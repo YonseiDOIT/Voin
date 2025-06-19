@@ -1,0 +1,109 @@
+spring:
+  application:
+    name: voin
+
+  # H2 Database 설정 (개발용)
+  datasource:
+    url: jdbc:h2:mem:voin_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+  # H2 Console 활성화 (개발용)
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  # JPA 설정
+  jpa:
+    hibernate:
+      ddl-auto: create-drop # 개발용: 시작할 때마다 테이블 재생성
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+
+  # Jackson 설정
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    time-zone: Asia/Seoul
+
+# JWT 설정
+jwt:
+  secret: ${JWT_SECRET:VoinSecretKeyForJWTTokenGenerationAndValidation2024}
+  expiration: 86400000 # 24시간 (밀리초)
+  refresh-expiration: 604800000 # 7일 (밀리초)
+
+# 카카오 API 설정
+kakao:
+  client-id: ${KAKAO_CLIENT_ID:your-kakao-client-id}
+  client-secret: ${KAKAO_CLIENT_SECRET:your-kakao-client-secret}
+  redirect-uri: ${KAKAO_REDIRECT_URI:http://localhost:3000/auth/callback}
+  api:
+    base-url: https://kapi.kakao.com
+    auth-url: https://kauth.kakao.com
+
+# Swagger 설정
+springdoc:
+  api-docs:
+    path: /api-docs
+    enabled: true
+  swagger-ui:
+    path: /swagger-ui.html
+    display-request-duration: true
+    groups-order: desc
+    operationsSorter: method
+    tagsSorter: alpha
+    try-it-out-enabled: true
+    filter: true
+  packages-to-scan: com.voin.controller
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+
+# 로깅 설정
+logging:
+  level:
+    com.voin: DEBUG
+    org.springframework.security: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+# 프로파일별 설정
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  # PostgreSQL 설정 (운영용)
+  datasource:
+    url: jdbc:postgresql://localhost:5432/voin_db
+    username: ${DB_USERNAME:voin_user}
+    password: ${DB_PASSWORD:voin_password}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update # 운영용: 기존 데이터 유지
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+---
+spring:
+  config:
+    activate:
+      on-profile: test
+  datasource:
+    url: jdbc:h2:mem:testdb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+  h2:
+    console:
+      enabled: true
