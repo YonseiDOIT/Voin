@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voin - Value + Coin</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .container {
+        background: white;
+        padding: 50px;
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        max-width: 600px;
+        width: 90%;
+      }
+      .logo {
+        font-size: 3em;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 20px;
+      }
+      .subtitle {
+        color: #666;
+        margin-bottom: 40px;
+        font-size: 1.2em;
+        line-height: 1.6;
+      }
+      .nav-links {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-top: 30px;
+      }
+      .nav-link {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 15px 30px;
+        font-size: 16px;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: inline-block;
+      }
+      .nav-link:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+      }
+      .nav-link.kakao {
+        background: #fee500;
+        color: #191919;
+      }
+      .nav-link.kakao:hover {
+        background: #e6cc00;
+        box-shadow: 0 10px 20px rgba(254, 229, 0, 0.3);
+      }
+      .description {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        text-align: left;
+      }
+      .description h3 {
+        margin-top: 0;
+        color: #333;
+      }
+      .feature-list {
+        list-style: none;
+        padding: 0;
+      }
+      .feature-list li {
+        margin: 10px 0;
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
+      }
+      .feature-list li:last-child {
+        border-bottom: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="logo">🪙 VOIN</div>
+      <div class="subtitle">
+        <strong>Value + Coin</strong><br />
+        20~30대를 위한 자기이해 플랫폼
+      </div>
+
+      <div class="description">
+        <h3>🚀 현재 개발 중인 기능들</h3>
+        <ul class="feature-list">
+          <li>🔐 카카오 소셜 로그인</li>
+          <li>👤 회원 관리 시스템</li>
+          <li>🃏 장점 카드 관리</li>
+          <li>👫 친구 관계 시스템</li>
+          <li>📝 폼 및 질문 관리</li>
+          <li>💰 코인 시스템</li>
+        </ul>
+      </div>
+
+      <div class="nav-links">
+        <a href="/auth/test" class="nav-link kakao">🍯 카카오 로그인 테스트</a>
+        <a href="/swagger-ui.html" class="nav-link">📖 API 문서 보기</a>
+        <a href="/h2-console" class="nav-link">🗄️ H2 데이터베이스 콘솔</a>
+      </div>
+
+      <div style="margin-top: 40px; color: #999; font-size: 14px">
+        <p>개발 환경: Spring Boot 3.5.0 + Java 17</p>
+        <p>데이터베이스: H2 (개발용) / PostgreSQL (운영용)</p>
+      </div>
+    </div>
+  </body>
+</html>
