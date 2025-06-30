@@ -1,5 +1,6 @@
 package com.voin.dto.response;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -9,11 +10,19 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Schema(description = "API 공통 응답 형식")
 public class ApiResponse<T> {
 
+    @Schema(description = "API 호출 성공 여부", example = "true")
     private boolean success;
+
+    @Schema(description = "응답 메시지", example = "요청이 성공적으로 처리되었습니다.")
     private String message;
+
+    @Schema(description = "응답 데이터")
     private T data;
+
+    @Schema(description = "에러 코드", example = "AUTH_001")
     private String errorCode;
 
     public static <T> ApiResponse<T> success(T data) {

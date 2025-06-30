@@ -42,13 +42,24 @@ public class KakaoAuthService {
      * 카카오 로그인 인증 URL 생성
      */
     public String getKakaoAuthUrl() {
-        return UriComponentsBuilder.fromHttpUrl(authUrl + "/oauth/authorize")
+        return getKakaoAuthUrl(false);
+    }
+
+    /**
+     * 카카오 로그인 인증 URL 생성 (동의 페이지 강제 표시 옵션)
+     */
+    public String getKakaoAuthUrl(boolean forceConsent) {
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(authUrl + "/oauth/authorize")
                 .queryParam("client_id", clientId)
                 .queryParam("redirect_uri", "http://localhost:8080/auth/kakao/callback")
                 .queryParam("response_type", "code")
-                .queryParam("scope", "profile_nickname,profile_image")
-                .build()
-                .toUriString();
+                .queryParam("scope", "profile_nickname,profile_image,friends");
+        
+        if (forceConsent) {
+            builder.queryParam("prompt", "consent");  // 매번 동의 페이지 표시
+        }
+        
+        return builder.build().toUriString();
     }
 
     /**
@@ -63,11 +74,24 @@ public class KakaoAuthService {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("grant_type", "authorization_code");
         params.add("client_id", clientId);
-        params.add("client_secret", clientSecret);
+        
+        // 클라이언트 시크릿이 있는 경우에만 추가
+        if (clientSecret != null && !clientSecret.trim().isEmpty()) {
+            params.add("client_secret", clientSecret);
+            log.debug("클라이언트 시크릿 포함하여 토큰 요청");
+        } else {
+            log.debug("클라이언트 시크릿 없이 토큰 요청");
+        }
+        
         params.add("redirect_uri", "http://localhost:8080/auth/kakao/callback");
         params.add("code", code);
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
+
+        log.info("카카오 토큰 요청 URL: {}", tokenUrl);
+        log.debug("요청 파라미터: grant_type={}, client_id={}, redirect_uri={}, code={}...", 
+                params.get("grant_type"), params.get("client_id"), params.get("redirect_uri"), 
+                code.substring(0, Math.min(10, code.length())));
 
         try {
             ResponseEntity<String> response = restTemplate.exchange(
@@ -77,12 +101,25 @@ public class KakaoAuthService {
                     String.class
             );
 
+            log.info("카카오 토큰 응답 상태: {}", response.getStatusCode());
+            log.debug("카카오 토큰 응답 본문: {}", response.getBody());
+
             JsonNode jsonNode = objectMapper.readTree(response.getBody());
-            return jsonNode.get("access_token").asText();
+            
+            if (jsonNode.has("error")) {
+                String error = jsonNode.get("error").asText();
+                String errorDescription = jsonNode.has("error_description") ? 
+                    jsonNode.get("error_description").asText() : "설명 없음";
+                throw new RuntimeException("카카오 토큰 요청 에러: " + error + " - " + errorDescription);
+            }
+            
+            String accessToken = jsonNode.get("access_token").asText();
+            log.info("액세스 토큰 획득 성공 (길이: {})", accessToken.length());
+            return accessToken;
 
         } catch (Exception e) {
             log.error("카카오 토큰 요청 실패", e);
-            throw new RuntimeException("카카오 토큰 요청에 실패했습니다.", e);
+            throw new RuntimeException("카카오 토큰 요청에 실패했습니다: " + e.getMessage(), e);
         }
     }
 
@@ -97,6 +134,9 @@ public class KakaoAuthService {
 
         HttpEntity<String> request = new HttpEntity<>(headers);
 
+        log.info("카카오 사용자 정보 요청 URL: {}", userInfoUrl);
+        log.debug("액세스 토큰 길이: {}", accessToken.length());
+
         try {
             ResponseEntity<String> response = restTemplate.exchange(
                     userInfoUrl,
@@ -105,22 +145,133 @@ public class KakaoAuthService {
                     String.class
             );
 
+            log.info("카카오 사용자 정보 응답 상태: {}", response.getStatusCode());
+            log.debug("카카오 사용자 정보 응답 본문: {}", response.getBody());
+
             JsonNode jsonNode = objectMapper.readTree(response.getBody());
+            
+            if (jsonNode.has("code") && jsonNode.get("code").asInt() < 0) {
+                String errorMsg = jsonNode.has("msg") ? jsonNode.get("msg").asText() : "알 수 없는 에러";
+                throw new RuntimeException("카카오 사용자 정보 요청 에러: " + errorMsg);
+            }
             
             Map<String, Object> userInfo = new HashMap<>();
             userInfo.put("id", jsonNode.get("id").asLong());
             
+            // 프로필 정보 (닉네임, 프로필 이미지) - 필수 동의
             JsonNode properties = jsonNode.get("properties");
             if (properties != null) {
-                userInfo.put("nickname", properties.get("nickname").asText());
-                userInfo.put("profile_image", properties.get("profile_image").asText());
+                if (properties.has("nickname")) {
+                    userInfo.put("nickname", properties.get("nickname").asText());
+                }
+                if (properties.has("profile_image")) {
+                    userInfo.put("profile_image", properties.get("profile_image").asText());
+                }
+                if (properties.has("thumbnail_image")) {
+                    userInfo.put("thumbnail_image", properties.get("thumbnail_image").asText());
+                }
             }
 
+            // 추가 카카오계정 정보는 해당 동의항목이 카카오 개발자 콘솔에서 설정된 경우에만 사용 가능
+            
+            log.info("카카오 사용자 정보 파싱 완료: {}", userInfo.keySet());
             return userInfo;
 
         } catch (Exception e) {
             log.error("카카오 사용자 정보 요청 실패", e);
-            throw new RuntimeException("카카오 사용자 정보 요청에 실패했습니다.", e);
+            throw new RuntimeException("카카오 사용자 정보 요청에 실패했습니다: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 카카오 앱 연결 끊기 (동의 페이지를 다시 보기 위해)
+     */
+    public Map<String, Object> unlinkKakaoApp(String accessToken) {
+        String unlinkUrl = apiBaseUrl + "/v1/user/unlink";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", "Bearer " + accessToken);
+        headers.add("Content-Type", "application/x-www-form-urlencoded");
+
+        HttpEntity<String> request = new HttpEntity<>(headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                    unlinkUrl,
+                    HttpMethod.POST,
+                    request,
+                    String.class
+            );
+
+            log.info("카카오 앱 연결 끊기 응답 상태: {}", response.getStatusCode());
+            log.debug("카카오 앱 연결 끊기 응답 본문: {}", response.getBody());
+
+            JsonNode jsonNode = objectMapper.readTree(response.getBody());
+            
+            Map<String, Object> result = new HashMap<>();
+            if (jsonNode.has("id")) {
+                result.put("unlinked_user_id", jsonNode.get("id").asLong());
+                result.put("success", true);
+                result.put("message", "카카오 앱 연결이 성공적으로 해제되었습니다. 이제 다시 로그인하면 동의 페이지가 나타납니다.");
+                log.info("카카오 앱 연결 끊기 완료: 사용자 ID {}", jsonNode.get("id").asLong());
+            } else {
+                result.put("success", false);
+                result.put("message", "연결 끊기 응답이 예상과 다릅니다.");
+            }
+
+            return result;
+
+        } catch (Exception e) {
+            log.error("카카오 앱 연결 끊기 실패", e);
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("error", "연결 끊기에 실패했습니다: " + e.getMessage());
+            return errorResult;
+        }
+    }
+
+    /**
+     * 카카오톡 친구 목록 조회 (friends 권한 필요)
+     * 이용 중 동의가 필요한 API
+     */
+    public Map<String, Object> getFriends(String accessToken) {
+        String friendsUrl = apiBaseUrl + "/v1/api/talk/friends";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Authorization", "Bearer " + accessToken);
+
+        HttpEntity<String> request = new HttpEntity<>(headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                    friendsUrl,
+                    HttpMethod.GET,
+                    request,
+                    String.class
+            );
+
+            JsonNode jsonNode = objectMapper.readTree(response.getBody());
+            
+            Map<String, Object> friendsInfo = new HashMap<>();
+            if (jsonNode.has("total_count")) {
+                friendsInfo.put("total_count", jsonNode.get("total_count").asInt());
+            }
+            
+            if (jsonNode.has("elements")) {
+                JsonNode elements = jsonNode.get("elements");
+                friendsInfo.put("friends_count", elements.size());
+                // 실제 친구 목록은 개인정보이므로 개수만 반환
+                // 필요시 친구 정보를 파싱할 수 있음
+            }
+
+            log.info("카카오톡 친구 정보 조회 완료: {} 명", friendsInfo.get("friends_count"));
+            return friendsInfo;
+
+        } catch (Exception e) {
+            log.warn("카카오톡 친구 정보 조회 실패 (권한이 없거나 이용 중 동의 필요): {}", e.getMessage());
+            Map<String, Object> emptyResult = new HashMap<>();
+            emptyResult.put("error", "친구 정보 조회 권한이 없습니다. 이용 중 동의가 필요합니다.");
+            return emptyResult;
         }
     }
 } 

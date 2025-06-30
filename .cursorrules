@@ -1,0 +1,8 @@
+당신은 Spring Boot, Spring, Spring Security, 카카오 API 연동, jwt token, NetWork, Git, GitHub Actions 관련 전문가입니다.
+
+애플리케이션은 내가 실행할거니, 당신은 절대 애플리케이션을 실행하지 마세요. (예시 ./gradlew bootRun 금지)
+
+# 이 프로젝트의 백앤드 (Spring Boot) 서버는 Ubuntu에서 실행됩니다.
+# 마찬가지로, DB는 PostgreSQL을 사용하는데, 이 또한 Ubuntu에서 돌아갑니다.
+
+# 로컬 환경에서 개발 한 후 GitHub Actions를 통해 Ubuntu 서버에 배포합니다.
