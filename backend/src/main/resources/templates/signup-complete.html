@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>회원가입 완료 - VOIN</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+      }
+
+      .complete-container {
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        max-width: 500px;
+        width: 100%;
+        text-align: center;
+      }
+
+      .success-icon {
+        font-size: 80px;
+        margin-bottom: 20px;
+      }
+
+      h1 {
+        color: #28a745;
+        margin-bottom: 20px;
+        font-size: 28px;
+      }
+
+      .subtitle {
+        color: #666;
+        margin-bottom: 30px;
+        line-height: 1.5;
+      }
+
+      .home-button {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 15px 40px;
+        border-radius: 50px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        transition: transform 0.3s ease;
+      }
+
+      .home-button:hover {
+        transform: translateY(-2px);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="complete-container">
+      <div class="success-icon">🎉</div>
+      <h1>회원가입 완료!</h1>
+      <p class="subtitle">
+        VOIN에 오신 것을 환영합니다!<br />
+        이제 자기이해 여정을 시작해보세요.
+      </p>
+
+      <a href="/" class="home-button">VOIN 시작하기</a>
+
+      <!-- 개발자 도구 링크 -->
+      <div style="margin-top: 20px">
+        <a
+          href="/h2-console"
+          target="_blank"
+          style="
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+            margin-right: 15px;
+          "
+        >
+          🗄️ H2 데이터베이스 Console
+        </a>
+        <a
+          href="/signup/members"
+          target="_blank"
+          style="color: #667eea; text-decoration: none; font-size: 14px"
+        >
+          👥 전체 회원 조회 API
+        </a>
+      </div>
+
+      <!-- 저장된 회원 정보 표시 -->
+      <div
+        th:if="${member}"
+        style="
+          margin-top: 30px;
+          padding: 20px;
+          background: #f8f9ff;
+          border-radius: 10px;
+          border: 1px solid #e1e1e1;
+        "
+      >
+        <h3 style="color: #667eea; margin-bottom: 15px">✅ 저장된 회원 정보</h3>
+        <div style="text-align: left; line-height: 1.8">
+          <div>
+            <strong>회원 ID:</strong> <span th:text="${member.id}"></span>
+          </div>
+          <div>
+            <strong>카카오 ID:</strong>
+            <span th:text="${member.kakaoId}"></span>
+          </div>
+          <div>
+            <strong>닉네임:</strong> <span th:text="${member.nickname}"></span>
+          </div>
+          <div>
+            <strong>친구 코드:</strong>
+            <span
+              th:text="${member.friendCode}"
+              style="color: #28a745; font-weight: bold"
+            ></span>
+          </div>
+          <div>
+            <strong>활성 상태:</strong>
+            <span
+              th:text="${member.isActive ? '활성' : '비활성'}"
+              th:style="${member.isActive ? 'color: #28a745;' : 'color: #dc3545;'}"
+            ></span>
+          </div>
+          <div th:if="${member.profileImage}">
+            <strong>프로필 이미지:</strong>
+            <img
+              th:src="${member.profileImage}"
+              style="
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                vertical-align: middle;
+                margin-left: 5px;
+              "
+              alt="프로필"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div
+        style="
+          margin-top: 20px;
+          padding: 15px;
+          background: #fff3cd;
+          border-radius: 10px;
+          font-size: 14px;
+          color: #856404;
+        "
+      >
+        <strong>임시 토큰:</strong><br />
+        <span th:text="${jwtToken}" style="word-break: break-all"
+          >토큰이 생성되지 않았습니다</span
+        >
+      </div>
+    </div>
+  </body>
+</html>
