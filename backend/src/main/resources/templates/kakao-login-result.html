@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>카카오 로그인 결과 - Voin</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .container {
+        background: white;
+        padding: 40px;
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        max-width: 500px;
+        width: 90%;
+      }
+      .logo {
+        font-size: 2.5em;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 10px;
+      }
+      .success {
+        color: #4caf50;
+        font-size: 1.5em;
+        margin: 20px 0;
+      }
+      .error {
+        color: #f44336;
+        font-size: 1.5em;
+        margin: 20px 0;
+      }
+      .user-info {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+        text-align: left;
+      }
+      .user-info h3 {
+        margin-top: 0;
+        color: #333;
+        text-align: center;
+      }
+      .info-item {
+        margin: 10px 0;
+        padding: 10px;
+        background: white;
+        border-radius: 8px;
+        border-left: 4px solid #667eea;
+      }
+      .info-label {
+        font-weight: bold;
+        color: #333;
+      }
+      .info-value {
+        color: #666;
+        margin-top: 5px;
+        word-break: break-all;
+      }
+      .profile-image {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        margin: 0 auto 20px;
+        display: block;
+        border: 3px solid #667eea;
+      }
+      .error-details {
+        background: #ffebee;
+        padding: 15px;
+        border-radius: 8px;
+        color: #c62828;
+        margin: 20px 0;
+        text-align: left;
+      }
+      .btn {
+        background-color: #667eea;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 24px;
+        font-size: 14px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+        margin: 10px;
+        transition: background-color 0.3s;
+      }
+      .btn:hover {
+        background-color: #5a67d8;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="logo">🪙 VOIN</div>
+
+      <!-- 성공한 경우 -->
+      <div th:if="${success}">
+        <div class="success">✅ 카카오 로그인 성공!</div>
+
+        <div class="user-info">
+          <h3>👤 사용자 정보</h3>
+
+          <img
+            th:if="${userInfo.profile_image}"
+            th:src="${userInfo.profile_image}"
+            class="profile-image"
+            alt="프로필 이미지"
+          />
+
+          <div class="info-item">
+            <div class="info-label">카카오 ID</div>
+            <div class="info-value" th:text="${userInfo.id}"></div>
+          </div>
+
+          <div class="info-item">
+            <div class="info-label">닉네임</div>
+            <div class="info-value" th:text="${userInfo.nickname}"></div>
+          </div>
+
+          <div class="info-item" th:if="${userInfo.profile_image}">
+            <div class="info-label">프로필 이미지 URL</div>
+            <div class="info-value" th:text="${userInfo.profile_image}"></div>
+          </div>
+        </div>
+
+        <div style="margin-top: 30px">
+          <p><strong>🎉 테스트 성공!</strong></p>
+          <p>이제 실제 회원가입/로그인 로직을 구현할 수 있습니다.</p>
+        </div>
+      </div>
+
+      <!-- 실패한 경우 -->
+      <div th:if="${!success}">
+        <div class="error">❌ 카카오 로그인 실패</div>
+
+        <div class="error-details">
+          <strong>오류 내용:</strong><br />
+          <span th:text="${error}"></span>
+        </div>
+
+        <div style="margin-top: 20px">
+          <p><strong>확인해주세요:</strong></p>
+          <ul style="text-align: left">
+            <li>카카오 개발자 콘솔에서 앱이 올바르게 설정되었는지</li>
+            <li>클라이언트 ID와 시크릿이 정확한지</li>
+            <li>리다이렉트 URI가 일치하는지</li>
+            <li>카카오 로그인이 활성화되어 있는지</li>
+          </ul>
+        </div>
+      </div>
+
+      <div style="margin-top: 30px">
+        <a href="/auth/test" class="btn">다시 테스트하기</a>
+        <a href="/swagger-ui.html" class="btn">API 문서 보기</a>
+      </div>
+    </div>
+  </body>
+</html>

@@ -41,9 +41,9 @@ jwt:
 
 # 카카오 API 설정
 kakao:
-  client-id: ${KAKAO_CLIENT_ID:your-kakao-client-id}
-  client-secret: ${KAKAO_CLIENT_SECRET:your-kakao-client-secret}
-  redirect-uri: ${KAKAO_REDIRECT_URI:http://localhost:3000/auth/callback}
+  client-id: 96d1ced447800ea2a300a0464546086b
+  client-secret: ${KAKAO_CLIENT_SECRET:}
+  redirect-uri: http://localhost:8080/auth/kakao/callback
   api:
     base-url: https://kapi.kakao.com
     auth-url: https://kauth.kakao.com
