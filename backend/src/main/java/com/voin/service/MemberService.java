@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -19,9 +20,18 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
 
+    public List<Member> getAllMembers() {
+        return memberRepository.findAll();
+    }
+
     public Member findById(UUID memberId) {
         return memberRepository.findById(memberId)
                 .orElseThrow(() -> new ResourceNotFoundException("Member not found with id: " + memberId));
+    }
+
+    public Member getMemberById(String memberId) {
+        UUID uuid = UUID.fromString(memberId);
+        return findById(uuid);
     }
 
     public Optional<Member> findByKakaoId(String kakaoId) {

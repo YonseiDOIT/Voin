@@ -138,7 +138,11 @@
       <div th:if="${kakaoAuthUrl != null and error == null}">
         <div class="success-notice">
           <strong>✅ 카카오 로그인 설정 완료!</strong><br />
-          아래 버튼을 클릭하여 테스트해보세요.
+          아래 버튼을 클릭하여 테스트해보세요.<br />
+          <small
+            >💡 동의 페이지를 보려면 카카오계정에서 앱 연결을 먼저 해제해야
+            합니다.</small
+          >
         </div>
 
         <a th:href="${kakaoAuthUrl}" class="kakao-login-btn">
@@ -182,7 +186,9 @@
             <strong>리다이렉트 URI:</strong>
             http://localhost:8080/auth/kakao/callback
           </li>
-          <li><strong>요청 권한:</strong> 닉네임, 프로필 이미지</li>
+          <li><strong>필수 동의:</strong> 닉네임, 프로필 이미지</li>
+          <li><strong>이용 중 동의:</strong> 친구 목록 (friends)</li>
+          <li><strong>참고:</strong> 친구 정보는 별도 API로 조회 가능</li>
         </ul>
       </div>
 
