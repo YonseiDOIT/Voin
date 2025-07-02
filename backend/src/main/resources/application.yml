@@ -19,8 +19,6 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop # 개발용: 시작할 때마다 테이블 재생성
-      naming:
-        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
     show-sql: true
     properties:
       hibernate:
@@ -107,3 +105,16 @@ spring:
   h2:
     console:
       enabled: true
+  web:
+    resources:
+      static-locations:
+        - classpath:/static/
+        - file:/home/ubuntu/voin/images/
+
+server:
+  port: 8080
+
+logging:
+  level:
+    root: INFO
+    com.voin: DEBUG
