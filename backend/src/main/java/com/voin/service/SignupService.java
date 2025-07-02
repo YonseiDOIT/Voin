@@ -8,6 +8,7 @@ import com.voin.dto.response.KakaoUserResponse;
 import com.voin.entity.Member;
 import com.voin.repository.MemberRepository;
 import com.voin.util.FriendCodeGenerator;
+import com.voin.util.ImageUtil;
 import com.voin.util.NicknameValidator;
 // import com.voin.util.JwtUtil; // JWT 임시 비활성화
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,8 @@ public class SignupService {
     private final KakaoAuthService kakaoAuthService;
     private final MemberRepository memberRepository;
     private final FriendCodeGenerator friendCodeGenerator;
+    private final ImageUtil imageUtil;
+    private final NicknameValidator nicknameValidator;
 
     // 임시 회원가입 데이터 저장소 (실제로는 Redis나 세션 사용 권장)
     private final Map<String, SignupData> tempSignupData = new HashMap<>();
@@ -93,12 +96,10 @@ public class SignupService {
         String finalNickname = request.getUseKakaoNickname() ? 
                 signupData.getKakaoNickname() : request.getNickname();
         
-        // 커스텀 닉네임 검증 (카카오 닉네임은 검증 제외)
-        if (!request.getUseKakaoNickname()) {
-            String validationError = NicknameValidator.validateNickname(request.getNickname());
-            if (validationError != null) {
-                throw new IllegalArgumentException(validationError);
-            }
+        // 커스텀 닉네임 검증 (카카오 닉네임도 중복 검사는 수행)
+        String validationError = nicknameValidator.validateNickname(finalNickname);
+        if (validationError != null) {
+            throw new IllegalArgumentException(validationError);
         }
         
         signupData.setSelectedNickname(finalNickname);
@@ -131,8 +132,24 @@ public class SignupService {
         }
 
         // 프로필 이미지 설정
-        String finalProfileImage = request.getUseKakaoProfileImage() ? 
-                signupData.getKakaoProfileImage() : request.getProfileImageUrl();
+        String finalProfileImage;
+        
+        try {
+            if (request.getUseKakaoProfileImage()) {
+                finalProfileImage = signupData.getKakaoProfileImage();
+            } else if (request.getUseFileUpload() && request.getBase64ImageData() != null) {
+                // Base64 이미지 업로드 처리
+                if (!imageUtil.isValidImageFile(request.getFileName())) {
+                    throw new IllegalArgumentException("지원하지 않는 이미지 형식입니다. (지원 형식: jpg, jpeg, png, gif)");
+                }
+                finalProfileImage = imageUtil.saveBase64Image(request.getBase64ImageData(), request.getFileName());
+            } else {
+                finalProfileImage = request.getProfileImageUrl();
+            }
+        } catch (Exception e) {
+            log.error("프로필 이미지 처리 중 오류 발생: {}", e.getMessage());
+            throw new RuntimeException("프로필 이미지 처리 중 오류가 발생했습니다: " + e.getMessage());
+        }
 
         // 친구 코드 생성
         String friendCode = friendCodeGenerator.generate();
