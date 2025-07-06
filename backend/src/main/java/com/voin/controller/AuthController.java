@@ -21,6 +21,20 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * 🔐 로그인 및 인증 컨트롤러
+ * 
+ * 이 클래스는 사용자의 로그인과 인증을 처리하는 기능을 담당합니다.
+ * 
+ * 주요 기능들:
+ * - 💛 카카오 로그인 처리하기
+ * - 🔄 로그인 콜백 처리하기 (카카오에서 돌아온 정보 받기)
+ * - 🧪 로그인 테스트 페이지 보여주기
+ * - 📋 로그인 URL 제공하기
+ * 
+ * 쉽게 말해서, "출입 관리 사무소" 같은 역할을 해요!
+ * 누가 들어올 수 있는지, 어떻게 들어오는지를 관리합니다.
+ */
 @Slf4j
 @Controller
 @RequiredArgsConstructor
@@ -65,7 +79,9 @@ public class AuthController {
     @GetMapping("/kakao/callback")
     public String kakaoCallback(
             @Parameter(description = "카카오로부터 받은 인가 코드", required = true)
-            @RequestParam("code") String code, 
+            @RequestParam("code") String code,
+            @Parameter(description = "플로우 테스트에서 왔는지 확인하는 state 파라미터", required = false)
+            @RequestParam(value = "state", required = false) String state,
             Model model) {
         log.info("카카오 콜백 처리 시작 - code: {}", code);
         
@@ -87,22 +103,38 @@ public class AuthController {
             
             if (existingMember.isPresent()) {
                 // 기존 회원 - 로그인 처리
-                log.info("기존 회원 로그인 - 회원 ID: {}", existingMember.get().getId());
+                Member member = existingMember.get();
+                log.info("기존 회원 로그인 - 회원 ID: {}, 닉네임: {}", member.getId(), member.getNickname());
                 
+                // 임시 토큰 생성 (실제 프로덕션에서는 JWT 사용)
+                String tempToken = "VOIN_LOGIN_TOKEN_" + member.getId() + "_" + System.currentTimeMillis();
+                log.info("로그인 성공 - 임시 토큰 생성: {}", tempToken.substring(0, 20) + "...");
+                
+                // 플로우 테스트에서 온 경우 다시 플로우 테스트로 리다이렉트
+                if ("flow_test".equals(state)) {
+                    return "redirect:/flow-test.html?login_success=true&member_id=" + member.getId() + 
+                           "&token=" + tempToken + "&is_existing=true";
+                }
+                
+                // 일반 로그인 테스트의 경우 결과 페이지 표시
                 model.addAttribute("success", true);
                 model.addAttribute("isExistingMember", true);
-                model.addAttribute("member", existingMember.get());
+                model.addAttribute("member", member);
                 model.addAttribute("userInfo", userInfo);
-                
-                // TODO: JWT 토큰 생성 및 추가
-                // model.addAttribute("jwtToken", jwtToken);
+                model.addAttribute("loginToken", tempToken);
                 
                 return "kakao-login-result";
             } else {
                 // 신규 회원 - 회원가입 플로우로 리다이렉트
                 log.info("신규 회원 감지 - 회원가입 플로우로 이동");
                 
-                // 액세스 토큰과 함께 닉네임 설정 페이지로 리다이렉트
+                // 플로우 테스트에서 온 경우 액세스 토큰을 포함해서 플로우 테스트로 리다이렉트
+                if ("flow_test".equals(state)) {
+                    return "redirect:/flow-test.html?login_success=true&access_token=" + accessToken + 
+                           "&is_new_member=true";
+                }
+                
+                // 일반 로그인 테스트의 경우 닉네임 설정 페이지로 리다이렉트
                 return "redirect:/signup/nickname?access_token=" + accessToken;
             }
             
@@ -132,9 +164,11 @@ public class AuthController {
     @SecurityRequirements // 인증 불필요
     @GetMapping("/kakao/url")
     @ResponseBody
-    public ApiResponse<String> getKakaoAuthUrlApi() {
+    public ApiResponse<String> getKakaoAuthUrlApi(
+            @Parameter(description = "플로우 테스트에서 호출하는지 여부", required = false)
+            @RequestParam(value = "from_flow", required = false, defaultValue = "false") boolean fromFlow) {
         try {
-            String authUrl = kakaoAuthService.getKakaoAuthUrl();
+            String authUrl = kakaoAuthService.getKakaoAuthUrl(false, fromFlow);
             return ApiResponse.success(authUrl);
         } catch (Exception e) {
             return ApiResponse.error("카카오 설정 오류: " + e.getMessage());

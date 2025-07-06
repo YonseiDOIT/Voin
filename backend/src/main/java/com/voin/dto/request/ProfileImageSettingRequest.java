@@ -18,6 +18,13 @@ public class ProfileImageSettingRequest {
     @NotBlank(message = "액세스 토큰은 필수입니다")
     private String accessToken;
 
+    @Schema(description = "설정된 닉네임", example = "박규민")
+    private String nickname;
+
+    @Schema(description = "카카오 닉네임 사용 여부", example = "true")
+    @Builder.Default
+    private Boolean useKakaoNickname = true;
+
     @Schema(description = "프로필 이미지 URL", example = "https://example.com/profile.jpg")
     private String profileImageUrl;
 

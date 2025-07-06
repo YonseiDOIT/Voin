@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>카드 상세 보기</title>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        margin: 0;
+        background-color: #f4f4f9;
+        color: #333;
+      }
+      header {
+        background-color: #fff;
+        padding: 20px;
+        text-align: center;
+        border-bottom: 1px solid #ddd;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        position: relative;
+      }
+      h1 {
+        margin: 0;
+        font-size: 28px;
+        color: #333;
+      }
+      .back-btn {
+        position: absolute;
+        left: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        background-color: #6c757d;
+        color: white;
+        padding: 8px 16px;
+        text-decoration: none;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: background-color 0.2s;
+      }
+      .back-btn:hover {
+        background-color: #5a6268;
+      }
+      main {
+        padding: 30px 20px;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .card-detail {
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        padding: 40px;
+        margin-bottom: 20px;
+      }
+      .card-header {
+        text-align: center;
+        margin-bottom: 30px;
+        padding-bottom: 20px;
+        border-bottom: 2px solid #f0f0f0;
+      }
+      .coin-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: bold;
+        display: inline-block;
+        margin-bottom: 10px;
+      }
+      .keyword-title {
+        font-size: 32px;
+        font-weight: bold;
+        color: #333;
+        margin: 10px 0;
+      }
+      .keyword-description {
+        font-size: 16px;
+        color: #666;
+        margin-bottom: 20px;
+      }
+      .content-section {
+        margin-top: 30px;
+      }
+      .content-title {
+        font-size: 20px;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+      }
+      .content-title::before {
+        content: "📝";
+        margin-right: 10px;
+        font-size: 24px;
+      }
+      .content-text {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 10px;
+        border-left: 4px solid #007bff;
+        font-size: 16px;
+        line-height: 1.6;
+        white-space: pre-wrap;
+      }
+      .card-meta {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .meta-item {
+        color: #666;
+        font-size: 14px;
+      }
+      .meta-label {
+        font-weight: bold;
+        color: #333;
+      }
+      #loading {
+        text-align: center;
+        padding: 80px 20px;
+        font-size: 18px;
+        color: #666;
+      }
+      .error-state {
+        text-align: center;
+        padding: 80px 20px;
+        color: #666;
+      }
+      .error-state h2 {
+        font-size: 24px;
+        margin-bottom: 12px;
+        color: #dc3545;
+      }
+      .error-state .btn {
+        display: inline-block;
+        background-color: #6c757d;
+        color: white;
+        padding: 12px 24px;
+        text-decoration: none;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: background-color 0.2s;
+      }
+      .error-state .btn:hover {
+        background-color: #5a6268;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <a href="/cards" class="back-btn">← 목록으로</a>
+      <h1>🪙 카드 상세 보기</h1>
+    </header>
+    <main>
+      <div id="loading">카드 정보를 불러오는 중...</div>
+      <div id="card-content" style="display: none">
+        <!-- 카드 상세 내용이 여기에 동적으로 추가됩니다 -->
+      </div>
+    </main>
+
+    <script th:inline="javascript">
+      document.addEventListener("DOMContentLoaded", function () {
+        const cardId = /*[[${cardId}]]*/ null;
+
+        if (!cardId) {
+          showError("카드 ID가 유효하지 않습니다.");
+          return;
+        }
+
+        fetch(`/api/cards/${cardId}`)
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("카드 정보를 가져오는데 실패했습니다.");
+            }
+            return response.json();
+          })
+          .then((card) => {
+            const loadingDiv = document.getElementById("loading");
+            const contentDiv = document.getElementById("card-content");
+
+            loadingDiv.style.display = "none";
+            contentDiv.style.display = "block";
+
+            // 카드 정보 표시
+            displayCard(card);
+          })
+          .catch((error) => {
+            console.error("Error fetching card:", error);
+            showError(error.message);
+          });
+      });
+
+      function displayCard(card) {
+        const contentDiv = document.getElementById("card-content");
+
+        const coinName =
+          card.keyword && card.keyword.coin ? card.keyword.coin.name : "미분류";
+        const coinColor =
+          card.keyword && card.keyword.coin
+            ? card.keyword.coin.color
+            : "#667eea";
+        const keywordName = card.keyword ? card.keyword.name : "키워드 없음";
+        const keywordDescription = card.keyword ? card.keyword.description : "";
+        const content = card.content || "내용이 없습니다.";
+
+        // 날짜 포맷팅
+        let formattedDate = "";
+        if (card.createdAt) {
+          const date = new Date(card.createdAt);
+          formattedDate = date.toLocaleDateString("ko-KR", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        }
+
+        contentDiv.innerHTML = `
+          <div class="card-detail">
+            <div class="card-header">
+              <div class="coin-badge" style="background: linear-gradient(135deg, ${coinColor}, ${adjustBrightness(
+          coinColor,
+          -20
+        )});">
+                ${coinName}
+              </div>
+              <div class="keyword-title">💎 ${keywordName}</div>
+              ${
+                keywordDescription
+                  ? `<div class="keyword-description">${keywordDescription}</div>`
+                  : ""
+              }
+            </div>
+            
+            <div class="content-section">
+              <div class="content-title">내가 기록한 이야기</div>
+              <div class="content-text">${content}</div>
+            </div>
+            
+            <div class="card-meta">
+              <div class="meta-item">
+                <span class="meta-label">생성일:</span> ${
+                  formattedDate || "정보 없음"
+                }
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">카드 ID:</span> #${card.id}
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">공개 여부:</span> ${
+                  card.isPublic ? "공개" : "비공개"
+                }
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      function showError(message) {
+        const loadingDiv = document.getElementById("loading");
+        loadingDiv.innerHTML = `
+          <div class="error-state">
+            <h2>⚠️ 오류 발생</h2>
+            <p>${message}</p>
+            <a href="/cards" class="btn">목록으로 돌아가기</a>
+          </div>
+        `;
+      }
+
+      // 색상 밝기 조절 함수
+      function adjustBrightness(hex, percent) {
+        const num = parseInt(hex.replace("#", ""), 16);
+        const amt = Math.round(2.55 * percent);
+        const R = (num >> 16) + amt;
+        const G = ((num >> 8) & 0x00ff) + amt;
+        const B = (num & 0x0000ff) + amt;
+        return (
+          "#" +
+          (
+            0x1000000 +
+            (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
+            (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
+            (B < 255 ? (B < 1 ? 0 : B) : 255)
+          )
+            .toString(16)
+            .slice(1)
+        );
+      }
+    </script>
+  </body>
+</html>
