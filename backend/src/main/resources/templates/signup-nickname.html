@@ -415,8 +415,15 @@
             const result = await response.json();
 
             if (result.success) {
-              // 다음 단계로 이동
-              window.location.href = `/signup/profile-image?access_token=${accessToken}`;
+              // 다음 단계로 이동 - 설정된 닉네임 정보도 전달
+              const finalNickname =
+                selectedType === "custom"
+                  ? customNickname
+                  : kakaoUserInfo?.nickname || "";
+              const useKakao = selectedType === "kakao";
+              window.location.href = `/signup/profile-image?access_token=${accessToken}&nickname=${encodeURIComponent(
+                finalNickname
+              )}&use_kakao_nickname=${useKakao}`;
             } else {
               showError(result.message || "닉네임 설정에 실패했습니다.");
               document.getElementById("nextButton").disabled = false;

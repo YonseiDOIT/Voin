@@ -42,18 +42,31 @@ public class KakaoAuthService {
      * 카카오 로그인 인증 URL 생성
      */
     public String getKakaoAuthUrl() {
-        return getKakaoAuthUrl(false);
+        return getKakaoAuthUrl(false, false);
     }
 
     /**
      * 카카오 로그인 인증 URL 생성 (동의 페이지 강제 표시 옵션)
      */
     public String getKakaoAuthUrl(boolean forceConsent) {
+        return getKakaoAuthUrl(forceConsent, false);
+    }
+
+    /**
+     * 카카오 로그인 인증 URL 생성 (플로우 테스트용)
+     */
+    public String getKakaoAuthUrl(boolean forceConsent, boolean fromFlow) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(authUrl + "/oauth/authorize")
                 .queryParam("client_id", clientId)
                 .queryParam("redirect_uri", "http://localhost:8080/auth/kakao/callback")
                 .queryParam("response_type", "code")
-                .queryParam("scope", "profile_nickname,profile_image,friends");
+                // 필수 동의: 닉네임, 프로필 이미지
+                .queryParam("scope", "profile_nickname,profile_image");
+        
+        // 플로우 테스트에서 온 요청인지 state 파라미터로 구분
+        if (fromFlow) {
+            builder.queryParam("state", "flow_test");
+        }
         
         if (forceConsent) {
             builder.queryParam("prompt", "consent");  // 매번 동의 페이지 표시
@@ -158,6 +171,11 @@ public class KakaoAuthService {
             Map<String, Object> userInfo = new HashMap<>();
             userInfo.put("id", jsonNode.get("id").asLong());
             
+            // 연결 시간
+            if (jsonNode.has("connected_at")) {
+                userInfo.put("connected_at", jsonNode.get("connected_at").asText());
+            }
+            
             // 프로필 정보 (닉네임, 프로필 이미지) - 필수 동의
             JsonNode properties = jsonNode.get("properties");
             if (properties != null) {
@@ -172,9 +190,39 @@ public class KakaoAuthService {
                 }
             }
 
-            // 추가 카카오계정 정보는 해당 동의항목이 카카오 개발자 콘솔에서 설정된 경우에만 사용 가능
+            // 카카오계정 정보
+            JsonNode kakaoAccount = jsonNode.get("kakao_account");
+            if (kakaoAccount != null) {
+                userInfo.put("kakao_account", new HashMap<String, Object>());
+                Map<String, Object> accountInfo = (Map<String, Object>) userInfo.get("kakao_account");
+                
+                // 프로필 정보
+                if (kakaoAccount.has("profile")) {
+                    JsonNode profile = kakaoAccount.get("profile");
+                    Map<String, Object> profileInfo = new HashMap<>();
+                    
+                    if (profile.has("nickname")) {
+                        profileInfo.put("nickname", profile.get("nickname").asText());
+                    }
+                    if (profile.has("profile_image_url")) {
+                        profileInfo.put("profile_image_url", profile.get("profile_image_url").asText());
+                    }
+                    if (profile.has("thumbnail_image_url")) {
+                        profileInfo.put("thumbnail_image_url", profile.get("thumbnail_image_url").asText());
+                    }
+                    
+                    accountInfo.put("profile", profileInfo);
+                }
+                
+                // 이메일 (선택 동의)
+                if (kakaoAccount.has("email") && kakaoAccount.has("email_needs_agreement") 
+                    && !kakaoAccount.get("email_needs_agreement").asBoolean()) {
+                    accountInfo.put("email", kakaoAccount.get("email").asText());
+                }
+            }
             
-            log.info("카카오 사용자 정보 파싱 완료: {}", userInfo.keySet());
+            log.info("카카오 사용자 정보 파싱 완료: ID={}, 닉네임={}", 
+                    userInfo.get("id"), userInfo.get("nickname"));
             return userInfo;
 
         } catch (Exception e) {

@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voin - 전체 플로우 테스트</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+        color: #333;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 2em;
+        margin-bottom: 10px;
+      }
+
+      .header p {
+        opacity: 0.9;
+      }
+
+      .content {
+        padding: 30px;
+      }
+
+      .step {
+        display: none;
+        animation: fadeIn 0.3s ease;
+      }
+
+      .step.active {
+        display: block;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .step-title {
+        font-size: 1.8em;
+        margin-bottom: 20px;
+        color: #333;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .step-number {
+        background: #667eea;
+        color: white;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9em;
+        font-weight: bold;
+      }
+
+      .btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 24px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin: 5px;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+      }
+
+      .btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .btn.kakao {
+        background: #fee500;
+        color: #000000;
+      }
+
+      .btn.secondary {
+        background: #6c757d;
+      }
+
+      .btn.secondary:hover {
+        background: #5a6268;
+        box-shadow: 0 8px 16px rgba(108, 117, 125, 0.3);
+      }
+
+      .btn-group {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        align-items: center;
+        margin-top: 20px;
+      }
+
+      .input-group {
+        margin: 15px 0;
+      }
+
+      .input-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        color: #333;
+      }
+
+      .input-group input,
+      .input-group textarea {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: border-color 0.3s ease;
+      }
+
+      .input-group input:focus,
+      .input-group textarea:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+
+      .card-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin: 20px 0;
+      }
+
+      .card {
+        border: 2px solid #eee;
+        border-radius: 12px;
+        padding: 20px;
+        background: white;
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+
+      .card:hover {
+        border-color: #667eea;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .card.selected {
+        border-color: #667eea;
+        background: #f0f4ff;
+      }
+
+      .card h3 {
+        color: #333;
+        margin-bottom: 10px;
+      }
+
+      .card p {
+        color: #666;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      .keyword-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 20px 0;
+      }
+
+      .keyword-tag {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .keyword-tag:hover {
+        background: #e9ecef;
+      }
+
+      .keyword-tag.selected {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+      }
+
+      .status {
+        margin: 20px 0;
+        padding: 15px;
+        border-radius: 8px;
+        background: #f8f9fa;
+        border-left: 4px solid #667eea;
+      }
+
+      .status.success {
+        background: #d1edda;
+        border-left-color: #28a745;
+        color: #155724;
+      }
+
+      .status.error {
+        background: #f8d7da;
+        border-left-color: #dc3545;
+        color: #721c24;
+      }
+
+      .navigation {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+      }
+
+      .progress-bar {
+        background: #f8f9fa;
+        height: 8px;
+        border-radius: 4px;
+        margin: 20px 0;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.3s ease;
+        width: 0%;
+      }
+
+      .coin-selection {
+        margin: 20px 0;
+      }
+
+      .coin-category {
+        margin-bottom: 30px;
+      }
+
+      .coin-category h3 {
+        color: #333;
+        margin-bottom: 15px;
+        padding-bottom: 5px;
+        border-bottom: 2px solid #667eea;
+      }
+
+      /* 새로운 코인 선택 UI 스타일 */
+      .categories {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+      }
+
+      .category-btn {
+        padding: 8px 16px;
+        border-radius: 20px;
+        border: 1px solid #ddd;
+        background-color: #f5f5f5;
+        color: #555;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 14px;
+      }
+
+      .category-btn:hover {
+        border-color: #667eea;
+        background-color: #f0f4ff;
+      }
+
+      .category-btn.selected {
+        background-color: #667eea;
+        color: white;
+        border-color: #667eea;
+      }
+
+      .keyword-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .keyword-card {
+        background-color: white;
+        border: 1px solid #ddd;
+        border-radius: 12px;
+        padding: 24px 16px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        font-size: 14px;
+        min-height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .keyword-card:hover {
+        border-color: #667eea;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+      }
+
+      .keyword-card.selected {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-color: #667eea;
+      }
+
+      .keyword-card.selected::before {
+        content: "✓ ";
+        margin-right: 4px;
+      }
+
+      .summary-box {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin: 24px 0;
+        text-align: left;
+        border: 1px solid #e9ecef;
+      }
+
+      .summary-box p {
+        margin: 8px 0;
+        line-height: 1.5;
+      }
+
+      .summary-box strong {
+        color: #495057;
+      }
+
+      .final-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 15px;
+        margin: 20px 0;
+        text-align: center;
+      }
+
+      .final-card h2 {
+        margin-bottom: 20px;
+      }
+
+      .selected-items {
+        background: white;
+        color: #333;
+        padding: 20px;
+        border-radius: 10px;
+        margin: 20px 0;
+      }
+
+      .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid #f3f3f3;
+        border-top: 2px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🪙 VOIN 전체 플로우 테스트</h1>
+        <p>카카오 로그인부터 카드 생성까지 전체 과정을 테스트해보세요</p>
+      </div>
+
+      <div class="content">
+        <!-- 진행률 표시 -->
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <!-- 1단계: 카카오 로그인 -->
+        <div class="step active" id="loginStep">
+          <div class="step-title">
+            <span class="step-number">1</span>
+            카카오 로그인
+          </div>
+          <p style="margin-bottom: 20px">
+            먼저 카카오 계정으로 로그인해주세요.
+          </p>
+          <button class="btn kakao" onclick="startKakaoLogin()">
+            🍯 카카오로 로그인하기
+          </button>
+          <div id="loginStatus" class="status" style="display: none"></div>
+        </div>
+
+        <!-- 2단계: 닉네임 설정 (신규 회원만) -->
+        <div class="step" id="nicknameStep">
+          <div class="step-title">
+            <span class="step-number">2</span>
+            닉네임 설정
+          </div>
+          <p style="margin-bottom: 20px">사용하실 닉네임을 입력해주세요.</p>
+          <div class="input-group">
+            <label for="nickname">닉네임</label>
+            <input
+              type="text"
+              id="nickname"
+              placeholder="2-10자의 닉네임을 입력하세요"
+              maxlength="10"
+            />
+          </div>
+          <div class="btn-group" style="margin-top: 20px">
+            <button
+              class="btn secondary"
+              onclick="goToPreviousStep('nicknameStep')"
+            >
+              이전
+            </button>
+            <button class="btn" onclick="setNickname()">다음 단계</button>
+          </div>
+          <div id="nicknameStatus" class="status" style="display: none"></div>
+        </div>
+
+        <!-- 3단계: 프로필 이미지 설정 (신규 회원만) -->
+        <div class="step" id="profileStep">
+          <div class="step-title">
+            <span class="step-number">3</span>
+            프로필 이미지 설정
+          </div>
+          <p style="margin-bottom: 20px">프로필 이미지를 선택해주세요.</p>
+          <div class="card-grid" id="profileImages">
+            <!-- 프로필 이미지 옵션들이 여기에 동적으로 추가됩니다 -->
+          </div>
+          <div class="btn-group" style="margin-top: 20px">
+            <button
+              class="btn secondary"
+              onclick="goToPreviousStep('profileStep')"
+            >
+              이전
+            </button>
+            <button
+              class="btn"
+              onclick="setProfileImage()"
+              id="profileBtn"
+              disabled
+            >
+              다음 단계
+            </button>
+          </div>
+          <div id="profileStatus" class="status" style="display: none"></div>
+        </div>
+
+        <!-- 4단계: 코인 찾기 유형 선택 -->
+        <div class="step" id="coinFinderStep">
+          <div class="step-title">
+            <span class="step-number">4</span>
+            코인 찾기 유형 선택
+          </div>
+          <p style="margin-bottom: 20px">어떤 방식으로 장점을 찾아볼까요?</p>
+          <div class="card-grid" id="finderTypes">
+            <!-- 코인 찾기 유형들이 여기에 동적으로 추가됩니다 -->
+          </div>
+          <div id="finderStatus" class="status" style="display: none"></div>
+        </div>
+
+        <!-- 5단계: 오늘의 일기 작성 -->
+        <div class="step" id="diaryStep">
+          <div class="step-title">
+            <span class="step-number">5</span>
+            오늘의 일기 작성
+          </div>
+          <p style="margin-bottom: 20px">
+            오늘 하루를 돌아보며 일기를 작성해보세요.
+          </p>
+          <div class="input-group">
+            <label for="diaryContent">오늘의 일기</label>
+            <textarea
+              id="diaryContent"
+              rows="6"
+              placeholder="오늘 하루 어떤 일이 있었나요? 어떤 기분이었나요?"
+            ></textarea>
+          </div>
+          <div class="btn-group" style="margin-top: 20px">
+            <button
+              class="btn secondary"
+              onclick="goToPreviousStep('diaryStep')"
+            >
+              이전
+            </button>
+            <button class="btn" onclick="saveDiary()">
+              일기 저장하고 다음 단계
+            </button>
+          </div>
+          <div id="diaryStatus" class="status" style="display: none"></div>
+        </div>
+
+        <!-- 6단계: 코인 선택 -->
+        <div class="step" id="coinSelectionStep">
+          <div class="step-title">
+            <span class="step-number">6</span>
+            코인 선택
+          </div>
+          <p style="margin-bottom: 20px">나에게 맞는 코인을 선택해주세요.</p>
+          <div class="coin-selection" id="coinOptions">
+            <!-- 코인 옵션들이 여기에 동적으로 추가됩니다 -->
+          </div>
+          <div class="btn-group" style="margin-top: 20px">
+            <button
+              class="btn secondary"
+              onclick="goToPreviousStep('coinSelectionStep')"
+            >
+              이전
+            </button>
+          </div>
+          <div
+            id="coinSelectionStatus"
+            class="status"
+            style="display: none"
+          ></div>
+        </div>
+
+        <!-- 7단계: 키워드 선택 -->
+        <div class="step" id="keywordSelectionStep">
+          <div class="step-title">
+            <span class="step-number">7</span>
+            키워드 선택
+          </div>
+          <p style="margin-bottom: 20px">
+            선택한 코인에 맞는 키워드를 3개까지 선택해주세요.
+          </p>
+          <div class="keyword-grid" id="keywordOptions">
+            <!-- 키워드 옵션들이 여기에 동적으로 추가됩니다 -->
+          </div>
+          <div class="btn-group" style="margin-top: 20px">
+            <button
+              class="btn secondary"
+              onclick="goToPreviousStep('keywordSelectionStep')"
+            >
+              이전
+            </button>
+            <button
+              class="btn"
+              onclick="createCard()"
+              id="createCardBtn"
+              disabled
+            >
+              카드 생성하기
+            </button>
+          </div>
+          <div id="keywordStatus" class="status" style="display: none"></div>
+        </div>
+
+        <!-- 8단계: 완료 -->
+        <div class="step" id="completeStep">
+          <div class="step-title">
+            <span class="step-number">8</span>
+            카드 생성 완료!
+          </div>
+          <div class="final-card">
+            <h2>🎉 장점 카드가 생성되었습니다!</h2>
+            <div class="selected-items" id="finalCardInfo">
+              <!-- 생성된 카드 정보가 여기에 표시됩니다 -->
+            </div>
+          </div>
+          <div class="navigation">
+            <button class="btn secondary" onclick="goHome()">
+              홈으로 돌아가기
+            </button>
+            <button class="btn" onclick="restart()">다시 시작하기</button>
+          </div>
+        </div>
+
+        <!-- 네비게이션 -->
+        <div class="navigation" id="navigation" style="display: none">
+          <button class="btn secondary" onclick="previousStep()" id="prevBtn">
+            이전 단계
+          </button>
+          <button class="btn" onclick="nextStep()" id="nextBtn">
+            다음 단계
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // 전역 상태 관리
+      const state = {
+        currentStep: 1,
+        totalSteps: 8,
+        accessToken: null,
+        jwtToken: null,
+        memberId: null,
+        isNewMember: false,
+        selectedFinderType: null,
+        formId: null,
+        selectedCoin: null,
+        selectedKeyword: null,
+        selectedKeywords: new Set(),
+        createdCard: null,
+        selectedProfileImage: null,
+        coinsWithKeywords: [],
+        diaryEntry: null,
+      };
+
+      // 진행률 업데이트
+      function updateProgress() {
+        const progress = (state.currentStep / state.totalSteps) * 100;
+        document.getElementById("progressFill").style.width = progress + "%";
+      }
+
+      // 단계 표시
+      function showStep(stepId) {
+        document
+          .querySelectorAll(".step")
+          .forEach((step) => step.classList.remove("active"));
+        document.getElementById(stepId).classList.add("active");
+
+        const stepNumber = {
+          loginStep: 1,
+          nicknameStep: 2,
+          profileStep: 3,
+          coinFinderStep: 4,
+          diaryStep: 5,
+          coinSelectionStep: 6,
+          keywordSelectionStep: 7,
+          completeStep: 8,
+        };
+
+        state.currentStep = stepNumber[stepId] || 1;
+        updateProgress();
+      }
+
+      // 상태 메시지 표시
+      function showStatus(elementId, message, isError = false) {
+        const element = document.getElementById(elementId);
+        element.style.display = "block";
+        element.textContent = message;
+        element.className = `status ${isError ? "error" : "success"}`;
+      }
+
+      // 이전 단계로 가기
+      function goToPreviousStep(currentStep) {
+        const stepFlow = {
+          nicknameStep: "loginStep",
+          profileStep: "nicknameStep",
+          coinFinderStep: state.isNewMember ? "profileStep" : "loginStep",
+          diaryStep: "coinFinderStep",
+          coinSelectionStep: "diaryStep",
+          keywordSelectionStep: "coinSelectionStep",
+        };
+
+        const previousStep = stepFlow[currentStep];
+        if (previousStep) {
+          showStep(previousStep);
+
+          // 특별한 처리가 필요한 경우
+          if (previousStep === "coinFinderStep") {
+            loadFinderTypes();
+          } else if (previousStep === "profileStep") {
+            loadProfileImages();
+          }
+        }
+      }
+
+      // 로딩 상태 표시
+      function showLoading(elementId, message = "처리 중...") {
+        const element = document.getElementById(elementId);
+        element.style.display = "block";
+        element.innerHTML = `<span class="loading"></span> ${message}`;
+        element.className = "status";
+      }
+
+      // 1. 카카오 로그인
+      async function startKakaoLogin() {
+        showLoading("loginStatus", "카카오 로그인 페이지로 이동 중...");
+
+        try {
+          // 플로우 테스트임을 알리는 파라미터와 함께 카카오 인증 URL을 가져옴
+          const response = await fetch("/auth/kakao/url?from_flow=true");
+          const data = await response.json();
+
+          if (data.success && data.data) {
+            // 실제 카카오 인증 페이지로 리다이렉트
+            window.location.href = data.data;
+          } else {
+            showStatus(
+              "loginStatus",
+              "카카오 로그인 URL을 가져올 수 없습니다.",
+              true
+            );
+          }
+        } catch (error) {
+          showStatus(
+            "loginStatus",
+            "카카오 로그인 준비 중 오류가 발생했습니다.",
+            true
+          );
+        }
+      }
+
+      // URL 파라미터에서 카카오 로그인 결과 처리
+      const urlParams = new URLSearchParams(window.location.search);
+      const loginSuccess = urlParams.get("login_success");
+      const accessToken = urlParams.get("access_token");
+      const memberId = urlParams.get("member_id");
+      const token = urlParams.get("token");
+      const isNewMember = urlParams.get("is_new_member");
+      const isExisting = urlParams.get("is_existing");
+
+      if (loginSuccess === "true") {
+        handleKakaoLoginResult();
+      }
+
+      function handleKakaoLoginResult() {
+        try {
+          showStatus("loginStatus", "로그인 성공! 다음 단계로 진행합니다.");
+
+          if (isNewMember === "true") {
+            // 신규 회원인 경우
+            state.isNewMember = true;
+            state.accessToken = accessToken;
+            showStep("nicknameStep");
+          } else if (isExisting === "true") {
+            // 기존 회원인 경우 - 코인 찾기 단계로 바로 이동
+            state.isNewMember = false;
+            state.memberId = memberId;
+            state.jwtToken = token;
+            showStep("coinFinderStep");
+            loadFinderTypes();
+          }
+
+          // URL에서 파라미터 제거 (뒤로가기 등을 위해)
+          window.history.replaceState(
+            {},
+            document.title,
+            window.location.pathname
+          );
+        } catch (error) {
+          showStatus(
+            "loginStatus",
+            "로그인 처리 중 오류가 발생했습니다.",
+            true
+          );
+        }
+      }
+
+      // 2. 닉네임 설정
+      async function setNickname() {
+        const nickname = document.getElementById("nickname").value.trim();
+        if (!nickname) {
+          showStatus("nicknameStatus", "닉네임을 입력해주세요.", true);
+          return;
+        }
+
+        if (nickname.length < 2 || nickname.length > 10) {
+          showStatus("nicknameStatus", "닉네임은 2-10자로 입력해주세요.", true);
+          return;
+        }
+
+        showLoading("nicknameStatus", "닉네임 설정 중...");
+
+        try {
+          const response = await fetch("/signup/nickname", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              accessToken: state.accessToken,
+              nickname: nickname,
+            }),
+          });
+
+          const data = await response.json();
+          if (data.success) {
+            showStatus("nicknameStatus", "닉네임이 설정되었습니다.");
+            loadProfileImages();
+            showStep("profileStep");
+          } else {
+            showStatus(
+              "nicknameStatus",
+              data.message || "닉네임 설정에 실패했습니다.",
+              true
+            );
+          }
+        } catch (error) {
+          showStatus("nicknameStatus", "서버 오류가 발생했습니다.", true);
+        }
+      }
+
+      // 3. 프로필 이미지 로드 및 선택
+      function loadProfileImages() {
+        const profileImages = [
+          "https://via.placeholder.com/80/667eea/white?text=😊",
+          "https://via.placeholder.com/80/764ba2/white?text=😎",
+          "https://via.placeholder.com/80/f093fb/white?text=🌟",
+          "https://via.placeholder.com/80/4facfe/white?text=🚀",
+          "https://via.placeholder.com/80/43e97b/white?text=🎯",
+          "https://via.placeholder.com/80/f38ba8/white?text=💎",
+        ];
+
+        const container = document.getElementById("profileImages");
+        container.innerHTML = "";
+
+        profileImages.forEach((imageUrl, index) => {
+          const card = document.createElement("div");
+          card.className = "card";
+          card.innerHTML = `
+            <img src="${imageUrl}" alt="프로필 ${
+            index + 1
+          }" style="width: 80px; height: 80px; margin: 0 auto; display: block; border-radius: 50%;">
+            <p style="text-align: center; margin-top: 10px;">프로필 ${
+              index + 1
+            }</p>
+          `;
+          card.addEventListener("click", () =>
+            selectProfileImage(imageUrl, card)
+          );
+          container.appendChild(card);
+        });
+      }
+
+      function selectProfileImage(imageUrl, element) {
+        document
+          .querySelectorAll("#profileImages .card")
+          .forEach((card) => card.classList.remove("selected"));
+        element.classList.add("selected");
+        state.selectedProfileImage = imageUrl;
+        document.getElementById("profileBtn").disabled = false;
+      }
+
+      async function setProfileImage() {
+        if (!state.selectedProfileImage) {
+          showStatus("profileStatus", "프로필 이미지를 선택해주세요.", true);
+          return;
+        }
+
+        showLoading("profileStatus", "프로필 이미지 설정 중...");
+
+        try {
+          const response = await fetch("/signup/profile-image", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              accessToken: state.accessToken,
+              profileImage: state.selectedProfileImage,
+            }),
+          });
+
+          const data = await response.json();
+          if (data.success) {
+            state.jwtToken = data.data.token || "temp_jwt_" + Date.now();
+            showStatus("profileStatus", "프로필 이미지가 설정되었습니다.");
+            loadFinderTypes();
+            showStep("coinFinderStep");
+          } else {
+            showStatus(
+              "profileStatus",
+              data.message || "프로필 이미지 설정에 실패했습니다.",
+              true
+            );
+          }
+        } catch (error) {
+          showStatus("profileStatus", "서버 오류가 발생했습니다.", true);
+        }
+      }
+
+      // 4. 코인 찾기 유형 로드
+      async function loadFinderTypes() {
+        try {
+          const response = await fetch("/api/cards/coin-finder/types");
+          const data = await response.json();
+
+          if (data.success) {
+            const container = document.getElementById("finderTypes");
+            container.innerHTML = "";
+
+            // 나의 장점 코인
+            data.data.myStrengthCoins.forEach((type) => {
+              const card = document.createElement("div");
+              card.className = "card";
+              card.innerHTML = `
+                <h3>${type.title}</h3>
+                <p>${type.description}</p>
+                <small style="color: #667eea; font-weight: 500;">${type.category}</small>
+              `;
+              card.addEventListener("click", () =>
+                selectFinderType(type, card)
+              );
+              container.appendChild(card);
+            });
+
+            // 친구의 장점 코인 (일단 비활성화)
+            data.data.friendStrengthCoins.forEach((type) => {
+              const card = document.createElement("div");
+              card.className = "card";
+              card.style.opacity = "0.6";
+              card.style.cursor = "not-allowed";
+              card.innerHTML = `
+                <h3>${type.title}</h3>
+                <p>${type.description}</p>
+                <small style="color: #999;">현재 테스트에서는 지원되지 않습니다</small>
+              `;
+              container.appendChild(card);
+            });
+          }
+        } catch (error) {
+          showStatus(
+            "finderStatus",
+            "코인 찾기 유형을 불러오는데 실패했습니다.",
+            true
+          );
+        }
+      }
+
+      function selectFinderType(type, element) {
+        if (type.type !== "TODAY_DIARY") {
+          showStatus(
+            "finderStatus",
+            '현재 테스트에서는 "오늘의 일기"만 지원합니다.',
+            true
+          );
+          return;
+        }
+
+        document
+          .querySelectorAll("#finderTypes .card")
+          .forEach((card) => card.classList.remove("selected"));
+        element.classList.add("selected");
+        state.selectedFinderType = type;
+
+        showStatus("finderStatus", "선택완료! 오늘의 일기를 작성해보세요.");
+        setTimeout(() => {
+          showStep("diaryStep");
+        }, 1000);
+      }
+
+      // 5. 일기 저장
+      async function saveDiary() {
+        const content = document.getElementById("diaryContent").value.trim();
+        if (!content) {
+          showStatus("diaryStatus", "일기 내용을 입력해주세요.", true);
+          return;
+        }
+
+        showLoading("diaryStatus", "일기 저장 중...");
+
+        try {
+          const response = await fetch("/api/cards/coin-finder/daily-diary", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content }),
+          });
+
+          const data = await response.json();
+          if (data.success) {
+            state.formId = data.data.formId;
+            showStatus(
+              "diaryStatus",
+              "일기가 저장되었습니다! 이제 코인을 선택해보세요."
+            );
+            setTimeout(() => {
+              loadCoins();
+              showStep("coinSelectionStep");
+            }, 1000);
+          } else {
+            showStatus(
+              "diaryStatus",
+              data.message || "일기 저장에 실패했습니다.",
+              true
+            );
+          }
+        } catch (error) {
+          showStatus("diaryStatus", "서버 오류가 발생했습니다.", true);
+        }
+      }
+
+      // 6. 코인 및 키워드 로드와 선택 (새로운 UI)
+      async function loadCoins() {
+        showLoading("coinSelectionStatus", "장점 목록을 불러오는 중...");
+        try {
+          const response = await fetch("/api/coins");
+          const data = await response.json();
+
+          if (data.success && data.data) {
+            state.coinsWithKeywords = data.data;
+
+            // 6단계 UI를 새로운 형태로 업데이트
+            const container = document.getElementById("coinSelectionStep");
+            container.innerHTML = `
+              <div class="step-title">
+                <span class="step-number">6</span>
+                그때 어떤 장점이 드러났나요?
+              </div>
+              <p style="margin-bottom: 20px; color: #666;">가장 돋보였다고 생각하는 장점 하나만 골라주세요.</p>
+              
+              <div id="coin-categories" class="categories"></div>
+              <div id="keyword-grid" class="keyword-grid"></div>
+              
+              <div class="btn-group" style="margin-top: 20px">
+                <button class="btn secondary" onclick="goToPreviousStep('coinSelectionStep')">이전</button>
+                <button id="selectKeywordBtn" class="btn" onclick="goToNextStep()" disabled>다음</button>
+              </div>
+              <div id="coinSelectionStatus" class="status" style="display: none"></div>
+            `;
+
+            // 카테고리 탭 생성
+            const categoriesContainer =
+              document.getElementById("coin-categories");
+            state.coinsWithKeywords.forEach((coin, index) => {
+              const categoryBtn = document.createElement("button");
+              categoryBtn.className = "category-btn";
+              categoryBtn.textContent = coin.name;
+              categoryBtn.onclick = () => selectCategory(coin, categoryBtn);
+              categoriesContainer.appendChild(categoryBtn);
+
+              // 첫 번째 카테고리를 기본 선택
+              if (index === 0) {
+                setTimeout(() => categoryBtn.click(), 100);
+              }
+            });
+
+            showStatus("coinSelectionStatus", "");
+          } else {
+            showStatus(
+              "coinSelectionStatus",
+              "코인 옵션을 불러오는데 실패했습니다: " + (data.message || ""),
+              true
+            );
+          }
+        } catch (error) {
+          showStatus(
+            "coinSelectionStatus",
+            "코인 옵션을 불러오는데 실패했습니다.",
+            true
+          );
+        }
+      }
+
+      function selectCategory(coin, btnElement) {
+        // 카테고리 탭 선택 상태 업데이트
+        document
+          .querySelectorAll(".category-btn")
+          .forEach((btn) => btn.classList.remove("selected"));
+        btnElement.classList.add("selected");
+
+        state.selectedCoin = coin;
+        state.selectedKeyword = null;
+        document.getElementById("selectKeywordBtn").disabled = true;
+
+        // 키워드 그리드 업데이트
+        const keywordGrid = document.getElementById("keyword-grid");
+        keywordGrid.innerHTML = "";
+
+        coin.keywords.forEach((keyword) => {
+          const keywordCard = document.createElement("div");
+          keywordCard.className = "keyword-card";
+          keywordCard.textContent = keyword.name;
+          keywordCard.onclick = () => selectKeyword(keyword, keywordCard);
+          keywordGrid.appendChild(keywordCard);
+        });
+      }
+
+      function selectKeyword(keyword, cardElement) {
+        // 키워드 카드 선택 상태 업데이트
+        document
+          .querySelectorAll(".keyword-card")
+          .forEach((card) => card.classList.remove("selected"));
+        cardElement.classList.add("selected");
+
+        state.selectedKeyword = keyword;
+        document.getElementById("selectKeywordBtn").disabled = false;
+        showStatus(
+          "coinSelectionStatus",
+          `장점 "${keyword.name}"이 선택되었습니다.`
+        );
+      }
+
+      function goToNextStep() {
+        if (!state.selectedKeyword) {
+          showStatus("coinSelectionStatus", "먼저 장점을 선택해주세요.", true);
+          return;
+        }
+
+        // 선택된 데이터를 저장하고 다음 단계로
+        console.log(
+          `선택된 코인: ${state.selectedCoin.name}, 선택된 키워드: ${state.selectedKeyword.name}`
+        );
+
+        // 키워드 선택 단계는 건너뛰고 바로 카드 생성으로
+        showStep("keywordSelectionStep");
+        prepareCardCreation();
+      }
+
+      // 카드 생성 준비 함수
+      function prepareCardCreation() {
+        const container = document.getElementById("keywordSelectionStep");
+        container.innerHTML = `
+          <div class="step-title">
+            <span class="step-number">7</span>
+            선택한 장점으로 카드를 만들까요?
+          </div>
+          
+          <div class="summary-box">
+            <p><strong>경험:</strong> ${
+              document.getElementById("diaryContent")
+                ? document.getElementById("diaryContent").value
+                : state.diaryEntry || "오늘의 일기"
+            }</p>
+            <p><strong>장점 카테고리:</strong> ${state.selectedCoin.name}</p>
+            <p><strong>가장 빛난 장점:</strong> ${
+              state.selectedKeyword.name
+            }</p>
+          </div>
+          
+          <div class="btn-group" style="margin-top: 20px">
+            <button class="btn secondary" onclick="goToPreviousStep('keywordSelectionStep')">이전</button>
+            <button class="btn" onclick="createCard()">네, 만들래요</button>
+          </div>
+          <div id="keywordStatus" class="status" style="display: none"></div>
+        `;
+      }
+
+      // 7. 키워드 로드 및 선택
+      function loadKeywords() {
+        if (!state.selectedCoin) return;
+
+        const container = document.getElementById("keywordOptions");
+        container.innerHTML = "";
+
+        state.selectedCoin.keywords.forEach((keyword) => {
+          const tag = document.createElement("div");
+          tag.className = "keyword-tag";
+          tag.textContent = keyword.name;
+          tag.addEventListener("click", () => toggleKeyword(keyword, tag));
+          container.appendChild(tag);
+        });
+      }
+
+      function toggleKeyword(keyword, element) {
+        if (state.selectedKeywords.has(keyword.id)) {
+          state.selectedKeywords.delete(keyword.id);
+          element.classList.remove("selected");
+        } else {
+          if (state.selectedKeywords.size < 3) {
+            state.selectedKeywords.add(keyword.id);
+            element.classList.add("selected");
+          } else {
+            showStatus(
+              "keywordStatus",
+              "최대 3개의 키워드만 선택할 수 있습니다.",
+              true
+            );
+            return;
+          }
+        }
+
+        const selectedCount = state.selectedKeywords.size;
+        document.getElementById("createCardBtn").disabled = selectedCount === 0;
+
+        if (selectedCount > 0) {
+          showStatus(
+            "keywordStatus",
+            `${selectedCount}개의 키워드가 선택되었습니다.`
+          );
+        }
+      }
+
+      // 8. 카드 생성
+      async function createCard() {
+        if (!state.selectedKeyword) {
+          showStatus("keywordStatus", "키워드를 선택해주세요.", true);
+          return;
+        }
+
+        showLoading("keywordStatus", "카드 생성 중...");
+
+        try {
+          const response = await fetch("/api/cards", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              formId: state.formId,
+              coinId: state.selectedCoin.id,
+              keywordIds: [state.selectedKeyword.id],
+            }),
+          });
+
+          const result = await response.json();
+          if (result.success) {
+            state.createdCard = result.data;
+            showCardComplete();
+            showStep("completeStep");
+          } else {
+            showStatus(
+              "keywordStatus",
+              result.message || "카드 생성에 실패했습니다.",
+              true
+            );
+          }
+        } catch (error) {
+          showStatus("keywordStatus", "서버 오류가 발생했습니다.", true);
+        }
+      }
+
+      // 완료 정보 표시
+      function showCardComplete() {
+        const container = document.getElementById("finalCardInfo");
+
+        container.innerHTML = `
+          <div style="text-align: left;">
+            <h2>🎉 카드 완성!</h2>
+            <p>나의 경험이 멋진 카드로 만들어졌어요.</p>
+            <div class="summary-box">
+              <h3>${state.selectedCoin.name}</h3>
+              <p><strong>${state.selectedKeyword.name}</strong></p>
+              <p style="margin-top: 1rem; color: #555;">${
+                document.getElementById("diaryContent")
+                  ? document.getElementById("diaryContent").value
+                  : state.diaryEntry || "오늘의 일기"
+              }</p>
+            </div>
+            ${
+              state.createdCard
+                ? `<p>생성된 카드 ID: ${state.createdCard.id}</p>`
+                : ""
+            }
+          </div>
+        `;
+      }
+
+      // 네비게이션
+      function goHome() {
+        window.location.href = "/";
+      }
+
+      function restart() {
+        // 상태 초기화
+        Object.keys(state).forEach((key) => {
+          if (key === "selectedKeywords") {
+            state[key] = new Set();
+          } else if (typeof state[key] === "number") {
+            state[key] =
+              key === "currentStep" ? 1 : key === "totalSteps" ? 8 : null;
+          } else {
+            state[key] = null;
+          }
+        });
+
+        // URL 정리
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname
+        );
+
+        // 첫 번째 단계로 이동
+        showStep("loginStep");
+
+        // 모든 상태 메시지 숨기기
+        document
+          .querySelectorAll(".status")
+          .forEach((el) => (el.style.display = "none"));
+
+        // 입력 필드 초기화
+        document.getElementById("nickname").value = "";
+        document.getElementById("diaryContent").value = "";
+      }
+
+      // 초기화
+      updateProgress();
+    </script>
+  </body>
+</html>
