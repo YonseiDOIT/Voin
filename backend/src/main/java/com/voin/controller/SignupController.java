@@ -80,7 +80,7 @@ public class SignupController {
             Model model) {
         
         model.addAttribute("accessToken", accessToken);
-        return "signup-nickname";
+        return "/signup-nickname";
     }
 
     /**
@@ -124,7 +124,7 @@ public class SignupController {
             Model model) {
         
         model.addAttribute("accessToken", accessToken);
-        return "signup-profile-image";
+        return "/signup-profile-image";
     }
 
     /**
@@ -191,7 +191,7 @@ public class SignupController {
             }
         }
         
-        return "signup-complete";
+        return "/signup-complete";
     }
 
     /**

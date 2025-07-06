@@ -1,126 +1,132 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Voin - Value + Coin</title>
+    <title>Voin 홈</title>
     <style>
       body {
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        margin: 0;
-        padding: 0;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        min-height: 100vh;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
         display: flex;
         justify-content: center;
         align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px;
       }
       .container {
+        text-align: center;
         background: white;
-        padding: 50px;
+        padding: 40px;
         border-radius: 20px;
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        text-align: center;
         max-width: 600px;
-        width: 90%;
+        width: 100%;
       }
-      .logo {
-        font-size: 3em;
-        font-weight: bold;
+      h1 {
         color: #333;
-        margin-bottom: 20px;
+        margin-bottom: 15px;
+        font-size: 32px;
       }
       .subtitle {
         color: #666;
+        font-size: 16px;
         margin-bottom: 40px;
-        font-size: 1.2em;
-        line-height: 1.6;
       }
-      .nav-links {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
+      .button-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 16px;
         margin-top: 30px;
       }
-      .nav-link {
+      .btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px 20px;
+        text-decoration: none;
+        border-radius: 12px;
+        font-size: 16px;
+        font-weight: 600;
+        transition: all 0.3s;
+        border: none;
+        cursor: pointer;
+        min-height: 60px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      }
+      .btn-primary {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        border: none;
-        border-radius: 12px;
-        padding: 15px 30px;
-        font-size: 16px;
-        font-weight: 500;
-        cursor: pointer;
-        text-decoration: none;
-        transition: all 0.3s ease;
-        display: inline-block;
       }
-      .nav-link:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+      .btn-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
       }
-      .nav-link.kakao {
-        background: #fee500;
-        color: #191919;
+      .btn-success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
       }
-      .nav-link.kakao:hover {
-        background: #e6cc00;
-        box-shadow: 0 10px 20px rgba(254, 229, 0, 0.3);
+      .btn-info {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
       }
-      .description {
-        background: #f8f9fa;
-        padding: 20px;
-        border-radius: 10px;
-        margin: 20px 0;
-        text-align: left;
+      .btn-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        color: white;
       }
-      .description h3 {
-        margin-top: 0;
-        color: #333;
+      .btn-icon {
+        margin-right: 8px;
+        font-size: 18px;
       }
-      .feature-list {
-        list-style: none;
-        padding: 0;
-      }
-      .feature-list li {
-        margin: 10px 0;
-        padding: 8px 0;
-        border-bottom: 1px solid #eee;
-      }
-      .feature-list li:last-child {
-        border-bottom: none;
+      .version {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+        color: #999;
+        font-size: 14px;
       }
     </style>
   </head>
   <body>
     <div class="container">
-      <div class="logo">🪙 VOIN</div>
-      <div class="subtitle">
-        <strong>Value + Coin</strong><br />
-        20~30대를 위한 자기이해 플랫폼
+      <h1>🪙 Voin</h1>
+      <p class="subtitle">나만의 장점 코인을 발견하고 수집해보세요</p>
+
+      <div class="button-grid">
+        <a href="/create-card" class="btn btn-primary">
+          <span class="btn-icon">🪙</span>
+          카드 생성하기
+        </a>
+
+        <a href="/auth/test" class="btn btn-secondary">
+          <span class="btn-icon">💬</span>
+          카카오 로그인 테스트
+        </a>
+
+        <a href="/cards" class="btn btn-success">
+          <span class="btn-icon">🪙</span>
+          나의 코인 보기
+        </a>
+
+        <a href="/swagger-ui/index.html" class="btn btn-info" target="_blank">
+          <span class="btn-icon">📋</span>
+          API 문서 보기
+        </a>
+
+        <a href="/h2-console" class="btn btn-warning" target="_blank">
+          <span class="btn-icon">🗄️</span>
+          DB 보기
+        </a>
       </div>
 
-      <div class="description">
-        <h3>🚀 현재 개발 중인 기능들</h3>
-        <ul class="feature-list">
-          <li>🔐 카카오 소셜 로그인</li>
-          <li>👤 회원 관리 시스템</li>
-          <li>🃏 장점 카드 관리</li>
-          <li>👫 친구 관계 시스템</li>
-          <li>📝 폼 및 질문 관리</li>
-          <li>💰 코인 시스템</li>
-        </ul>
-      </div>
-
-      <div class="nav-links">
-        <a href="/auth/test" class="nav-link kakao">🍯 카카오 로그인 테스트</a>
-        <a href="/swagger-ui.html" class="nav-link">📖 API 문서 보기</a>
-        <a href="/h2-console" class="nav-link">🗄️ H2 데이터베이스 콘솔</a>
-      </div>
-
-      <div style="margin-top: 40px; color: #999; font-size: 14px">
-        <p>개발 환경: Spring Boot 3.5.0 + Java 17</p>
-        <p>데이터베이스: H2 (개발용) / PostgreSQL (운영용)</p>
+      <div class="version">
+        <p>Voin v1.0 | Spring Boot + PostgreSQL</p>
       </div>
     </div>
   </body>

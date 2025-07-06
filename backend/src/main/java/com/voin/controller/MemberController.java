@@ -17,6 +17,20 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * 👥 회원 관리 컨트롤러
+ * 
+ * 이 클래스는 회원과 관련된 모든 기능을 처리합니다.
+ * 
+ * 주요 기능들:
+ * - 👤 회원 정보 조회하기
+ * - 🔍 회원 검색하기 (닉네임, 친구코드 등)
+ * - ✏️ 회원 정보 수정하기
+ * - 📝 새 회원 등록하기
+ * - 🗑️ 회원 탈퇴 처리하기
+ * 
+ * 쉽게 말해서, "회원 관리 사무소" 같은 역할을 해요!
+ */
 @RestController
 @RequestMapping("/members")
 @RequiredArgsConstructor

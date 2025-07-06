@@ -1,67 +1,103 @@
-# Voin Backend API
+# 🪙 Voin - 나만의 장점 코인 발견하기
 
-Voin(Value+Coin)은 20~30대가 자신의 장점(강점)을 인식하고 확장할 수 있게 돕는 자기이해 플랫폼입니다.
+> **Voin = Value + Coin** 💎
 
-## 🚀 기술 스택
+Voin은 여러분의 소중한 장점들을 "코인"으로 만들어 수집하고 관리할 수 있는 특별한 웹사이트입니다!
 
-- **Framework**: Spring Boot 3.5.0
-- **Language**: Java 17
-- **Database**: PostgreSQL
-- **ORM**: Spring Data JPA
-- **Authentication**: JWT (추후 구현 예정)
-- **Social Login**: Kakao API (추후 구현 예정)
-- **Documentation**: Swagger/OpenAPI (추후 구현 예정)
-- **Build Tool**: Gradle
+## 🌟 Voin이 뭔가요?
 
-## 📋 주요 기능
+**중학생도 쉽게 이해할 수 있게 설명드릴게요!**
 
-### 회원 관리
+- 📝 **일기를 쓰면서** 내 장점을 발견해요
+- 🪙 **장점을 코인으로** 만들어서 수집해요
+- 📚 **내가 모은 코인들을** 언제든지 볼 수 있어요
+- 💛 **카카오 로그인으로** 간편하게 시작해요
+- 🎨 **예쁜 디자인으로** 즐겁게 사용해요
 
-- 카카오 소셜 로그인 (추후 구현)
-- 회원 정보 관리
-- 친구 코드 시스템
-- 닉네임 검색
+### 💭 이런 분들에게 추천해요!
 
-### 카드(코인) 시스템
+- "내 장점이 뭔지 모르겠어요" 하는 분
+- "자신감을 키우고 싶어요" 하는 분
+- "내 성장을 기록하고 싶어요" 하는 분
 
-- 장점 카드 작성/수정/삭제
-- 카드 공개/비공개 설정
-- 카테고리별 분류
-- 카드 좋아요 기능
+## 🛠️ 어떤 기술로 만들어졌나요?
 
-### 친구 시스템 (추후 구현)
+**쉽게 말해서 이런 도구들로 만들었어요:**
 
-- 친구 요청/수락/거절
-- 친구 코드로 친구 추가
-- 친구들의 카드 피드
+- 🍃 **Spring Boot 3.5.0** - 웹사이트를 만드는 기본 틀
+- ☕ **Java 17** - 프로그래밍 언어 (컴퓨터가 이해하는 언어)
+- 🐘 **PostgreSQL** - 데이터를 저장하는 창고
+- 🔗 **Spring Data JPA** - 데이터 창고와 소통하는 도구
+- 🔐 **JWT** - 로그인 상태를 기억하는 방법 (아직 개발 중)
+- 💛 **카카오 로그인** - 카카오톡으로 간편 로그인 (개발 중)
+- 📋 **Swagger** - API 설명서 자동 생성 도구
+- 🔨 **Gradle** - 프로젝트를 빌드하는 도구
 
-### 아카이브 시스템 (추후 구현)
+## ✨ 무엇을 할 수 있나요?
 
-- 내 카드 아카이브
-- 즐겨찾기 기능
-- 카테고리별 정리
+### 🙋‍♀️ 회원 관리
 
-## 🗄️ 데이터베이스 설계
+- 💛 **카카오 로그인** - 카카오톡 계정으로 간편하게 가입하고 로그인해요
+- 👤 **내 정보 관리** - 닉네임, 프로필 사진 등을 설정해요
+- 🎯 **친구 코드** - 특별한 코드로 친구를 찾고 추가할 수 있어요
 
-### 주요 엔티티
+### 🪙 코인(장점 카드) 시스템
 
-- **Member**: 사용자 정보
-- **Card**: 장점 카드
-- **Category**: 장점 카테고리
-- **Value**: 카드의 핵심 가치
-- **Friend**: 친구 관계
-- **Archive**: 카드 아카이브
-- **Form**: 작성 폼 템플릿
+- 📝 **코인 만들기** - 일기나 경험담을 쓰면서 내 장점을 발견해요
+- 📚 **나의 코인 보기** - 내가 모은 모든 코인들을 예쁘게 볼 수 있어요
+- 📖 **코인 상세보기** - 각 코인을 클릭하면 자세한 이야기를 볼 수 있어요
+- ✏️ **코인 수정하기** - 내용을 바꾸거나 공개/비공개를 설정해요
 
-## 🛠️ 설치 및 실행
+### 👥 친구 시스템 (곧 만들 예정!)
 
-### 사전 요구사항
+- 🤝 **친구 맺기** - 친구 코드로 친구를 찾아서 친구가 되어요
+- 📱 **친구 피드** - 친구들이 만든 코인들을 구경할 수 있어요
+- 💬 **응원하기** - 친구의 코인에 좋아요나 댓글을 달 수 있어요
 
-- Java 17
-- PostgreSQL 12+
-- Gradle 8.0+
+### 📦 보관함 시스템 (곧 만들 예정!)
 
-### 데이터베이스 설정
+- ⭐ **즐겨찾기** - 특히 마음에 드는 코인들을 따로 모아놔요
+- 🏷️ **카테고리 정리** - 코인들을 종류별로 깔끔하게 정리해요
+
+## 🗄️ 데이터는 어떻게 저장되나요?
+
+**컴퓨터가 여러분의 정보를 잘 기억할 수 있도록 이렇게 정리해서 저장해요:**
+
+### 📊 주요 데이터 종류들
+
+- 👤 **Member (회원)** - 여러분의 기본 정보 (이름, 프로필 사진 등)
+- 🪙 **Card (코인)** - 여러분이 만든 장점 코인들
+- 🏷️ **Coin (코인 종류)** - 6가지 고정된 코인 타입들
+- 💎 **Keyword (키워드)** - 각 코인 안에 있는 세부 장점들
+- 👥 **Friend (친구)** - 친구 관계 정보
+- 📝 **Form (양식)** - 코인을 만들 때 사용하는 질문 양식들
+
+### 🪙 6가지 코인 종류
+
+우리 Voin에는 **6가지 고정된 코인 종류**가 있어요:
+
+1. **🎯 관리와 성장** (9개 키워드) - 계획적이고 체계적인 장점들
+2. **❤️ 감정과 태도** (6개 키워드) - 마음가짐과 감정 관리 장점들
+3. **🎨 창의와 몰입** (6개 키워드) - 창의적이고 집중력 있는 장점들
+4. **🧠 사고와 해결** (7개 키워드) - 논리적 사고와 문제해결 장점들
+5. **🤝 관계와 공감** (11개 키워드) - 인간관계와 소통 장점들
+6. **💪 신념과 실행** (14개 키워드) - 실행력과 의지가 강한 장점들
+
+총 **55개의 키워드**가 준비되어 있어서, 여러분의 다양한 장점들을 표현할 수 있어요!
+
+## 🛠️ 개발자를 위한 설치 가이드
+
+**개발자나 컴퓨터를 잘 아는 분들을 위한 설치 방법이에요!**
+
+### 📋 미리 준비해야 할 것들
+
+- ☕ **Java 17** - 자바 프로그래밍 언어
+- 🐘 **PostgreSQL 12+** - 데이터베이스 프로그램
+- 🔨 **Gradle 8.0+** - 빌드 도구 (자동으로 설치됨)
+
+### 🗄️ 데이터베이스 설정하기
+
+**PostgreSQL을 설치한 후 이 명령어들을 실행하세요:**
 
 ```sql
 CREATE DATABASE voin_db;
@@ -69,7 +105,9 @@ CREATE USER voin_user WITH PASSWORD 'voin_password';
 GRANT ALL PRIVILEGES ON DATABASE voin_db TO voin_user;
 ```
 
-### 환경 변수 설정
+### 🔧 환경 변수 설정하기
+
+**컴퓨터에 이런 설정을 추가해주세요:**
 
 ```bash
 export DB_USERNAME=voin_user
@@ -79,96 +117,161 @@ export KAKAO_CLIENT_ID=your-kakao-client-id
 export KAKAO_CLIENT_SECRET=your-kakao-client-secret
 ```
 
-### 실행
+### 🚀 실행하기
+
+**터미널(명령창)에서 이렇게 실행하세요:**
 
 ```bash
-# 프로젝트 클론
+# 1. 프로젝트 다운로드
 git clone <repository-url>
 cd voin/backend
 
-# 빌드 및 실행
+# 2. 프로젝트 빌드하고 실행하기
 ./gradlew bootRun
 ```
 
-## 📚 API 문서
+### 🎉 잘 되었는지 확인하기
 
-### 회원 관리 API
+- 🌐 **홈페이지**: http://localhost:8080
+- 📋 **API 문서**: http://localhost:8080/swagger-ui/index.html
+- 🗄️ **데이터베이스**: http://localhost:8080/h2-console (개발용)
 
-- `GET /api/members/{id}` - 회원 정보 조회
-- `GET /api/members/friend-code/{friendCode}` - 친구 코드로 회원 조회
-- `GET /api/members/search?keyword={keyword}` - 닉네임 검색
-- `PUT /api/members/{id}` - 회원 정보 수정
-- `POST /api/members/{id}/friend-code/regenerate` - 친구 코드 재생성
-- `DELETE /api/members/{id}` - 회원 탈퇴
+## 📚 개발자를 위한 API 문서
 
-### 카드 관리 API
+**프로그래머들이 우리 서비스와 소통할 수 있는 방법들이에요!**
 
-- `GET /api/cards/{id}` - 카드 상세 조회
-- `GET /api/cards/member/{memberId}` - 회원의 카드 목록
-- `GET /api/cards/public` - 공개 카드 목록
-- `GET /api/cards/category/{categoryId}` - 카테고리별 카드 조회
-- `GET /api/cards/search?keyword={keyword}` - 카드 내용 검색
-- `POST /api/cards` - 카드 생성
-- `PUT /api/cards/{id}` - 카드 수정
-- `DELETE /api/cards/{id}` - 카드 삭제
-- `POST /api/cards/{id}/toggle-visibility` - 공개/비공개 전환
-- `POST /api/cards/{id}/like` - 카드 좋아요
+### 👥 회원 관리 API
 
-## 🏗️ 프로젝트 구조
+**회원과 관련된 기능들:**
+
+- `GET /api/members/{id}` - 🔍 특정 회원 정보 보기
+- `GET /api/members/friend-code/{friendCode}` - 🎯 친구 코드로 회원 찾기
+- `GET /api/members/search?keyword={keyword}` - 🔎 닉네임으로 회원 검색
+- `PUT /api/members/{id}` - ✏️ 회원 정보 수정하기
+- `POST /api/members/{id}/friend-code/regenerate` - 🔄 새 친구 코드 만들기
+- `DELETE /api/members/{id}` - 👋 회원 탈퇴하기
+
+### 🪙 코인 관리 API
+
+**코인과 관련된 기능들:**
+
+- `GET /api/cards/{id}` - 📖 특정 코인 자세히 보기
+- `GET /api/cards/my-cards` - 📚 내가 만든 모든 코인 보기
+- `GET /api/cards/member/{memberId}` - 👤 다른 사람의 코인 목록 보기
+- `GET /api/cards/public` - 🌍 공개된 코인들 보기
+- `GET /api/cards/search?keyword={keyword}` - 🔍 코인 내용으로 검색하기
+- `POST /api/cards` - ✨ 새로운 코인 만들기
+- `PUT /api/cards/{id}` - ✏️ 기존 코인 수정하기
+- `DELETE /api/cards/{id}` - 🗑️ 코인 삭제하기
+- `POST /api/cards/{id}/toggle-visibility` - 👁️ 공개/비공개 설정 바꾸기
+
+### 🔐 로그인 관련 API
+
+**카카오 로그인과 관련된 기능들:**
+
+- `GET /auth/test` - 💛 카카오 로그인 테스트 페이지
+- `GET /auth/kakao/url` - 🔗 카카오 로그인 URL 받기
+- `GET /auth/kakao/callback` - 🔄 카카오에서 돌아올 때 처리
+
+### 🏠 페이지 관련 API
+
+**웹페이지들:**
+
+- `GET /` - 🏠 메인 홈페이지
+- `GET /cards` - 📚 나의 코인 목록 페이지
+- `GET /cards/{id}` - 📖 코인 상세보기 페이지
+- `GET /create-card` - ✨ 코인 만들기 페이지
+
+## 🏗️ 프로젝트 폴더 구조
+
+**우리 프로젝트가 어떻게 정리되어 있는지 보여드릴게요!**
 
 ```
 src/main/java/com/voin/
-├── config/          # 설정 클래스
-├── constant/        # 상수 및 Enum
-├── controller/      # REST 컨트롤러
-├── dto/            # 데이터 전송 객체
-│   ├── request/    # 요청 DTO
-│   └── response/   # 응답 DTO
-├── entity/         # JPA 엔티티
-├── exception/      # 예외 클래스
-├── repository/     # 데이터 접근 계층
-├── service/        # 비즈니스 로직
-└── util/           # 유틸리티 클래스
+├── 📁 config/          # ⚙️ 설정 파일들 (스프링 설정, 데이터베이스 설정 등)
+├── 📁 constant/        # 🏷️ 고정값들 (FormType, FriendStatus 등)
+├── 📁 controller/      # 🎮 컨트롤러들 (웹 요청을 받아서 처리)
+│   ├── 🏠 HomeController.java
+│   ├── 👥 MemberController.java
+│   ├── 🪙 CardController.java
+│   └── 🔐 AuthController.java
+├── 📁 dto/            # 📦 데이터 주고받기용 클래스들
+│   ├── 📁 request/    # ⬇️ 요청할 때 사용하는 데이터 형식들
+│   └── 📁 response/   # ⬆️ 응답할 때 사용하는 데이터 형식들
+├── 📁 entity/         # 🗄️ 데이터베이스 테이블과 연결되는 클래스들
+│   ├── 👤 Member.java
+│   ├── 🪙 Card.java
+│   ├── 🏷️ Coin.java
+│   ├── 💎 Keyword.java
+│   └── 📝 Form.java
+├── 📁 exception/      # ⚠️ 오류 처리용 클래스들
+├── 📁 repository/     # 🗃️ 데이터베이스와 소통하는 클래스들
+├── 📁 service/        # 🔧 실제 비즈니스 로직을 처리하는 클래스들
+│   ├── 🪙 CardService.java
+│   ├── 👥 MemberService.java
+│   └── 🔐 KakaoAuthService.java
+└── 📁 util/           # 🛠️ 도움이 되는 도구 클래스들
+    ├── 🎯 FriendCodeGenerator.java
+    └── 🔑 JwtUtil.java
 ```
 
-## 🔧 개발 상태
+### 📝 각 폴더가 하는 일
 
-### ✅ 완료된 기능
+- **Controller** 🎮: 사용자의 요청을 받아서 "이걸 처리해주세요"라고 Service에게 전달
+- **Service** 🔧: 실제 일을 처리하는 곳 (코인 만들기, 회원 관리 등)
+- **Entity** 🗄️: 데이터베이스의 테이블과 1:1로 매칭되는 자바 클래스들
+- **Repository** 🗃️: 데이터베이스에서 데이터를 가져오거나 저장하는 일을 담당
+- **DTO** 📦: 프론트엔드와 백엔드 사이에 데이터를 주고받을 때 사용하는 형식
 
-- 기본 엔티티 설계 및 구현
-- 회원 관리 API
-- 카드 관리 API
-- 카테고리 시스템
-- 기본 데이터 초기화
+## 🔧 현재 개발 진행 상황
 
-### 🚧 진행 중인 기능
+### ✅ 이미 완성된 기능들
 
-- JWT 인증 시스템
-- 카카오 소셜 로그인
-- Swagger API 문서화
+- 🗄️ **데이터베이스 설계** - 회원, 코인, 키워드 등 기본 구조 완성
+- 👥 **회원 관리** - 회원가입, 로그인, 정보 수정 등
+- 🪙 **코인 시스템** - 코인 만들기, 보기, 수정, 삭제
+- 🏷️ **6가지 코인 + 55개 키워드** - 모든 기본 데이터 준비 완료
+- 🎨 **예쁜 웹페이지들** - 홈, 코인 목록, 코인 상세보기 페이지
+- 📋 **API 문서화** - Swagger로 자동 생성되는 API 가이드
 
-### 📋 예정된 기능
+### 🚧 현재 개발 중인 기능들
 
-- 친구 시스템 구현
-- 아카이브 시스템 구현
-- 폼 시스템 구현
-- 알림 시스템
-- 테스트 코드 작성
+- 💛 **카카오 로그인** - 거의 완성! 테스트 중
+- 🔐 **JWT 토큰 인증** - 로그인 상태를 안전하게 관리하는 시스템
+- 📱 **회원가입 플로우** - 카카오 로그인 후 닉네임, 프로필 설정
 
-## 🤝 기여하기
+### 📋 앞으로 만들 예정인 기능들
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+- 👥 **친구 시스템** - 친구 추가하고 코인 공유하기
+- 📦 **보관함 시스템** - 즐겨찾기, 카테고리 정리 등
+- 💬 **알림 시스템** - 친구가 코인을 만들면 알려주기
+- 🧪 **테스트 코드** - 버그 없는 안정적인 서비스를 위해
+- 📱 **모바일 앱** - 언젠가는 스마트폰 앱도!
 
-## 📝 라이센스
+## 🤝 함께 개발하고 싶다면?
 
-이 프로젝트는 MIT 라이센스 하에 있습니다. 자세한 내용은 `LICENSE` 파일을 참조하세요.
+**개발자 분들의 참여를 환영합니다!**
 
-## 📞 연락처
+1. 🍴 **Fork** - 이 프로젝트를 여러분의 GitHub로 복사하기
+2. 🌿 **Branch 만들기** - `git checkout -b feature/멋진기능`
+3. 💾 **커밋하기** - `git commit -m '멋진 기능 추가했어요'`
+4. 📤 **푸시하기** - `git push origin feature/멋진기능`
+5. 🔄 **Pull Request** - 우리에게 여러분의 코드를 보여주세요!
 
-프로젝트 관련 문의: [이메일 주소]
+## 📞 궁금한 것이 있으신가요?
 
-프로젝트 링크: [GitHub 저장소 URL]
+- 💬 **개발 문의**: [이메일 주소 넣기]
+- 🐛 **버그 신고**: GitHub Issues에 올려주세요
+- 💡 **아이디어 제안**: 언제든지 환영합니다!
+- 🔗 **프로젝트 링크**: [GitHub 저장소 URL]
+
+---
+
+### 💝 마지막으로...
+
+**Voin을 사용해주시고 관심 가져주셔서 정말 감사합니다!**
+
+여러분의 소중한 장점들이 아름다운 코인으로 만들어지기를 바라며,
+더 나은 서비스가 될 수 있도록 계속 발전시켜 나가겠습니다! 🌟
+
+> "모든 사람은 고유한 장점을 가지고 있습니다. Voin과 함께 여러분만의 특별한 코인을 발견해보세요!" 🪙✨
