@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🪙 Voin - 코인 찾기 테스트</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+      }
+
+      .content {
+        padding: 40px;
+      }
+
+      .section {
+        margin-bottom: 40px;
+        padding: 25px;
+        border: 2px solid #f0f0f0;
+        border-radius: 15px;
+        background: #fafafa;
+      }
+
+      .section h2 {
+        color: #333;
+        margin-bottom: 20px;
+        font-size: 1.5em;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .btn {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 24px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin: 5px;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+      }
+
+      .btn.secondary {
+        background: #6c757d;
+      }
+
+      .btn.success {
+        background: #28a745;
+      }
+
+      .btn.danger {
+        background: #dc3545;
+      }
+
+      .response-box {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 15px;
+        font-family: "Courier New", monospace;
+        font-size: 12px;
+        white-space: pre-wrap;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+
+      .input-group {
+        margin: 15px 0;
+      }
+
+      .input-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+        color: #333;
+      }
+
+      .input-group input,
+      .input-group textarea,
+      .input-group select {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 14px;
+      }
+
+      .input-group textarea {
+        min-height: 100px;
+        resize: vertical;
+      }
+
+      .coin-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+      }
+
+      .coin-card {
+        border: 2px solid #eee;
+        border-radius: 12px;
+        padding: 20px;
+        background: white;
+        transition: all 0.3s ease;
+        cursor: pointer;
+      }
+
+      .coin-card:hover {
+        border-color: #667eea;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(102, 126, 234, 0.1);
+      }
+
+      .coin-card.selected {
+        border-color: #667eea;
+        background: #f0f4ff;
+      }
+
+      .coin-color {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        margin-bottom: 10px;
+      }
+
+      .keyword-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .keyword-tag {
+        background: #e9ecef;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .keyword-tag:hover {
+        background: #667eea;
+        color: white;
+      }
+
+      .keyword-tag.selected {
+        background: #667eea;
+        color: white;
+      }
+
+      .flow-step {
+        display: none;
+        animation: fadeIn 0.3s ease;
+      }
+
+      .flow-step.active {
+        display: block;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .situation-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+      }
+
+      .situation-card {
+        border: 2px solid #eee;
+        border-radius: 8px;
+        padding: 15px;
+        background: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+      }
+
+      .situation-card:hover {
+        border-color: #667eea;
+        background: #f0f4ff;
+      }
+
+      .situation-card.selected {
+        border-color: #667eea;
+        background: #667eea;
+        color: white;
+      }
+
+      .navigation {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+      }
+
+      .status-indicator {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 8px;
+      }
+
+      .status-indicator.success {
+        background: #28a745;
+      }
+
+      .status-indicator.error {
+        background: #dc3545;
+      }
+
+      .status-indicator.waiting {
+        background: #ffc107;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>🪙 코인 찾기 플로우 테스트</h1>
+        <p>CardController API 동작 확인</p>
+      </div>
+
+      <div class="content">
+        <!-- 1. API 상태 확인 -->
+        <div class="section">
+          <h2>🔍 1. API 상태 확인</h2>
+          <button class="btn" onclick="testBasicAPIs()">기본 API 테스트</button>
+          <button class="btn secondary" onclick="testCoinFinderAPIs()">
+            코인 찾기 API 테스트
+          </button>
+          <div id="api-status" class="response-box"></div>
+        </div>
+
+        <!-- 2. 코인 및 키워드 조회 -->
+        <div class="section">
+          <h2>💰 2. 코인 및 키워드 데이터</h2>
+          <button class="btn" onclick="loadCoinsAndKeywords()">
+            코인/키워드 데이터 로드
+          </button>
+          <div id="coins-display"></div>
+        </div>
+
+        <!-- 3. 코인 찾기 플로우 시뮬레이션 -->
+        <div class="section">
+          <h2>🎯 3. 코인 찾기 플로우 시뮬레이션</h2>
+
+          <!-- 플로우 선택 -->
+          <div id="flow-step-0" class="flow-step active">
+            <h3>찾기 유형 선택</h3>
+            <button class="btn" onclick="loadFinderTypes()">
+              찾기 유형 로드
+            </button>
+            <div id="finder-types-display"></div>
+          </div>
+
+          <!-- 오늘의 일기 -->
+          <div id="flow-step-diary" class="flow-step">
+            <h3>📝 오늘의 일기</h3>
+            <div class="input-group">
+              <label>일기 내용</label>
+              <textarea
+                id="diary-content"
+                placeholder="오늘 하루를 기록해주세요..."
+              ></textarea>
+            </div>
+            <button class="btn" onclick="saveDailyDiary()">일기 저장</button>
+            <div class="navigation">
+              <button class="btn secondary" onclick="showStep(0)">이전</button>
+              <button class="btn" onclick="showDirectSelection()">
+                직접 찾기로
+              </button>
+            </div>
+          </div>
+
+          <!-- 사례 돌아보기 -->
+          <div id="flow-step-experience" class="flow-step">
+            <h3>💭 사례 돌아보기</h3>
+
+            <div id="experience-step1">
+              <button class="btn" onclick="loadSituations()">
+                순간의 상황 로드
+              </button>
+              <div id="situations-display"></div>
+
+              <div class="input-group">
+                <label>그때 나는 어떤 행동을 했었나요?</label>
+                <textarea
+                  id="action-description"
+                  placeholder="나의 행동을 자세히 설명해주세요..."
+                ></textarea>
+              </div>
+              <button class="btn" onclick="saveExperienceStep1()">
+                1단계 저장
+              </button>
+            </div>
+
+            <div id="experience-step2" style="display: none">
+              <div class="input-group">
+                <label>내 행동에 대해 어떻게 생각하나요?</label>
+                <textarea
+                  id="thought-description"
+                  placeholder="내 행동에 대한 생각을 적어주세요..."
+                ></textarea>
+              </div>
+              <button class="btn" onclick="saveExperienceStep2()">
+                2단계 저장
+              </button>
+            </div>
+
+            <div class="navigation">
+              <button class="btn secondary" onclick="showStep(0)">이전</button>
+              <button class="btn" onclick="showDirectSelection()">
+                직접 찾기로
+              </button>
+            </div>
+          </div>
+
+          <!-- 친구 추억 -->
+          <div id="flow-step-friend" class="flow-step">
+            <h3>👫 함께한 추억 떠올리기</h3>
+
+            <div id="friend-step1">
+              <button class="btn" onclick="loadSituations()">
+                순간의 상황 로드
+              </button>
+              <div id="friend-situations-display"></div>
+
+              <div class="input-group">
+                <label>그때 상대는 어떤 행동을 했었나요?</label>
+                <textarea
+                  id="friend-action-description"
+                  placeholder="친구의 행동을 자세히 설명해주세요..."
+                ></textarea>
+              </div>
+              <button class="btn" onclick="saveFriendStep1()">
+                1단계 저장
+              </button>
+            </div>
+
+            <div id="friend-step2" style="display: none">
+              <div class="input-group">
+                <label>그 행동에 대해 어떻게 생각하나요?</label>
+                <textarea
+                  id="friend-thought-description"
+                  placeholder="친구의 행동에 대한 생각을 적어주세요..."
+                ></textarea>
+              </div>
+              <button class="btn" onclick="saveFriendStep2()">
+                2단계 저장
+              </button>
+            </div>
+
+            <div class="navigation">
+              <button class="btn secondary" onclick="showStep(0)">이전</button>
+              <button class="btn" onclick="showDirectSelection()">
+                직접 찾기로
+              </button>
+            </div>
+          </div>
+
+          <!-- 직접 선택 -->
+          <div id="flow-step-selection" class="flow-step">
+            <h3>🎯 코인과 키워드 선택</h3>
+            <div id="selection-display"></div>
+            <button class="btn success" onclick="createFinalCard()">
+              카드 생성!
+            </button>
+            <div class="navigation">
+              <button class="btn secondary" onclick="showStep(0)">
+                처음으로
+              </button>
+            </div>
+          </div>
+
+          <!-- 결과 -->
+          <div id="flow-step-result" class="flow-step">
+            <h3>🎉 생성 완료!</h3>
+            <div id="result-display"></div>
+            <div class="navigation">
+              <button class="btn" onclick="showStep(0)">다시 시작</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 응답 로그 -->
+        <div class="section">
+          <h2>📋 4. 응답 로그</h2>
+          <button class="btn secondary" onclick="clearLog()">
+            로그 지우기
+          </button>
+          <div id="response-log" class="response-box"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // 전역 변수
+      let currentFormId = null;
+      let selectedCoinId = null;
+      let selectedKeyword = null;
+      let selectedSituation = null;
+      let targetType = "self";
+      let allCoinsData = {};
+
+      // 로그 함수
+      function logResponse(title, data) {
+        const log = document.getElementById("response-log");
+        const timestamp = new Date().toLocaleTimeString();
+        const status = data.success !== false ? "success" : "error";
+
+        log.innerHTML += `
+<span class="status-indicator ${status}"></span>[${timestamp}] ${title}
+${JSON.stringify(data, null, 2)}
+
+`;
+        log.scrollTop = log.scrollHeight;
+      }
+
+      function clearLog() {
+        document.getElementById("response-log").innerHTML = "";
+      }
+
+      // API 호출 함수
+      async function callAPI(url, method = "GET", body = null) {
+        try {
+          const options = {
+            method,
+            headers: {
+              "Content-Type": "application/json",
+            },
+          };
+
+          if (body) {
+            options.body = JSON.stringify(body);
+          }
+
+          const response = await fetch(url, options);
+          const data = await response.json();
+
+          logResponse(`${method} ${url}`, data);
+          return data;
+        } catch (error) {
+          logResponse(`ERROR ${method} ${url}`, { error: error.message });
+          return { success: false, error: error.message };
+        }
+      }
+
+      // 기본 API 테스트
+      async function testBasicAPIs() {
+        const statusDiv = document.getElementById("api-status");
+        statusDiv.innerHTML = "테스트 중...";
+
+        const tests = [
+          { name: "Home Dashboard", url: "/api/home/dashboard" },
+          { name: "Public Cards", url: "/api/cards/public?page=0&size=5" },
+        ];
+
+        let results = "";
+        for (const test of tests) {
+          const result = await callAPI(test.url);
+          const status = result.success !== false ? "✅" : "❌";
+          results += `${status} ${test.name}: ${
+            result.success !== false ? "OK" : "FAIL"
+          }\n`;
+        }
+
+        statusDiv.innerHTML = results;
+      }
+
+      // 코인 찾기 API 테스트
+      async function testCoinFinderAPIs() {
+        const statusDiv = document.getElementById("api-status");
+        statusDiv.innerHTML = "코인 찾기 API 테스트 중...";
+
+        const tests = [
+          { name: "Finder Types", url: "/api/cards/coin-finder/types" },
+          { name: "Situations", url: "/api/cards/coin-finder/situations" },
+          {
+            name: "Selection Options",
+            url: "/api/cards/coin-finder/selection-options",
+          },
+        ];
+
+        let results = "";
+        for (const test of tests) {
+          const result = await callAPI(test.url);
+          const status = result.success !== false ? "✅" : "❌";
+          results += `${status} ${test.name}: ${
+            result.success !== false ? "OK" : "FAIL"
+          }\n`;
+        }
+
+        statusDiv.innerHTML = results;
+      }
+
+      // 코인/키워드 데이터 로드
+      async function loadCoinsAndKeywords() {
+        const result = await callAPI(
+          "/api/cards/coin-finder/selection-options"
+        );
+        const displayDiv = document.getElementById("coins-display");
+
+        if (result.success !== false && result.data) {
+          allCoinsData = result.data.coins;
+          displayDiv.innerHTML = '<div class="coin-grid"></div>';
+          const grid = displayDiv.querySelector(".coin-grid");
+
+          Object.values(allCoinsData).forEach((coin) => {
+            const coinCard = document.createElement("div");
+            coinCard.className = "coin-card";
+            coinCard.innerHTML = `
+                        <div class="coin-color" style="background-color: ${
+                          coin.color
+                        }"></div>
+                        <h4>${coin.name}</h4>
+                        <p style="font-size: 12px; color: #666;">${
+                          coin.description
+                        }</p>
+                        <div class="keyword-list">
+                            ${coin.keywords
+                              .map(
+                                (k) =>
+                                  `<span class="keyword-tag">${k.name}</span>`
+                              )
+                              .join("")}
+                        </div>
+                    `;
+            grid.appendChild(coinCard);
+          });
+        } else {
+          displayDiv.innerHTML =
+            '<p style="color: red;">코인 데이터 로드 실패</p>';
+        }
+      }
+
+      // 찾기 유형 로드
+      async function loadFinderTypes() {
+        const result = await callAPI("/api/cards/coin-finder/types");
+        const displayDiv = document.getElementById("finder-types-display");
+
+        if (result.success !== false && result.data) {
+          let html = '<div style="margin-top: 20px;">';
+
+          // 나의 장점 코인
+          html += "<h4>나의 장점 코인</h4>";
+          result.data.myStrengthCoins.forEach((type) => {
+            html += `
+                        <div style="margin: 10px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
+                            <h5>${type.title}</h5>
+                            <p style="color: #666; margin: 5px 0;">${type.description}</p>
+                            <button class="btn" onclick="selectFinderType('${type.type}')">${type.title} 선택</button>
+                        </div>
+                    `;
+          });
+
+          // 친구의 장점 코인
+          html += '<h4 style="margin-top: 30px;">친구의 장점 코인</h4>';
+          result.data.friendStrengthCoins.forEach((type) => {
+            html += `
+                        <div style="margin: 10px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
+                            <h5>${type.title}</h5>
+                            <p style="color: #666; margin: 5px 0;">${type.description}</p>
+                            <button class="btn" onclick="selectFinderType('${type.type}')">${type.title} 선택</button>
+                        </div>
+                    `;
+          });
+
+          html += "</div>";
+          displayDiv.innerHTML = html;
+        }
+      }
+
+      // 찾기 유형 선택
+      function selectFinderType(type) {
+        if (type === "TODAY_DIARY") {
+          showStep("diary");
+          targetType = "self";
+        } else if (type === "EXPERIENCE_REFLECTION") {
+          showStep("experience");
+          targetType = "self";
+        } else if (type === "FRIEND_STRENGTH") {
+          showStep("friend");
+          targetType = "friend";
+        }
+      }
+
+      // 상황 로드
+      async function loadSituations() {
+        const result = await callAPI("/api/cards/coin-finder/situations");
+
+        if (result.success !== false && result.data) {
+          const situationsHtml = `
+                    <div class="situation-grid">
+                        ${result.data
+                          .map(
+                            (situation) => `
+                            <div class="situation-card" onclick="selectSituation(${situation.id})" data-situation="${situation.id}">
+                                <h5>${situation.title}</h5>
+                                <p style="font-size: 12px; margin-top: 5px;">${situation.description}</p>
+                            </div>
+                        `
+                          )
+                          .join("")}
+                    </div>
+                `;
+
+          document.getElementById("situations-display").innerHTML =
+            situationsHtml;
+          document.getElementById("friend-situations-display").innerHTML =
+            situationsHtml;
+        }
+      }
+
+      // 상황 선택
+      function selectSituation(situationId) {
+        selectedSituation = situationId;
+        document.querySelectorAll(".situation-card").forEach((card) => {
+          card.classList.remove("selected");
+        });
+        document
+          .querySelectorAll(`[data-situation="${situationId}"]`)
+          .forEach((card) => {
+            card.classList.add("selected");
+          });
+      }
+
+      // 일기 저장
+      async function saveDailyDiary() {
+        const content = document.getElementById("diary-content").value;
+        if (!content) {
+          alert("일기 내용을 입력해주세요.");
+          return;
+        }
+
+        const result = await callAPI(
+          "/api/cards/coin-finder/daily-diary",
+          "POST",
+          { content }
+        );
+        if (result.success !== false) {
+          currentFormId = result.data.formId;
+          showDirectSelection();
+        }
+      }
+
+      // 경험 돌아보기 1단계
+      async function saveExperienceStep1() {
+        if (!selectedSituation) {
+          alert("상황을 선택해주세요.");
+          return;
+        }
+
+        const actionDescription =
+          document.getElementById("action-description").value;
+        if (!actionDescription) {
+          alert("행동 설명을 입력해주세요.");
+          return;
+        }
+
+        const result = await callAPI(
+          "/api/cards/coin-finder/experience-review/step1",
+          "POST",
+          {
+            situationId: selectedSituation,
+            actionDescription: actionDescription,
+          }
+        );
+
+        if (result.success !== false) {
+          currentFormId = result.data.formId;
+          document.getElementById("experience-step1").style.display = "none";
+          document.getElementById("experience-step2").style.display = "block";
+        }
+      }
+
+      // 경험 돌아보기 2단계
+      async function saveExperienceStep2() {
+        const thoughtDescription = document.getElementById(
+          "thought-description"
+        ).value;
+        if (!thoughtDescription) {
+          alert("생각을 입력해주세요.");
+          return;
+        }
+
+        const result = await callAPI(
+          "/api/cards/coin-finder/experience-review/step2",
+          "POST",
+          {
+            formId: currentFormId,
+            thoughtDescription: thoughtDescription,
+          }
+        );
+
+        if (result.success !== false) {
+          showDirectSelection();
+        }
+      }
+
+      // 친구 추억 1단계
+      async function saveFriendStep1() {
+        if (!selectedSituation) {
+          alert("상황을 선택해주세요.");
+          return;
+        }
+
+        const friendActionDescription = document.getElementById(
+          "friend-action-description"
+        ).value;
+        if (!friendActionDescription) {
+          alert("친구의 행동 설명을 입력해주세요.");
+          return;
+        }
+
+        const result = await callAPI(
+          "/api/cards/coin-finder/memory-recall/step1",
+          "POST",
+          {
+            situationId: selectedSituation,
+            friendActionDescription: friendActionDescription,
+          }
+        );
+
+        if (result.success !== false) {
+          currentFormId = result.data.formId;
+          document.getElementById("friend-step1").style.display = "none";
+          document.getElementById("friend-step2").style.display = "block";
+        }
+      }
+
+      // 친구 추억 2단계
+      async function saveFriendStep2() {
+        const friendThoughtDescription = document.getElementById(
+          "friend-thought-description"
+        ).value;
+        if (!friendThoughtDescription) {
+          alert("친구에 대한 생각을 입력해주세요.");
+          return;
+        }
+
+        const result = await callAPI(
+          "/api/cards/coin-finder/memory-recall/step2",
+          "POST",
+          {
+            formId: currentFormId,
+            friendThoughtDescription: friendThoughtDescription,
+          }
+        );
+
+        if (result.success !== false) {
+          showDirectSelection();
+        }
+      }
+
+      // 직접 선택 단계
+      async function showDirectSelection() {
+        showStep("selection");
+
+        const displayDiv = document.getElementById("selection-display");
+
+        if (Object.keys(allCoinsData).length === 0) {
+          await loadCoinsAndKeywords();
+        }
+
+        let html = '<h4>코인을 선택하세요</h4><div class="coin-grid">';
+
+        Object.values(allCoinsData).forEach((coin) => {
+          html += `
+                    <div class="coin-card" onclick="selectCoin(${
+                      coin.id
+                    })" data-coin="${coin.id}">
+                        <div class="coin-color" style="background-color: ${
+                          coin.color
+                        }"></div>
+                        <h5>${coin.name}</h5>
+                        <p style="font-size: 12px; color: #666;">${
+                          coin.description
+                        }</p>
+                        <div class="keyword-list">
+                            ${coin.keywords
+                              .map(
+                                (k) => `
+                                <span class="keyword-tag" onclick="event.stopPropagation(); selectKeyword('${k.name}')" data-keyword="${k.name}">
+                                    ${k.name}
+                                </span>
+                            `
+                              )
+                              .join("")}
+                        </div>
+                    </div>
+                `;
+        });
+
+        html += "</div>";
+        displayDiv.innerHTML = html;
+      }
+
+      // 코인 선택
+      function selectCoin(coinId) {
+        selectedCoinId = coinId;
+        document.querySelectorAll("[data-coin]").forEach((card) => {
+          card.classList.remove("selected");
+        });
+        document
+          .querySelector(`[data-coin="${coinId}"]`)
+          .classList.add("selected");
+      }
+
+      // 키워드 선택
+      function selectKeyword(keyword) {
+        selectedKeyword = keyword;
+        document.querySelectorAll("[data-keyword]").forEach((tag) => {
+          tag.classList.remove("selected");
+        });
+        document
+          .querySelector(`[data-keyword="${keyword}"]`)
+          .classList.add("selected");
+      }
+
+      // 최종 카드 생성
+      async function createFinalCard() {
+        if (!currentFormId || !selectedCoinId || !selectedKeyword) {
+          alert("Form ID, 코인, 키워드를 모두 선택해주세요.");
+          return;
+        }
+
+        const result = await callAPI(
+          "/api/cards/coin-finder/create-card",
+          "POST",
+          {
+            formId: currentFormId,
+            coinId: selectedCoinId,
+            keyword: selectedKeyword,
+            targetType: targetType,
+          }
+        );
+
+        if (result.success !== false) {
+          const displayDiv = document.getElementById("result-display");
+          displayDiv.innerHTML = `
+                    <div style="text-align: center; padding: 30px; background: #f8f9fa; border-radius: 12px;">
+                        <h3 style="color: #28a745; margin-bottom: 20px;">${
+                          result.message
+                        }</h3>
+                        <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                            <h4>생성된 카드 정보</h4>
+                            <p><strong>카드 ID:</strong> ${result.data.id}</p>
+                            <p><strong>키워드:</strong> ${
+                              result.data.keyword.name
+                            }</p>
+                            <p><strong>코인:</strong> ${
+                              allCoinsData[
+                                Object.keys(allCoinsData).find(
+                                  (key) =>
+                                    allCoinsData[key].id === selectedCoinId
+                                )
+                              ]?.name
+                            }</p>
+                            <p><strong>대상:</strong> ${
+                              targetType === "friend" ? "친구" : "본인"
+                            }</p>
+                        </div>
+                    </div>
+                `;
+          showStep("result");
+        }
+      }
+
+      // 단계 표시
+      function showStep(step) {
+        document.querySelectorAll(".flow-step").forEach((stepDiv) => {
+          stepDiv.classList.remove("active");
+        });
+        document.getElementById(`flow-step-${step}`).classList.add("active");
+      }
+
+      // 페이지 로드 시 초기화
+      window.onload = function () {
+        logResponse("페이지 로드", {
+          message: "코인 찾기 테스트 페이지가 준비되었습니다.",
+        });
+      };
+    </script>
+  </body>
+</html>

@@ -506,8 +506,19 @@
       const accessToken = /*[[${accessToken}]]*/ "";
       let kakaoUserInfo = null;
       let selectedNickname = "";
+      let useKakaoNickname = true;
       let selectedFile = null;
       let currentImageType = null;
+
+      // URL 파라미터에서 닉네임 정보 추출
+      const urlParams = new URLSearchParams(window.location.search);
+      const nicknameFromUrl = urlParams.get("nickname");
+      const useKakaoFromUrl = urlParams.get("use_kakao_nickname") === "true";
+
+      if (nicknameFromUrl) {
+        selectedNickname = nicknameFromUrl;
+        useKakaoNickname = useKakaoFromUrl;
+      }
 
       // 페이지 로드 시 설정된 닉네임 정보 로드
       async function loadSignupData() {
@@ -529,7 +540,12 @@
 
           if (result.success && result.data) {
             kakaoUserInfo = result.data.kakaoUserInfo;
-            selectedNickname = result.data.currentNickname;
+
+            // URL 파라미터에서 닉네임이 전달되지 않은 경우에만 API 응답 사용
+            if (!nicknameFromUrl) {
+              selectedNickname = result.data.currentNickname;
+              useKakaoNickname = selectedNickname === kakaoUserInfo.nickname;
+            }
 
             // 닉네임 표시
             document.getElementById("preview-nickname").textContent =
@@ -792,6 +808,8 @@
 
           const requestData = {
             accessToken: accessToken,
+            nickname: selectedNickname,
+            useKakaoNickname: useKakaoNickname,
             profileImageUrl: profileImageData,
             useKakaoProfileImage: selectedType === "kakao",
           };
