@@ -17,9 +17,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.ui.Model;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.net.URLEncoder;
 
 /**
  * 🔐 로그인 및 인증 컨트롤러
@@ -39,7 +41,7 @@ import java.util.Optional;
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/auth")
-@Tag(name = "인증 API", description = "카카오 로그인 관련 API")
+@Tag(name = "🔐 Auth", description = "카카오 로그인 및 인증 관리")
 public class AuthController {
 
     private final KakaoAuthService kakaoAuthService;
@@ -82,8 +84,14 @@ public class AuthController {
             @RequestParam("code") String code,
             @Parameter(description = "플로우 테스트에서 왔는지 확인하는 state 파라미터", required = false)
             @RequestParam(value = "state", required = false) String state,
+            HttpServletRequest request,
             Model model) {
-        log.info("카카오 콜백 처리 시작 - code: {}", code);
+        String referer = request.getHeader("Referer");
+        log.info("카카오 콜백 처리 시작 - code: {}, state: {}, referer: {}", code, state, referer);
+        
+        // state가 없더라도 referer를 통해 플로우 테스트인지 확인
+        boolean isFromFlowTest = "flow_test".equals(state) || 
+                               (referer != null && referer.contains("flow-test.html"));
         
         try {
             // 1단계: 인가 코드로 토큰 받기
@@ -106,36 +114,60 @@ public class AuthController {
                 Member member = existingMember.get();
                 log.info("기존 회원 로그인 - 회원 ID: {}, 닉네임: {}", member.getId(), member.getNickname());
                 
+                // 세션에 사용자 정보 저장
+                request.getSession().setAttribute("memberId", member.getId());
+                request.getSession().setAttribute("nickname", member.getNickname());
+                request.getSession().setMaxInactiveInterval(24 * 60 * 60); // 24시간
+                
                 // 임시 토큰 생성 (실제 프로덕션에서는 JWT 사용)
                 String tempToken = "VOIN_LOGIN_TOKEN_" + member.getId() + "_" + System.currentTimeMillis();
-                log.info("로그인 성공 - 임시 토큰 생성: {}", tempToken.substring(0, 20) + "...");
+                log.info("로그인 성공 - 세션 및 임시 토큰 생성: {}", tempToken.substring(0, 20) + "...");
                 
                 // 플로우 테스트에서 온 경우 다시 플로우 테스트로 리다이렉트
-                if ("flow_test".equals(state)) {
-                    return "redirect:/flow-test.html?login_success=true&member_id=" + member.getId() + 
+                if (isFromFlowTest) {
+                    String redirectUrl = "redirect:/flow-test.html?login_success=true&member_id=" + member.getId() + 
                            "&token=" + tempToken + "&is_existing=true";
+                    log.info("기존 회원 플로우 테스트 리다이렉트: {}", redirectUrl);
+                    return redirectUrl;
                 }
                 
-                // 일반 로그인 테스트의 경우 결과 페이지 표시
-                model.addAttribute("success", true);
-                model.addAttribute("isExistingMember", true);
-                model.addAttribute("member", member);
-                model.addAttribute("userInfo", userInfo);
-                model.addAttribute("loginToken", tempToken);
+                // "/auth/test"에서 온 로그인 테스트의 경우 결과 페이지 표시
+                if (referer != null && referer.contains("/auth/test")) {
+                    model.addAttribute("success", true);
+                    model.addAttribute("isExistingMember", true);
+                    model.addAttribute("member", member);
+                    model.addAttribute("userInfo", userInfo);
+                    model.addAttribute("loginToken", tempToken);
+                    return "kakao-login-result";
+                }
                 
-                return "kakao-login-result";
+                // 홈페이지에서 온 일반 로그인의 경우 홈페이지로 리다이렉트
+                String redirectUrl = "redirect:/?login_success=true&member_id=" + member.getId() + 
+                       "&token=" + tempToken + "&is_existing=true&nickname=" + 
+                       java.net.URLEncoder.encode(member.getNickname(), "UTF-8");
+                log.info("기존 회원 홈페이지 리다이렉트: {}", redirectUrl);
+                return redirectUrl;
             } else {
                 // 신규 회원 - 회원가입 플로우로 리다이렉트
                 log.info("신규 회원 감지 - 회원가입 플로우로 이동");
                 
                 // 플로우 테스트에서 온 경우 액세스 토큰을 포함해서 플로우 테스트로 리다이렉트
-                if ("flow_test".equals(state)) {
-                    return "redirect:/flow-test.html?login_success=true&access_token=" + accessToken + 
+                if (isFromFlowTest) {
+                    String redirectUrl = "redirect:/flow-test.html?login_success=true&access_token=" + accessToken + 
                            "&is_new_member=true";
+                    log.info("신규 회원 플로우 테스트 리다이렉트: {}", redirectUrl);
+                    return redirectUrl;
                 }
                 
-                // 일반 로그인 테스트의 경우 닉네임 설정 페이지로 리다이렉트
-                return "redirect:/signup/nickname?access_token=" + accessToken;
+                // "/auth/test"에서 온 로그인 테스트의 경우 닉네임 설정 페이지로 리다이렉트
+                if (referer != null && referer.contains("/auth/test")) {
+                    return "redirect:/signup/nickname?access_token=" + accessToken;
+                }
+                
+                // 홈페이지에서 온 신규 회원의 경우 홈페이지로 리다이렉트 (회원가입 필요 안내)
+                String redirectUrl = "redirect:/?login_success=true&access_token=" + accessToken + "&is_new_member=true";
+                log.info("신규 회원 홈페이지 리다이렉트: {}", redirectUrl);
+                return redirectUrl;
             }
             
         } catch (Exception e) {
@@ -224,5 +256,39 @@ public class AuthController {
         testInfo.put("message", "콜백 엔드포인트가 정상 작동 중입니다");
         testInfo.put("timestamp", System.currentTimeMillis());
         return ApiResponse.success(testInfo);
+    }
+    
+    @Operation(summary = "세션 확인", 
+               description = "현재 세션의 로그인 상태를 확인합니다.")
+    @SecurityRequirements // 인증 불필요
+    @GetMapping("/session/check")
+    @ResponseBody
+    public ApiResponse<Object> checkSession(HttpServletRequest request) {
+        Map<String, Object> sessionInfo = new HashMap<>();
+        
+        Object memberId = request.getSession().getAttribute("memberId");
+        Object nickname = request.getSession().getAttribute("nickname");
+        
+        if (memberId != null) {
+            sessionInfo.put("isLoggedIn", true);
+            sessionInfo.put("memberId", memberId);
+            sessionInfo.put("nickname", nickname);
+            sessionInfo.put("sessionId", request.getSession().getId());
+            sessionInfo.put("maxInactiveInterval", request.getSession().getMaxInactiveInterval());
+            return ApiResponse.success("세션이 유효합니다.", sessionInfo);
+        } else {
+            sessionInfo.put("isLoggedIn", false);
+            return ApiResponse.success("세션이 없습니다.", sessionInfo);
+        }
+    }
+    
+    @Operation(summary = "로그아웃", 
+               description = "현재 세션을 무효화합니다.")
+    @SecurityRequirements // 인증 불필요
+    @PostMapping("/logout")
+    @ResponseBody
+    public ApiResponse<Object> logout(HttpServletRequest request) {
+        request.getSession().invalidate();
+        return ApiResponse.success("로그아웃되었습니다.");
     }
 } 

@@ -7,6 +7,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 /**
  * 카드 생성 시 사용되는 폼을 나타내는 엔티티
@@ -55,6 +57,14 @@ public class Form extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "type", nullable = false, length = 20)
     private FormType type;
+
+    /**
+     * 사용자가 폼을 통해 입력한 모든 응답을 JSON 형태로 저장
+     * 예: {"situationContextId": 1, "action": "...", "thought": "..."}
+     */
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "form_response", columnDefinition = "TEXT")
+    private String formResponse;
 
     // === 비즈니스 메서드 ===
 

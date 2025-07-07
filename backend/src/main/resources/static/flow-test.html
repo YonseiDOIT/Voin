@@ -655,6 +655,7 @@
         selectedProfileImage: null,
         coinsWithKeywords: [],
         diaryEntry: null,
+        fromExperience: false, // 사례 돌아보기에서 온 경우 표시
       };
 
       // 진행률 업데이트
@@ -753,35 +754,86 @@
         }
       }
 
-      // URL 파라미터에서 카카오 로그인 결과 처리
-      const urlParams = new URLSearchParams(window.location.search);
-      const loginSuccess = urlParams.get("login_success");
-      const accessToken = urlParams.get("access_token");
-      const memberId = urlParams.get("member_id");
-      const token = urlParams.get("token");
-      const isNewMember = urlParams.get("is_new_member");
-      const isExisting = urlParams.get("is_existing");
-
-      if (loginSuccess === "true") {
-        handleKakaoLoginResult();
-      }
-
-      function handleKakaoLoginResult() {
+      // 카카오 로그인 결과 처리 함수
+      function handleKakaoLoginResult(urlParams) {
         try {
           showStatus("loginStatus", "로그인 성공! 다음 단계로 진행합니다.");
 
-          if (isNewMember === "true") {
+          const accessToken = urlParams.get("access_token");
+          const memberId = urlParams.get("member_id");
+          const token = urlParams.get("token");
+          const isNewMember = urlParams.get("is_new_member");
+          const isExisting = urlParams.get("is_existing");
+
+          // URL 파라미터를 안전하게 boolean으로 변환
+          const isNewMemberBool = isNewMember === "true";
+          const isExistingBool = isExisting === "true";
+
+          console.log("Login result parameters:", {
+            isNewMember,
+            isExisting,
+            isNewMemberBool,
+            isExistingBool,
+            accessToken,
+            memberId,
+            token,
+            "accessToken length": accessToken ? accessToken.length : 0,
+            "memberId type": typeof memberId,
+            "token length": token ? token.length : 0,
+          });
+
+          if (isNewMemberBool) {
             // 신규 회원인 경우
+            console.log("Processing new member flow");
             state.isNewMember = true;
             state.accessToken = accessToken;
-            showStep("nicknameStep");
-          } else if (isExisting === "true") {
-            // 기존 회원인 경우 - 코인 찾기 단계로 바로 이동
+            console.log("New member flow - going to nickname step");
+            setTimeout(() => {
+              showStep("nicknameStep");
+            }, 1000);
+          } else if (isExistingBool) {
+            // 기존 회원인 경우
+            console.log("Processing existing member flow");
             state.isNewMember = false;
             state.memberId = memberId;
             state.jwtToken = token;
-            showStep("coinFinderStep");
-            loadFinderTypes();
+
+            console.log("Existing member flow", {
+              skipToCoins: state.skipToCoins,
+              fromExperience: state.fromExperience,
+            });
+
+            // 사례 돌아보기에서 온 경우 바로 코인 선택으로 이동
+            if (state.skipToCoins && state.fromExperience) {
+              console.log("Skipping to coins for experience flow");
+              setTimeout(() => {
+                loadCoins();
+                showStep("coinSelectionStep");
+              }, 1000);
+            } else {
+              // 일반적인 경우 코인 찾기 단계로 이동
+              console.log("Going to finder types step");
+              setTimeout(() => {
+                showStep("coinFinderStep");
+                loadFinderTypes();
+              }, 1000);
+            }
+          } else {
+            // 파라미터가 없는 경우의 처리
+            console.error("No valid login parameters found:", {
+              isNewMember,
+              isExisting,
+              isNewMemberBool,
+              isExistingBool,
+            });
+            showStatus(
+              "loginStatus",
+              "로그인 결과를 확인할 수 없습니다. 파라미터: isNewMember=" +
+                isNewMember +
+                ", isExisting=" +
+                isExisting,
+              true
+            );
           }
 
           // URL에서 파라미터 제거 (뒤로가기 등을 위해)
@@ -791,6 +843,7 @@
             window.location.pathname
           );
         } catch (error) {
+          console.error("Error in handleKakaoLoginResult:", error);
           showStatus(
             "loginStatus",
             "로그인 처리 중 오류가 발생했습니다.",
@@ -904,8 +957,16 @@
           if (data.success) {
             state.jwtToken = data.data.token || "temp_jwt_" + Date.now();
             showStatus("profileStatus", "프로필 이미지가 설정되었습니다.");
-            loadFinderTypes();
-            showStep("coinFinderStep");
+
+            // 사례 돌아보기에서 온 경우 바로 코인 선택으로 이동
+            if (state.skipToCoins && state.fromExperience) {
+              loadCoins();
+              showStep("coinSelectionStep");
+            } else {
+              // 일반적인 경우 코인 찾기 단계로 이동
+              loadFinderTypes();
+              showStep("coinFinderStep");
+            }
           } else {
             showStatus(
               "profileStatus",
@@ -921,7 +982,7 @@
       // 4. 코인 찾기 유형 로드
       async function loadFinderTypes() {
         try {
-          const response = await fetch("/api/cards/coin-finder/types");
+          const response = await fetch("/api/coin-finder/types");
           const data = await response.json();
 
           if (data.success) {
@@ -932,14 +993,28 @@
             data.data.myStrengthCoins.forEach((type) => {
               const card = document.createElement("div");
               card.className = "card";
-              card.innerHTML = `
-                <h3>${type.title}</h3>
-                <p>${type.description}</p>
-                <small style="color: #667eea; font-weight: 500;">${type.category}</small>
-              `;
-              card.addEventListener("click", () =>
-                selectFinderType(type, card)
-              );
+
+              if (type.type === "EXPERIENCE_REFLECTION") {
+                // 사례 돌아보기는 별도 페이지로 이동
+                card.innerHTML = `
+                  <h3>${type.title}</h3>
+                  <p>${type.description}</p>
+                  <small style="color: #667eea; font-weight: 500;">${type.category}</small>
+                `;
+                card.addEventListener("click", () => {
+                  window.location.href = "/situation-context-selection";
+                });
+              } else {
+                card.innerHTML = `
+                  <h3>${type.title}</h3>
+                  <p>${type.description}</p>
+                  <small style="color: #667eea; font-weight: 500;">${type.category}</small>
+                `;
+                card.addEventListener("click", () =>
+                  selectFinderType(type, card)
+                );
+              }
+
               container.appendChild(card);
             });
 
@@ -999,7 +1074,7 @@
         showLoading("diaryStatus", "일기 저장 중...");
 
         try {
-          const response = await fetch("/api/cards/coin-finder/daily-diary", {
+          const response = await fetch("/api/coin-finder/daily-diary", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ content }),
@@ -1032,11 +1107,11 @@
       async function loadCoins() {
         showLoading("coinSelectionStatus", "장점 목록을 불러오는 중...");
         try {
-          const response = await fetch("/api/coins");
+          const response = await fetch("/api/coin-finder/selection-options");
           const data = await response.json();
 
-          if (data.success && data.data) {
-            state.coinsWithKeywords = data.data;
+          if (data.success && data.data && data.data.coins) {
+            state.coinsWithKeywords = Object.values(data.data.coins);
 
             // 6단계 UI를 새로운 형태로 업데이트
             const container = document.getElementById("coinSelectionStep");
@@ -1321,7 +1396,53 @@
       }
 
       // 초기화
-      updateProgress();
+      function initializeApp() {
+        // URL 파라미터 확인
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // 카카오 로그인 결과 처리
+        const loginSuccess = urlParams.get("login_success");
+        if (loginSuccess === "true") {
+          handleKakaoLoginResult(urlParams);
+          return; // 로그인 처리 후 종료
+        }
+
+        // 사례 돌아보기에서 온 경우 처리
+        const formId = urlParams.get("formId");
+        const type = urlParams.get("type");
+        const fromExperience = urlParams.get("from_experience");
+
+        if (
+          formId &&
+          type === "EXPERIENCE_REFLECTION" &&
+          fromExperience === "true"
+        ) {
+          // 사례 돌아보기에서 온 경우
+          state.formId = parseInt(formId);
+          state.fromExperience = true;
+          state.selectedFinderType = { type: "EXPERIENCE_REFLECTION" };
+
+          // 카카오 로그인이 필요하므로 첫 번째 단계부터 시작
+          showStep("loginStep");
+
+          // 사용자에게 알림
+          showStatus(
+            "loginStatus",
+            "사례 돌아보기를 완료했습니다! 이제 로그인 후 장점을 선택해보세요."
+          );
+
+          // 자동으로 다음 단계들을 건너뛰고 코인 선택으로 바로 이동할 수 있도록 준비
+          state.skipToCoins = true;
+        } else {
+          // 일반적인 플로우
+          showStep("loginStep");
+        }
+
+        updateProgress();
+      }
+
+      // 앱 초기화 실행
+      initializeApp();
     </script>
   </body>
 </html>

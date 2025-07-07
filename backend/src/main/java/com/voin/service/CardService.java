@@ -18,6 +18,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import com.voin.dto.request.CardCreateRequest;
 
 
@@ -25,7 +30,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.ArrayList;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.voin.constant.SituationContext;
 
 /**
  * 🪙 코인(카드) 관리 서비스
@@ -98,12 +107,25 @@ public class CardService {
              throw new IllegalArgumentException("선택된 키워드가 해당 코인에 속해있지 않습니다.");
         }
 
+        // 사례 돌아보기로 생성된 카드인지 확인하여 상황 맥락 설정
+        String situationContext = null;
+        if (form.getType() == FormType.EXPERIENCE_REFLECTION && form.getFormResponse() != null) {
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                Map<String, Object> responseData = objectMapper.readValue(form.getFormResponse(), Map.class);
+                situationContext = (String) responseData.get("situationContextTitle");
+            } catch (Exception e) {
+                log.warn("Failed to parse form response for situation context: {}", e.getMessage());
+            }
+        }
+
         Card card = Card.builder()
                 .member(currentMember)
                 .targetMember(currentMember) // '나의 장점'이므로 대상도 자신
                 .form(form)
                 .keyword(keyword)
                 .content(form.getDescription())
+                .situationContext(situationContext)
                 .isPublic(false)
                 .build();
 
@@ -143,46 +165,154 @@ public class CardService {
     public Long saveDiaryForm(String diaryContent) {
         Member currentMember = getCurrentMember();
         
+        // 사용자가 입력한 일기 내용이 비어있으면 기본 메시지를 사용합니다.
+        String description = (diaryContent != null && !diaryContent.trim().isEmpty()) 
+                                ? diaryContent 
+                                : "작성된 일기 내용이 없습니다.";
+
         Form form = Form.builder()
                 .title("오늘의 일기")
-                .description("오늘의 일상을 기록한 일기")
+                .description(description) // 실제 일기 내용을 저장합니다.
                 .type(FormType.TODAY_DIARY)
                 .build();
         
         Form savedForm = formRepository.save(form);
         
-        // TODO: Form 엔티티에 formResponse 필드가 있다면 여기서 설정
-        // savedForm.setFormResponse(diaryContent);
-        
-        log.info("Saved diary form: {} for member: {}", savedForm.getId(), currentMember.getId());
+        log.info("Saved diary form: {} for member: {} with content: {}", 
+                savedForm.getId(), currentMember.getId(), 
+                description.substring(0, Math.min(description.length(), 20)) + "...");
         return savedForm.getId();
     }
 
+    /**
+     * 📄 Form 데이터 조회
+     * 
+     * @param formId 조회할 Form의 ID
+     * @return Form 데이터 Map
+     */
+    public Map<String, Object> getFormData(Long formId) {
+        Form form = formRepository.findById(formId)
+                .orElseThrow(() -> new ResourceNotFoundException("Form not found with id: " + formId));
+        
+        Map<String, Object> formData = new HashMap<>();
+        formData.put("id", form.getId());
+        formData.put("title", form.getTitle());
+        formData.put("description", form.getDescription());
+        formData.put("type", form.getType().name());
+        
+        // 사례 돌아보기인 경우 상세 응답 데이터 포함
+        if (form.getType() == FormType.EXPERIENCE_REFLECTION && form.getFormResponse() != null) {
+            try {
+                ObjectMapper objectMapper = new ObjectMapper();
+                Map<String, Object> responseData = objectMapper.readValue(form.getFormResponse(), Map.class);
+                formData.put("responseData", responseData);
+            } catch (Exception e) {
+                log.warn("Failed to parse form response for form {}: {}", formId, e.getMessage());
+            }
+        }
+        
+        log.info("Retrieved form data for ID: {}, type: {}", formId, form.getType());
+        return formData;
+    }
+
+    // ===== 사례 돌아보기 플로우 메서드들 =====
+
+    /**
+     * 🎯 상황 맥락 목록 조회
+     * 
+     * 사례 돌아보기에서 사용할 수 있는 6가지 상황 맥락을 반환합니다.
+     */
+    public Map<String, Object> getSituationContexts() {
+        List<Map<String, Object>> contexts = new ArrayList<>();
+        
+        for (SituationContext context : SituationContext.getAll()) {
+            Map<String, Object> contextInfo = Map.of(
+                "id", context.getId(),
+                "subtitle", context.getSubtitle(),
+                "title", context.getTitle()
+            );
+            contexts.add(contextInfo);
+        }
+        
+        return Map.of("contexts", contexts);
+    }
+
+    /**
+     * 📝 사례 돌아보기 1단계 저장 (상황 맥락 + 행동 질문)
+     * 
+     * @param situationContextId 선택한 상황 맥락 ID (1~6)
+     * @param actionDescription 첫 번째 질문에 대한 답변 (어떤 행동을 했는지)
+     * @return 생성된 Form의 ID
+     */
     @Transactional
-    public Long saveExperienceStep1(Integer situationId, String actionDescription) {
+    public Long saveExperienceStep1(Integer situationContextId, String actionDescription) {
         Member currentMember = getCurrentMember();
         
+        // 상황 맥락 유효성 검사
+        SituationContext situationContext = SituationContext.findById(situationContextId);
+        
+        // JSON 형태로 1단계 응답 저장
+        ObjectMapper objectMapper = new ObjectMapper();
+        Map<String, Object> responseData = new HashMap<>();
+        responseData.put("situationContextId", situationContextId);
+        responseData.put("situationContextTitle", situationContext.getTitle());
+        responseData.put("action", actionDescription);
+        
+        String formResponse;
+        try {
+            formResponse = objectMapper.writeValueAsString(responseData);
+        } catch (Exception e) {
+            throw new RuntimeException("JSON 변환 중 오류가 발생했습니다.", e);
+        }
+        
         Form form = Form.builder()
-                .title("사례 돌아보기 - 1단계")
-                .description("순간의 상황: " + situationId + ", 행동: " + actionDescription)
+                .title("사례 돌아보기")
+                .description("상황: " + situationContext.getTitle() + " / 행동: " + actionDescription)
                 .type(FormType.EXPERIENCE_REFLECTION)
+                .formResponse(formResponse)
                 .build();
         
         Form savedForm = formRepository.save(form);
         
-        log.info("Saved experience step1 form: {} for member: {}", savedForm.getId(), currentMember.getId());
+        log.info("Saved experience step1 form: {} for member: {} with context: {}", 
+                savedForm.getId(), currentMember.getId(), situationContext.getTitle());
         return savedForm.getId();
     }
 
+    /**
+     * 💭 사례 돌아보기 2단계 저장 (생각 질문)
+     * 
+     * @param formId 1단계에서 생성된 Form ID
+     * @param thoughtDescription 두 번째 질문에 대한 답변 (행동에 대한 생각)
+     */
     @Transactional
     public void saveExperienceStep2(Long formId, String thoughtDescription) {
         Form form = formRepository.findById(formId)
                 .orElseThrow(() -> new ResourceNotFoundException("Form not found with id: " + formId));
         
-        // TODO: Form 엔티티에 step2 응답을 저장할 방법 구현
-        // form.setStep2Response(thoughtDescription);
-        
-        log.info("Updated experience step2 for form: {}", formId);
+        // 기존 JSON 응답에 2단계 응답 추가
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            Map<String, Object> responseData = objectMapper.readValue(form.getFormResponse(), Map.class);
+            responseData.put("thought", thoughtDescription);
+            
+            String updatedFormResponse = objectMapper.writeValueAsString(responseData);
+            
+            // 새로운 Form 객체를 만들어 저장 (불변 객체 패턴)
+            Form updatedForm = Form.builder()
+                    .id(form.getId())
+                    .title(form.getTitle())
+                    .description(form.getDescription() + " / 생각: " + thoughtDescription)
+                    .type(form.getType())
+                    .formResponse(updatedFormResponse)
+                    .build();
+            
+            formRepository.save(updatedForm);
+            
+            log.info("Updated experience step2 for form: {} with thought response", formId);
+        } catch (Exception e) {
+            throw new RuntimeException("JSON 처리 중 오류가 발생했습니다.", e);
+        }
     }
 
     @Transactional
@@ -252,17 +382,37 @@ public class CardService {
      * @throws RuntimeException 회원이 아무도 없을 때 발생하는 오류
      */
     private Member getCurrentMember() {
-        // 📝 모든 회원 목록을 가져옵니다
+        // 세션에서 현재 사용자 ID 가져오기 시도
+        try {
+            // RequestContextHolder를 통해 현재 HTTP 세션에 접근
+            ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
+            HttpServletRequest request = attr.getRequest();
+            HttpSession session = request.getSession(false);
+            
+            if (session != null) {
+                Object memberIdObj = session.getAttribute("memberId");
+                if (memberIdObj != null) {
+                    UUID memberId = (UUID) memberIdObj;
+                    Optional<Member> member = memberRepository.findById(memberId);
+                    if (member.isPresent()) {
+                        log.info("세션에서 현재 사용자 조회: {} ({})", member.get().getNickname(), member.get().getId());
+                        return member.get();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("세션에서 사용자 정보를 가져올 수 없음: {}", e.getMessage());
+        }
+        
+        // 세션에서 가져올 수 없는 경우 임시로 첫 번째 회원 사용
         List<Member> members = memberRepository.findAll();
         
-        // 🔍 회원이 한 명도 없다면 오류 메시지를 보여줍니다
         if (members.isEmpty()) {
             throw new RuntimeException("데이터베이스에 등록된 회원이 없습니다. 먼저 카카오 로그인을 통해 회원가입을 완료해주세요.");
         }
         
-        // 👤 임시로 첫 번째 회원을 현재 사용자로 설정합니다
         Member firstMember = members.get(0);
-        log.info("테스트용으로 첫 번째 회원 사용 중: {} ({})", firstMember.getNickname(), firstMember.getId());
+        log.info("세션 정보 없음 - 임시로 첫 번째 회원 사용: {} ({})", firstMember.getNickname(), firstMember.getId());
         return firstMember;
     }
 } 
