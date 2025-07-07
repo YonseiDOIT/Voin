@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/members")
 @RequiredArgsConstructor
-@Tag(name = "Member", description = "회원 관리 API")
+@Tag(name = "👤 Member", description = "사용자 정보 관리")
 public class MemberController {
 
     private final MemberService memberService;

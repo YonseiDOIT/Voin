@@ -11,8 +11,10 @@ import com.voin.repository.QuestionRepository;
 import com.voin.constant.FormType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.event.EventListener;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 
 import java.util.Arrays;
 import java.util.List;
@@ -20,18 +22,21 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class DataInitializer implements CommandLineRunner {
+@Transactional
+public class DataInitializer {
 
     private final CoinRepository coinRepository;
     private final KeywordRepository keywordRepository;
     private final FormRepository formRepository;
     private final QuestionRepository questionRepository;
 
-    @Override
-    public void run(String... args) throws Exception {
+    @EventListener(ApplicationReadyEvent.class)
+    public void initializeData() {
+        log.info("Initializing data after application startup...");
         initializeCoins();
         initializeKeywords();
         initializeForms();
+        log.info("Data initialization completed successfully!");
     }
 
     private void initializeCoins() {

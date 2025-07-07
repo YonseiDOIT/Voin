@@ -87,6 +87,14 @@ public class Card extends BaseEntity {
     @Builder.Default
     private Boolean isPublic = false;
 
+    /**
+     * 카드가 생성된 상황 맥락 (사례 돌아보기에서 사용)
+     * 예: "일상적 행동, 습관", "다른 사람과 대화, 행동" 등
+     */
+    @Size(max = 100, message = "상황 맥락은 100자를 초과할 수 없습니다")
+    @Column(name = "situation_context", length = 100)
+    private String situationContext;
+
     // === 비즈니스 메서드 ===
 
     /**
