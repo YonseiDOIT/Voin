@@ -3,6 +3,7 @@ package com.voin.controller;
 import com.voin.dto.response.ApiResponse;
 import com.voin.entity.Member;
 import com.voin.repository.MemberRepository;
+import com.voin.security.JwtTokenProvider;
 import com.voin.service.KakaoAuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -20,6 +21,7 @@ import org.springframework.ui.Model;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 /**
  * 🔐 로그인 및 인증 컨트롤러
@@ -36,7 +38,7 @@ import java.util.Optional;
  * 누가 들어올 수 있는지, 어떻게 들어오는지를 관리합니다.
  */
 @Slf4j
-@Controller
+@RestController
 @RequiredArgsConstructor
 @RequestMapping("/auth")
 @Tag(name = "인증 API", description = "카카오 로그인 관련 API")
@@ -44,6 +46,7 @@ public class AuthController {
 
     private final KakaoAuthService kakaoAuthService;
     private final MemberRepository memberRepository;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @Value("${kakao.client-id}")
     private String clientId;
@@ -107,13 +110,13 @@ public class AuthController {
                 log.info("기존 회원 로그인 - 회원 ID: {}, 닉네임: {}", member.getId(), member.getNickname());
                 
                 // 임시 토큰 생성 (실제 프로덕션에서는 JWT 사용)
-                String tempToken = "VOIN_LOGIN_TOKEN_" + member.getId() + "_" + System.currentTimeMillis();
-                log.info("로그인 성공 - 임시 토큰 생성: {}", tempToken.substring(0, 20) + "...");
+                String jwtToken = jwtTokenProvider.createToken(member.getId().toString());
+                log.info("로그인 성공 - 토큰 생성: {}", jwtToken.substring(0, 20) + "...");
                 
                 // 플로우 테스트에서 온 경우 다시 플로우 테스트로 리다이렉트
                 if ("flow_test".equals(state)) {
                     return "redirect:/flow-test.html?login_success=true&member_id=" + member.getId() + 
-                           "&token=" + tempToken + "&is_existing=true";
+                           "&token=" + jwtToken + "&is_existing=true";
                 }
                 
                 // 일반 로그인 테스트의 경우 결과 페이지 표시
@@ -121,21 +124,54 @@ public class AuthController {
                 model.addAttribute("isExistingMember", true);
                 model.addAttribute("member", member);
                 model.addAttribute("userInfo", userInfo);
-                model.addAttribute("loginToken", tempToken);
+                model.addAttribute("loginToken", jwtToken);
                 
                 return "kakao-login-result";
             } else {
-                // 신규 회원 - 회원가입 플로우로 리다이렉트
-                log.info("신규 회원 감지 - 회원가입 플로우로 이동");
-                
-                // 플로우 테스트에서 온 경우 액세스 토큰을 포함해서 플로우 테스트로 리다이렉트
+                log.info("신규 회원 감지 - 회원가입 처리 시작");
+
+                // 사용자 정보 파싱
+                String nickname = userInfo.get("nickname").toString();
+                String profileImage = userInfo.getOrDefault("profile_image", "").toString();
+
+                log.info("😮 kakaoId: {}", kakaoId);
+                log.info("😮 nickname: {}", nickname);
+                log.info("😮 profileImage: {}", profileImage);
+
+                String friendCode;
+                do {
+                    friendCode = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+                } while (memberRepository.existsByFriendCode(friendCode));
+
+                // 1. 회원가입 처리
+                Member newMember = Member.builder()
+                        .kakaoId(kakaoId)
+                        .nickname(nickname)
+                        .profileImage(profileImage)
+                        .friendCode(friendCode)
+                        .build();
+
+                memberRepository.save(newMember);
+                log.info("회원가입 완료 - 신규 회원 ID: {}", newMember.getId());
+
+                // 2. JWT 발급
+                String jwtToken = jwtTokenProvider.createToken(newMember.getId().toString());
+
+                log.info("🎟️ 발급된 JWT 토큰: {}", jwtToken);
+
+                // 3. 플로우 테스트용 리다이렉트 or 일반 로그인 결과 페이지
                 if ("flow_test".equals(state)) {
-                    return "redirect:/flow-test.html?login_success=true&access_token=" + accessToken + 
-                           "&is_new_member=true";
+                    return "redirect:/flow-test.html?login_success=true&member_id=" + newMember.getId() +
+                            "&token=" + jwtToken + "&is_new_member=true";
                 }
-                
-                // 일반 로그인 테스트의 경우 닉네임 설정 페이지로 리다이렉트
-                return "redirect:/signup/nickname?access_token=" + accessToken;
+
+                model.addAttribute("success", true);
+                model.addAttribute("isExistingMember", false);
+                model.addAttribute("member", newMember);
+                model.addAttribute("userInfo", userInfo);
+                model.addAttribute("loginToken", jwtToken);
+
+                return "kakao-login-result";
             }
             
         } catch (Exception e) {
