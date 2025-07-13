@@ -17,13 +17,11 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 
 @Slf4j
-@Controller
+@RestController
 @RequiredArgsConstructor
 @RequestMapping("/signup")
 @Tag(name = "회원가입 API", description = "카카오 로그인을 통한 회원가입 관련 API")
@@ -51,40 +49,24 @@ public class SignupController {
     })
     @SecurityRequirements // 인증 불필요
     @PostMapping("/start")
-    @ResponseBody
     public ApiResponse<SignupResponse> startSignup(
             @Parameter(description = "카카오 액세스 토큰", required = true)
             @RequestParam("access_token") String accessToken) {
         
+        log.info("회원가입 프로세스 시작 - 액세스 토큰: {}", accessToken);
+        
         try {
             SignupResponse response = signupService.startSignupProcess(accessToken);
-            return ApiResponse.success("회원가입 프로세스가 시작되었습니다.", response);
-        } catch (IllegalStateException e) {
-            return ApiResponse.error(e.getMessage());
+            log.info("회원가입 프로세스 시작 성공");
+            return ApiResponse.success(response);
         } catch (Exception e) {
-            log.error("회원가입 시작 오류: {}", e.getMessage());
-            return ApiResponse.error("회원가입 프로세스를 시작할 수 없습니다.");
+            log.error("회원가입 프로세스 시작 실패", e);
+            return ApiResponse.error("회원가입 프로세스 시작 실패: " + e.getMessage());
         }
     }
 
     /**
-     * 닉네임 설정 페이지
-     */
-    @Operation(summary = "닉네임 설정 페이지", 
-               description = "닉네임을 설정할 수 있는 HTML 페이지를 반환합니다.")
-    @SecurityRequirements // 인증 불필요
-    @GetMapping("/nickname")
-    public String nicknameSettingPage(
-            @Parameter(description = "카카오 액세스 토큰")
-            @RequestParam(value = "access_token", required = false) String accessToken,
-            Model model) {
-        
-        model.addAttribute("accessToken", accessToken);
-        return "/signup-nickname";
-    }
-
-    /**
-     * 닉네임 설정 처리
+     * 닉네임 설정
      */
     @Operation(summary = "닉네임 설정", 
                description = "사용자가 선택한 닉네임을 설정합니다.")
@@ -98,33 +80,17 @@ public class SignupController {
     })
     @SecurityRequirements // 인증 불필요
     @PostMapping("/nickname")
-    @ResponseBody
     public ApiResponse<SignupResponse> setNickname(@Valid @RequestBody NicknameSettingRequest request) {
+        log.info("닉네임 설정 요청 - 닉네임: {}", request.getNickname());
+        
         try {
             SignupResponse response = signupService.setNickname(request);
-            return ApiResponse.success("닉네임이 설정되었습니다.", response);
-        } catch (IllegalStateException e) {
-            return ApiResponse.error(e.getMessage());
+            log.info("닉네임 설정 성공");
+            return ApiResponse.success(response);
         } catch (Exception e) {
-            log.error("닉네임 설정 오류: {}", e.getMessage());
-            return ApiResponse.error("닉네임을 설정할 수 없습니다.");
+            log.error("닉네임 설정 실패", e);
+            return ApiResponse.error("닉네임 설정 실패: " + e.getMessage());
         }
-    }
-
-    /**
-     * 프로필 이미지 설정 페이지
-     */
-    @Operation(summary = "프로필 이미지 설정 페이지", 
-               description = "프로필 이미지를 설정할 수 있는 HTML 페이지를 반환합니다.")
-    @SecurityRequirements // 인증 불필요
-    @GetMapping("/profile-image")
-    public String profileImageSettingPage(
-            @Parameter(description = "카카오 액세스 토큰")
-            @RequestParam(value = "access_token", required = false) String accessToken,
-            Model model) {
-        
-        model.addAttribute("accessToken", accessToken);
-        return "/signup-profile-image";
     }
 
     /**
@@ -142,74 +108,36 @@ public class SignupController {
     })
     @SecurityRequirements // 인증 불필요
     @PostMapping("/profile-image")
-    @ResponseBody
     public ApiResponse<SignupResponse> setProfileImageAndComplete(@Valid @RequestBody ProfileImageSettingRequest request) {
+        log.info("프로필 이미지 설정 및 회원가입 완료 요청");
+        
         try {
             SignupResponse response = signupService.setProfileImageAndComplete(request);
-            return ApiResponse.success("회원가입이 완료되었습니다!", response);
-        } catch (IllegalStateException e) {
-            return ApiResponse.error(e.getMessage());
+            log.info("회원가입 완료 - JWT 토큰 생성됨");
+            return ApiResponse.success(response);
         } catch (Exception e) {
-            log.error("프로필 이미지 설정 오류: {}", e.getMessage());
-            return ApiResponse.error("프로필 이미지를 설정할 수 없습니다.");
+            log.error("프로필 이미지 설정 및 회원가입 완료 실패", e);
+            return ApiResponse.error("회원가입 완료 실패: " + e.getMessage());
         }
     }
 
     /**
-     * 회원가입 완료 페이지
-     */
-    @Operation(summary = "회원가입 완료 페이지", 
-               description = "회원가입 완료를 알리는 HTML 페이지를 반환합니다.")
-    @SecurityRequirements // 인증 불필요
-    @GetMapping("/complete")
-    public String signupCompletePage(
-            @Parameter(description = "JWT 토큰")
-            @RequestParam(value = "token", required = false) String token,
-            Model model) {
-        
-        model.addAttribute("jwtToken", token);
-        
-        // 임시 토큰에서 회원 ID 추출하여 회원 정보 조회
-        if (token != null && token.startsWith("VOIN_TOKEN_")) {
-            try {
-                String[] parts = token.split("_");
-                if (parts.length >= 3) {
-                    String memberIdStr = parts[2];
-                    // UUID 파싱 시도
-                    java.util.UUID memberId = java.util.UUID.fromString(memberIdStr);
-                    
-                    // 회원 정보 조회하여 모델에 추가
-                    Optional<Member> memberOpt = memberRepository.findById(memberId);
-                    if (memberOpt.isPresent()) {
-                        Member member = memberOpt.get();
-                        model.addAttribute("member", member);
-                        log.info("회원가입 완료 페이지 - 회원 정보 조회 성공: {}", member.getNickname());
-                    }
-                }
-            } catch (Exception e) {
-                log.warn("토큰에서 회원 ID 추출 실패: {}", e.getMessage());
-            }
-        }
-        
-        return "/signup-complete";
-    }
-
-    /**
-     * DB에 저장된 모든 회원 조회 (개발/테스트용)
+     * 전체 회원 조회 (개발/테스트용)
      */
     @Operation(summary = "전체 회원 조회", 
                description = "DB에 저장된 모든 회원 정보를 조회합니다 (개발/테스트용)")
     @SecurityRequirements // 인증 불필요
     @GetMapping("/members")
-    @ResponseBody
     public ApiResponse<java.util.List<Member>> getAllMembers() {
+        log.info("전체 회원 조회 요청");
+        
         try {
             java.util.List<Member> members = memberRepository.findAll();
-            log.info("전체 회원 조회: {} 명", members.size());
-            return ApiResponse.success("전체 회원 조회 성공", members);
+            log.info("전체 회원 조회 성공 - 총 {} 명", members.size());
+            return ApiResponse.success(members);
         } catch (Exception e) {
             log.error("전체 회원 조회 실패", e);
-            return ApiResponse.error("회원 조회에 실패했습니다: " + e.getMessage());
+            return ApiResponse.error("전체 회원 조회 실패: " + e.getMessage());
         }
     }
 } 
