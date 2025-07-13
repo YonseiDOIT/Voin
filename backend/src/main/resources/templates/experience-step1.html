@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>사례 돌아보기 1단계 - Voin</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+
+      .container {
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        max-width: 700px;
+        width: 100%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+      }
+
+      .progress-bar {
+        height: 6px;
+        background: #e0e0e0;
+        border-radius: 3px;
+        margin-bottom: 30px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        width: 50%;
+        transition: width 0.3s ease;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 40px;
+      }
+
+      .step-indicator {
+        color: #667eea;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+      }
+
+      .context-info {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px 20px;
+        border-radius: 15px;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      .context-info .label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        margin-bottom: 5px;
+      }
+
+      .context-info .title {
+        font-size: 1.1rem;
+        font-weight: bold;
+      }
+
+      .header h1 {
+        color: #333;
+        font-size: 1.8rem;
+        margin-bottom: 15px;
+        line-height: 1.4;
+      }
+
+      .header .description {
+        color: #666;
+        font-size: 1rem;
+        line-height: 1.6;
+      }
+
+      .form-section {
+        margin-bottom: 40px;
+      }
+
+      .form-group {
+        margin-bottom: 25px;
+      }
+
+      .form-group label {
+        display: block;
+        color: #333;
+        font-weight: 600;
+        margin-bottom: 12px;
+        font-size: 1.1rem;
+      }
+
+      .form-group textarea {
+        width: 100%;
+        min-height: 150px;
+        padding: 20px;
+        border: 2px solid #e0e0e0;
+        border-radius: 15px;
+        font-size: 1rem;
+        font-family: inherit;
+        resize: vertical;
+        transition: border-color 0.3s ease;
+        background: #f9f9f9;
+      }
+
+      .form-group textarea:focus {
+        outline: none;
+        border-color: #667eea;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+
+      .char-counter {
+        text-align: right;
+        color: #999;
+        font-size: 0.9rem;
+        margin-top: 8px;
+      }
+
+      .char-counter.warning {
+        color: #f39c12;
+      }
+
+      .char-counter.error {
+        color: #e74c3c;
+      }
+
+      .buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 40px;
+      }
+
+      .btn {
+        padding: 15px 30px;
+        border: none;
+        border-radius: 25px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+      }
+
+      .btn-back {
+        background: #e0e0e0;
+        color: #333;
+      }
+
+      .btn-back:hover {
+        background: #d0d0d0;
+      }
+
+      .btn-next {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .btn-next.enabled {
+        opacity: 1;
+        cursor: pointer;
+      }
+
+      .btn-next.enabled:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+      }
+
+      .loading {
+        display: none;
+        text-align: center;
+        color: #667eea;
+        font-size: 1.1rem;
+        margin-top: 20px;
+      }
+
+      .tips {
+        background: #f0f4f8;
+        border-left: 4px solid #667eea;
+        padding: 20px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+      }
+
+      .tips h3 {
+        color: #667eea;
+        font-size: 1rem;
+        margin-bottom: 10px;
+      }
+
+      .tips ul {
+        color: #666;
+        font-size: 0.9rem;
+        line-height: 1.6;
+        padding-left: 20px;
+      }
+
+      .tips li {
+        margin-bottom: 5px;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          padding: 30px 20px;
+          margin: 10px;
+        }
+
+        .header h1 {
+          font-size: 1.5rem;
+        }
+
+        .buttons {
+          flex-direction: column;
+        }
+
+        .btn {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="progress-bar">
+        <div class="progress-fill"></div>
+      </div>
+
+      <div class="header">
+        <div class="step-indicator">STEP 1 / 2</div>
+        <div class="context-info" id="contextInfo">
+          <div class="label">선택된 상황 맥락</div>
+          <div class="title" id="contextTitle">불러오는 중...</div>
+        </div>
+        <h1>📝 그때 나는 어떤 행동을 했었나요?</h1>
+        <p class="description">
+          선택하신 상황에서 여러분이 실제로 했던 행동이나 말,<br />
+          또는 보여주었던 모습을 구체적으로 적어보세요.
+        </p>
+      </div>
+
+      <div class="tips">
+        <h3>💡 작성 팁</h3>
+        <ul>
+          <li>구체적인 행동이나 말을 중심으로 작성해주세요</li>
+          <li>"그때 나는 ~했다" 형태로 작성하면 좋습니다</li>
+          <li>감정보다는 실제 행동에 집중해서 써주세요</li>
+          <li>최소 50자 이상 작성해주시면 더 좋은 결과를 얻을 수 있어요</li>
+        </ul>
+      </div>
+
+      <div class="form-section">
+        <div class="form-group">
+          <label for="actionDescription">나의 행동 *</label>
+          <textarea
+            id="actionDescription"
+            placeholder="예: 팀 프로젝트에서 의견이 충돌했을 때, 나는 각자의 의견을 정리해서 화이트보드에 적고, 하나씩 장단점을 함께 이야기하자고 제안했다. 그리고 모든 사람이 발언할 수 있도록 순서를 정해서 돌아가며 의견을 들었다."
+            maxlength="500"
+            oninput="updateCharCounter()"
+            onkeyup="checkFormValid()"
+          ></textarea>
+          <div class="char-counter" id="charCounter">0 / 500자</div>
+        </div>
+      </div>
+
+      <div class="buttons">
+        <button class="btn btn-back" onclick="goBack()">🔙 이전으로</button>
+        <button
+          id="nextBtn"
+          class="btn btn-next"
+          disabled
+          onclick="proceedToStep2()"
+        >
+          다음 단계 🚀
+        </button>
+      </div>
+
+      <div class="loading" id="loading">행동 내용을 저장하는 중... ⏳</div>
+    </div>
+
+    <script>
+      let contextId = null;
+      let contextTitle = "";
+
+      // 페이지 로드 시 URL 파라미터에서 상황 맥락 정보 가져오기
+      document.addEventListener("DOMContentLoaded", function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        contextId = urlParams.get("contextId");
+        contextTitle = urlParams.get("contextTitle");
+
+        if (!contextId || !contextTitle) {
+          alert("잘못된 접근입니다. 상황 맥락 선택 페이지로 돌아갑니다.");
+          window.location.href = "/situation-context-selection";
+          return;
+        }
+
+        // 상황 맥락 정보 표시
+        document.getElementById("contextTitle").textContent = contextTitle;
+
+        // 텍스트영역 포커스
+        document.getElementById("actionDescription").focus();
+      });
+
+      function updateCharCounter() {
+        const textarea = document.getElementById("actionDescription");
+        const counter = document.getElementById("charCounter");
+        const length = textarea.value.length;
+
+        counter.textContent = `${length} / 500자`;
+
+        if (length > 450) {
+          counter.className = "char-counter error";
+        } else if (length > 350) {
+          counter.className = "char-counter warning";
+        } else {
+          counter.className = "char-counter";
+        }
+      }
+
+      function checkFormValid() {
+        const actionDescription = document
+          .getElementById("actionDescription")
+          .value.trim();
+        const nextBtn = document.getElementById("nextBtn");
+
+        if (actionDescription.length >= 10) {
+          nextBtn.disabled = false;
+          nextBtn.classList.add("enabled");
+        } else {
+          nextBtn.disabled = true;
+          nextBtn.classList.remove("enabled");
+        }
+      }
+
+      function goBack() {
+        const params = new URLSearchParams({
+          contextId: contextId,
+          contextTitle: contextTitle,
+        });
+        window.location.href = `/situation-context-selection?${params.toString()}`;
+      }
+
+      async function proceedToStep2() {
+        const actionDescription = document
+          .getElementById("actionDescription")
+          .value.trim();
+
+        if (!actionDescription || actionDescription.length < 10) {
+          alert("행동 내용을 10자 이상 입력해주세요.");
+          return;
+        }
+
+        const loading = document.getElementById("loading");
+        const nextBtn = document.getElementById("nextBtn");
+
+        try {
+          loading.style.display = "block";
+          nextBtn.disabled = true;
+
+          const response = await fetch(
+            "/api/coin-finder/experience-review/step1",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                situationContextId: parseInt(contextId),
+                actionDescription: actionDescription,
+              }),
+            }
+          );
+
+          const result = await response.json();
+
+          if (result.success) {
+            // 2단계로 이동
+            const params = new URLSearchParams({
+              formId: result.data.formId,
+              contextId: contextId,
+              contextTitle: contextTitle,
+              actionDescription: actionDescription,
+            });
+
+            window.location.href = `/experience-step2?${params.toString()}`;
+          } else {
+            throw new Error(result.message || "저장에 실패했습니다.");
+          }
+        } catch (error) {
+          console.error("Error saving step 1:", error);
+          alert("저장 중 오류가 발생했습니다: " + error.message);
+          nextBtn.disabled = false;
+          nextBtn.classList.add("enabled");
+        } finally {
+          loading.style.display = "none";
+        }
+      }
+
+      // 키보드 단축키 지원 (Ctrl+Enter로 다음 단계)
+      document.addEventListener("keydown", function (e) {
+        if (e.ctrlKey && e.key === "Enter") {
+          if (!document.getElementById("nextBtn").disabled) {
+            proceedToStep2();
+          }
+        }
+      });
+
+      // 자동 저장 기능 (선택사항)
+      let autoSaveTimeout;
+      document
+        .getElementById("actionDescription")
+        .addEventListener("input", function () {
+          clearTimeout(autoSaveTimeout);
+          autoSaveTimeout = setTimeout(() => {
+            const content = this.value.trim();
+            if (content.length > 0) {
+              localStorage.setItem("experienceStep1_action", content);
+            }
+          }, 1000);
+        });
+
+      // 페이지 로드 시 자동 저장된 내용 복원
+      window.addEventListener("load", function () {
+        const savedContent = localStorage.getItem("experienceStep1_action");
+        if (savedContent) {
+          document.getElementById("actionDescription").value = savedContent;
+          updateCharCounter();
+          checkFormValid();
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -1,14 +1,9 @@
 package com.voin.dto.request;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
+import lombok.Data;
 import java.util.List;
 
-@Getter
-@Setter
-@NoArgsConstructor
+@Data
 public class CardCreateRequest {
     private Long formId;
     private Long coinId;
