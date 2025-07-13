@@ -53,6 +53,8 @@ public class AuthController {
     private final MemberRepository memberRepository;
     private final JwtTokenProvider jwtTokenProvider;
 
+    private static final String FRONTEND_URL = "https://localhost:5173";
+
     @Value("${kakao.client-id}")
     private String clientId;
 
@@ -104,152 +106,48 @@ public class AuthController {
                 request.getSession().setAttribute("nickname", member.getNickname());
                 request.getSession().setMaxInactiveInterval(24 * 60 * 60); // 24시간
                 
-                // 임시 토큰 생성 (실제 프로덕션에서는 JWT 사용)
-                String tempToken = "VOIN_LOGIN_TOKEN_" + member.getId() + "_" + System.currentTimeMillis();
-                log.info("로그인 성공 - 세션 및 임시 토큰 생성: {}", tempToken.substring(0, 20) + "...");
+                // JWT 토큰 생성
+                String jwtToken = jwtTokenProvider.createToken(member.getId().toString());
+                log.info("로그인 성공 - JWT 토큰 생성: {}", jwtToken.substring(0, 20) + "...");
                 
-                // 플로우 테스트에서 온 경우 다시 플로우 테스트로 리다이렉트
-                if (isFromFlowTest) {
-                    try {
-                        String targetUrl = "/flow-test.html?login_success=true&member_id=" + member.getId() + 
-                               "&token=" + tempToken + "&is_existing=true";
-                        URI redirectUri = new URI(targetUrl);
-                        log.info("기존 회원 플로우 테스트 리다이렉트: {}", redirectUri);
-                        HttpHeaders headers = new HttpHeaders();
-                        headers.setLocation(redirectUri);
-                        return new ResponseEntity<>(headers, HttpStatus.FOUND);
-                    } catch (Exception e) {
-                        log.error("플로우 테스트 리다이렉트 URI 생성 실패", e);
-                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-                    }
-                }
-                
-                // "/auth/test"에서 온 로그인 테스트의 경우 홈으로 리다이렉트 (model 사용 불가)
-                if (referer != null && referer.contains("/auth/test")) {
-                    try {
-                        String targetUrl = "/?login_success=true&is_existing=true&message=login_test_completed";
-                        URI redirectUri = new URI(targetUrl);
-                        HttpHeaders headers = new HttpHeaders();
-                        headers.setLocation(redirectUri);
-                        return new ResponseEntity<>(headers, HttpStatus.FOUND);
-                    } catch (Exception e) {
-                        log.error("로그인 테스트 리다이렉트 URI 생성 실패", e);
-                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-                    }
-                }
-                
-                // 홈페이지에서 온 일반 로그인의 경우 홈페이지로 리다이렉트
+                // 프론트엔드로 리디렉션
                 try {
-                    String targetUrl = "/?login_success=true&member_id=" + member.getId() + 
-                           "&token=" + tempToken + "&is_existing=true&nickname=" + 
+                    String targetUrl = FRONTEND_URL + "/?login_success=true&access_token=" + jwtToken + 
+                           "&is_new_member=false&nickname=" + 
                            URLEncoder.encode(member.getNickname(), StandardCharsets.UTF_8);
                     URI redirectUri = new URI(targetUrl);
-                    log.info("기존 회원 홈페이지 리다이렉트: {}", redirectUri);
+                    log.info("기존 회원 프론트엔드 리디렉트: {}", redirectUri);
                     HttpHeaders headers = new HttpHeaders();
                     headers.setLocation(redirectUri);
                     return new ResponseEntity<>(headers, HttpStatus.FOUND);
                 } catch (Exception e) {
-                    log.error("기존 회원 홈페이지 리다이렉트 URI 생성 실패", e);
+                    log.error("기존 회원 프론트엔드 리디렉트 URI 생성 실패", e);
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
                 }
             } else {
                 // 신규 회원 - 회원가입 플로우로 리다이렉트
                 log.info("신규 회원 감지 - 회원가입 플로우로 이동");
                 
-                // 플로우 테스트에서 온 경우 액세스 토큰을 포함해서 플로우 테스트로 리다이렉트
-                if (isFromFlowTest) {
-                    try {
-                        String targetUrl = "/flow-test.html?login_success=true&access_token=" + accessToken + 
-                               "&is_new_member=true";
-                        URI redirectUri = new URI(targetUrl);
-                        log.info("신규 회원 플로우 테스트 리다이렉트: {}", redirectUri);
-                        HttpHeaders headers = new HttpHeaders();
-                        headers.setLocation(redirectUri);
-                        return new ResponseEntity<>(headers, HttpStatus.FOUND);
-                    } catch (Exception e) {
-                        log.error("신규 회원 플로우 테스트 리다이렉트 URI 생성 실패", e);
-                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-                    }
-                }
-                
-                // "/auth/test"에서 온 로그인 테스트의 경우 닉네임 설정 페이지로 리다이렉트
-                if (referer != null && referer.contains("/auth/test")) {
-                    try {
-                        String targetUrl = "/signup/nickname?access_token=" + accessToken;
-                        URI redirectUri = new URI(targetUrl);
-                        HttpHeaders headers = new HttpHeaders();
-                        headers.setLocation(redirectUri);
-                        return new ResponseEntity<>(headers, HttpStatus.FOUND);
-                    } catch (Exception e) {
-                        log.error("닉네임 설정 페이지 리다이렉트 URI 생성 실패", e);
-                        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-                    }
-                }
-                
-                // 홈페이지에서 온 신규 회원의 경우 홈페이지로 리다이렉트 (회원가입 필요 안내)
+                // 프론트엔드의 회원가입 페이지로 리디렉션
                 try {
-                    String targetUrl = "/?login_success=true&access_token=" + accessToken + "&is_new_member=true";
+                    String targetUrl = FRONTEND_URL + "/signup?is_new_member=true&kakao_access_token=" + accessToken;
                     URI redirectUri = new URI(targetUrl);
-                    log.info("신규 회원 홈페이지 리다이렉트: {}", redirectUri);
+                    log.info("신규 회원 프론트엔드 리디렉트: {}", redirectUri);
                     HttpHeaders headers = new HttpHeaders();
                     headers.setLocation(redirectUri);
                     return new ResponseEntity<>(headers, HttpStatus.FOUND);
                 } catch (Exception e) {
-                    log.error("신규 회원 홈페이지 리다이렉트 URI 생성 실패", e);
+                    log.error("신규 회원 프론트엔드 리디렉트 URI 생성 실패", e);
                     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
                 }
-//                 log.info("신규 회원 감지 - 회원가입 처리 시작");
-
-//                 // 사용자 정보 파싱
-//                 String nickname = userInfo.get("nickname").toString();
-//                 String profileImage = userInfo.getOrDefault("profile_image", "").toString();
-
-//                 log.info("😮 kakaoId: {}", kakaoId);
-//                 log.info("😮 nickname: {}", nickname);
-//                 log.info("😮 profileImage: {}", profileImage);
-
-//                 String friendCode;
-//                 do {
-//                     friendCode = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
-//                 } while (memberRepository.existsByFriendCode(friendCode));
-
-//                 // 1. 회원가입 처리
-//                 Member newMember = Member.builder()
-//                         .kakaoId(kakaoId)
-//                         .nickname(nickname)
-//                         .profileImage(profileImage)
-//                         .friendCode(friendCode)
-//                         .build();
-
-//                 memberRepository.save(newMember);
-//                 log.info("회원가입 완료 - 신규 회원 ID: {}", newMember.getId());
-
-//                 // 2. JWT 발급
-//                 String jwtToken = jwtTokenProvider.createToken(newMember.getId().toString());
-
-//                 log.info("🎟️ 발급된 JWT 토큰: {}", jwtToken);
-
-//                 // 3. 플로우 테스트용 리다이렉트 or 일반 로그인 결과 페이지
-//                 if ("flow_test".equals(state)) {
-//                     return "redirect:/flow-test.html?login_success=true&member_id=" + newMember.getId() +
-//                             "&token=" + jwtToken + "&is_new_member=true";
-//                 }
-
-//                 model.addAttribute("success", true);
-//                 model.addAttribute("isExistingMember", false);
-//                 model.addAttribute("member", newMember);
-//                 model.addAttribute("userInfo", userInfo);
-//                 model.addAttribute("loginToken", jwtToken);
-
-//                 return "kakao-login-result";
             }
             
         } catch (Exception e) {
             log.error("카카오 로그인 콜백 처리 실패", e);
-            // 오류 발생 시 에러 페이지로 리다이렉트
+            // 오류 발생 시 프론트엔드 에러 페이지로 리다이렉트
             try {
                 String errorMessage = URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
-                URI errorRedirectUri = new URI("/?error=true&message=" + errorMessage);
+                URI errorRedirectUri = new URI(FRONTEND_URL + "/?error=true&message=" + errorMessage);
                 HttpHeaders headers = new HttpHeaders();
                 headers.setLocation(errorRedirectUri);
                 return new ResponseEntity<>(headers, HttpStatus.FOUND);
