@@ -1,0 +1,108 @@
+@import "tailwindcss";
+
+@theme {
+    --color-grey-99: oklch(0.97 0.003 285);
+    --color-grey-98: oklch(0.96 0.003 283);
+    --color-grey-97: oklch(0.93 0.003 281);
+    --color-grey-96: oklch(0.91 0.003 280);
+    --color-grey-95: oklch(0.88 0.003 281);
+    --color-grey-90: oklch(0.80 0.004 278);
+    --color-grey-80: oklch(0.72 0.004 275);
+    --color-grey-70: oklch(0.65 0.004 274);
+    --color-grey-60: oklch(0.58 0.005 272);
+    --color-grey-50: oklch(0.50 0.005 271);
+    --color-grey-40: oklch(0.41 0.004 272);
+    --color-grey-30: oklch(0.32 0.003 273);
+    --color-grey-25: oklch(0.26 0.002 274);
+    --color-grey-23: oklch(0.24 0.002 274);
+    --color-grey-22: oklch(0.22 0.002 274);
+    --color-grey-20: oklch(0.20 0.002 274);
+    --color-grey-17: oklch(0.15 0.002 274);
+    --color-grey-15: oklch(0.12 0.001 275);
+    --color-grey-10: oklch(0.10 0.001 276);
+    --color-grey-7: oklch(0.08 0.001 277);
+    --color-grey-5: oklch(0.06 0 0);
+    --color-VB-99: oklch(0.99 0.007 220);
+    --color-VB-98: oklch(0.98 0.01 223);
+    --color-VB-95: oklch(0.96 0.03 221);
+    --color-VB-90: oklch(0.94 0.05 220);
+    --color-VB-80: oklch(0.92 0.06 218);
+    --color-VB-70: oklch(0.89 0.08 216);
+    --color-VB-60: oklch(0.85 0.11 213);
+    --color-VB-50: oklch(0.77 0.14 210);
+    --color-VB-40: oklch(0.73 0.13 209);
+    --color-VB-30: oklch(0.69 0.12 208);
+    --color-VB-20: oklch(0.58 0.09 205);
+    --color-VB-10: oklch(0.35 0.05 203);
+}
+
+@font-face {
+    font-family: 'Pretendard';
+    src: url('/fonts/PretendardVariable.woff2') format('woff2');
+}
+
+html {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
+}
+
+body {
+    font-family: 'Pretendard';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+
+    width: 100vw;
+    height: 100vh;
+}
+
+#root {
+    height: 100vh;
+    width: 100vw;
+
+    padding-top: env(safe-area-inset-top);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.display-n {
+    font-size: 36px;
+    line-height: 1.3;
+    word-spacing: -2.5%;
+}
+
+.title-n {
+    font-size: 20px;
+    line-height: 1.4;
+    word-spacing: -2.5%;
+}
+
+.body-n {
+    font-size: 15px;
+    line-height: 1.5;
+    word-spacing: -2.5%;
+}
+
+.button-n {
+    font-size: 13px;
+    line-height: 1.5;
+    word-spacing: -2.5%;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+/* Firefox 용 */
+.no-scrollbar {
+    scrollbar-width: none;
+}
+
+/* IE 및 구형 Edge 용 */
+.no-scrollbar {
+    -ms-overflow-style: none;
+}
