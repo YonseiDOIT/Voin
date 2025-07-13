@@ -1,14 +1,14 @@
 package com.voin.service;
 
 import com.voin.entity.Card;
-import com.voin.entity.Form;
+import com.voin.entity.Story;
 import com.voin.entity.Coin;
 import com.voin.entity.Keyword;
 import com.voin.entity.Member;
-import com.voin.constant.FormType;
+import com.voin.constant.StoryType;
 import com.voin.exception.ResourceNotFoundException;
 import com.voin.repository.CardRepository;
-import com.voin.repository.FormRepository;
+import com.voin.repository.StoryRepository;
 import com.voin.repository.CoinRepository;
 import com.voin.repository.KeywordRepository;
 import com.voin.repository.MemberRepository;
@@ -25,7 +25,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import com.voin.dto.request.CardCreateRequest;
 
-
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -33,7 +32,6 @@ import java.util.UUID;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.stream.Collectors;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.voin.constant.SituationContext;
 
 /**
@@ -57,7 +55,7 @@ import com.voin.constant.SituationContext;
 public class CardService {
 
     private final CardRepository cardRepository;
-    private final FormRepository formRepository;
+    private final StoryRepository storyRepository;
     private final CoinRepository coinRepository;
     private final KeywordRepository keywordRepository;
     private final MemberRepository memberRepository;
@@ -67,12 +65,16 @@ public class CardService {
                 .orElseThrow(() -> new ResourceNotFoundException("Card not found with id: " + cardId));
     }
 
-    public List<Card> findByMemberId(UUID memberId) {
-        return cardRepository.findByMemberIdOrderByCreatedAtDesc(memberId);
+    public List<Card> findByOwnerId(UUID ownerId) {
+        return cardRepository.findByOwnerIdOrderByCreatedAtDesc(ownerId);
     }
 
-    public Page<Card> findByMemberId(UUID memberId, Pageable pageable) {
-        return cardRepository.findByMemberIdOrderByCreatedAtDesc(memberId, pageable);
+    public List<Card> findByCreatorId(UUID creatorId) {
+        return cardRepository.findByCreatorIdOrderByCreatedAtDesc(creatorId);
+    }
+
+    public Page<Card> findByOwnerId(UUID ownerId, Pageable pageable) {
+        return cardRepository.findByOwnerIdOrderByCreatedAtDesc(ownerId, pageable);
     }
 
     public Page<Card> findPublicCards(Pageable pageable) {
@@ -85,15 +87,86 @@ public class CardService {
 
     public List<Card> findMyCards() {
         Member currentMember = getCurrentMember();
-        return cardRepository.findByMemberIdOrderByCreatedAtDesc(currentMember.getId());
+        return cardRepository.findByOwnerIdOrderByCreatedAtDesc(currentMember.getId());
+    }
+
+    /**
+     * 📋 내 카드 목록 조회 (Story 정보 포함)
+     * 
+     * 사용자가 생성한 모든 카드와 함께 연결된 Story의 상세 정보를 반환합니다.
+     * 경험 돌아보기의 경우 answer1, answer2 필드 정보도 포함됩니다.
+     * 
+     * @return 카드와 Story 정보가 포함된 데이터 목록
+     */
+    public List<Map<String, Object>> getMyCardsWithStoryData() {
+        Member currentMember = getCurrentMember();
+        List<Card> cards = cardRepository.findByOwnerIdOrderByCreatedAtDesc(currentMember.getId());
+        
+        return cards.stream().map(card -> {
+            Map<String, Object> cardData = new HashMap<>();
+            
+            // 기본 카드 정보
+            cardData.put("id", card.getId());
+            cardData.put("content", card.getContent());
+            cardData.put("createdAt", card.getCreatedAt());
+            cardData.put("isPublic", card.getIsPublic());
+            cardData.put("isGift", card.getIsGift());
+            cardData.put("situationContext", card.getSituationContext());
+            
+            // 키워드 정보
+            if (card.getKeyword() != null) {
+                Map<String, Object> keywordData = new HashMap<>();
+                keywordData.put("id", card.getKeyword().getId());
+                keywordData.put("name", card.getKeyword().getName());
+                keywordData.put("description", card.getKeyword().getDescription());
+                
+                // 코인 정보
+                if (card.getKeyword().getCoin() != null) {
+                    Map<String, Object> coinData = new HashMap<>();
+                    coinData.put("id", card.getKeyword().getCoin().getId());
+                    coinData.put("name", card.getKeyword().getCoin().getName());
+                    coinData.put("description", card.getKeyword().getCoin().getDescription());
+                    coinData.put("color", card.getKeyword().getCoin().getColor());
+                    keywordData.put("coin", coinData);
+                }
+                
+                cardData.put("keyword", keywordData);
+            }
+            
+            // Story 정보 (경험 돌아보기의 answer1, answer2 포함)
+            if (card.getStory() != null) {
+                Map<String, Object> storyData = new HashMap<>();
+                storyData.put("id", card.getStory().getId());
+                storyData.put("title", card.getStory().getTitle());
+                storyData.put("content", card.getStory().getContent());
+                storyData.put("storyType", card.getStory().getStoryType().name());
+                
+                // 경험 돌아보기인 경우 추가 정보 포함
+                if (card.getStory().getStoryType() == StoryType.EXPERIENCE_REFLECTION) {
+                    if (card.getStory().getSituationContext() != null) {
+                        storyData.put("situationContext", card.getStory().getSituationContext());
+                    }
+                    if (card.getStory().getAnswer1() != null) {
+                        storyData.put("answer1", card.getStory().getAnswer1());
+                    }
+                    if (card.getStory().getAnswer2() != null) {
+                        storyData.put("answer2", card.getStory().getAnswer2());
+                    }
+                }
+                
+                cardData.put("story", storyData);
+            }
+            
+            return cardData;
+        }).collect(Collectors.toList());
     }
 
     @Transactional
     public Card createCard(CardCreateRequest request) {
         Member currentMember = getCurrentMember();
 
-        Form form = formRepository.findById(request.getFormId())
-                .orElseThrow(() -> new ResourceNotFoundException("Form not found with id: " + request.getFormId()));
+        Story story = storyRepository.findById(request.getFormId())
+                .orElseThrow(() -> new ResourceNotFoundException("Story not found with id: " + request.getFormId()));
 
         if (request.getKeywordIds() == null || request.getKeywordIds().isEmpty()) {
             throw new IllegalArgumentException("Keyword ID는 필수입니다.");
@@ -107,30 +180,38 @@ public class CardService {
              throw new IllegalArgumentException("선택된 키워드가 해당 코인에 속해있지 않습니다.");
         }
 
-        // 사례 돌아보기로 생성된 카드인지 확인하여 상황 맥락 설정
+        // 경험 돌아보기로 생성된 카드인지 확인하여 상황 맥락 설정
         String situationContext = null;
-        if (form.getType() == FormType.EXPERIENCE_REFLECTION && form.getFormResponse() != null) {
-            try {
-                ObjectMapper objectMapper = new ObjectMapper();
-                Map<String, Object> responseData = objectMapper.readValue(form.getFormResponse(), Map.class);
-                situationContext = (String) responseData.get("situationContextTitle");
-            } catch (Exception e) {
-                log.warn("Failed to parse form response for situation context: {}", e.getMessage());
-            }
+        if (story.getStoryType() == StoryType.EXPERIENCE_REFLECTION) {
+            situationContext = story.getSituationContext();
         }
 
-        Card card = Card.builder()
-                .member(currentMember)
-                .targetMember(currentMember) // '나의 장점'이므로 대상도 자신
-                .form(form)
-                .keyword(keyword)
-                .content(form.getDescription())
-                .situationContext(situationContext)
-                .isPublic(false)
-                .build();
+        // 자신에 대한 카드 생성
+        Card card = Card.createSelfCard(
+            currentMember.getId(),
+            currentMember,
+            story,
+            keyword,
+            story.getContent()
+        );
+        
+        // 상황 맥락 설정
+        if (situationContext != null && !situationContext.trim().isEmpty()) {
+            card = Card.builder()
+                    .creatorId(card.getCreatorId())
+                    .ownerId(card.getOwnerId())
+                    .targetMember(card.getTargetMember())
+                    .story(card.getStory())
+                    .keyword(card.getKeyword())
+                    .content(card.getContent())
+                    .isPublic(card.getIsPublic())
+                    .isGift(card.getIsGift())
+                    .situationContext(situationContext)
+                    .build();
+        }
 
         Card savedCard = cardRepository.save(card);
-        log.info("Created card from request for member: {}", currentMember.getId());
+        log.info("Created card from story: {} for member: {}", story.getId(), currentMember.getId());
         return savedCard;
     }
 
@@ -140,13 +221,15 @@ public class CardService {
         
         Card updatedEntity = Card.builder()
                 .id(existingCard.getId())
-                .member(existingCard.getMember())
+                .creatorId(existingCard.getCreatorId())
+                .ownerId(existingCard.getOwnerId())
                 .targetMember(existingCard.getTargetMember())
-                .form(existingCard.getForm())
+                .story(existingCard.getStory())
                 .keyword(existingCard.getKeyword())
                 .content(updatedCard.getContent() != null ? updatedCard.getContent() : existingCard.getContent())
-                .formResponse(existingCard.getFormResponse())
                 .isPublic(updatedCard.getIsPublic() != null ? updatedCard.getIsPublic() : existingCard.getIsPublic())
+                .isGift(existingCard.getIsGift())
+                .situationContext(existingCard.getSituationContext())
                 .build();
         
         return cardRepository.save(updatedEntity);
@@ -162,57 +245,59 @@ public class CardService {
     // ===== 코인 찾기 플로우 메서드들 =====
 
     @Transactional
-    public Long saveDiaryForm(String diaryContent) {
+    public Long saveDiaryStory(String diaryContent) {
         Member currentMember = getCurrentMember();
         
         // 사용자가 입력한 일기 내용이 비어있으면 기본 메시지를 사용합니다.
-        String description = (diaryContent != null && !diaryContent.trim().isEmpty()) 
+        String content = (diaryContent != null && !diaryContent.trim().isEmpty()) 
                                 ? diaryContent 
                                 : "작성된 일기 내용이 없습니다.";
 
-        Form form = Form.builder()
-                .title("오늘의 일기")
-                .description(description) // 실제 일기 내용을 저장합니다.
-                .type(FormType.TODAY_DIARY)
-                .build();
+        Story story = Story.createDiary(
+            currentMember.getId(),
+            "오늘의 일기",
+            content
+        );
         
-        Form savedForm = formRepository.save(form);
+        Story savedStory = storyRepository.save(story);
         
-        log.info("Saved diary form: {} for member: {} with content: {}", 
-                savedForm.getId(), currentMember.getId(), 
-                description.substring(0, Math.min(description.length(), 20)) + "...");
-        return savedForm.getId();
+        log.info("Saved diary story: {} for member: {} with content: {}", 
+                savedStory.getId(), currentMember.getId(), 
+                content.substring(0, Math.min(content.length(), 20)) + "...");
+        return savedStory.getId();
     }
 
     /**
-     * 📄 Form 데이터 조회
+     * 📄 Story 데이터 조회
      * 
-     * @param formId 조회할 Form의 ID
-     * @return Form 데이터 Map
+     * @param storyId 조회할 Story의 ID
+     * @return Story 데이터 Map
      */
-    public Map<String, Object> getFormData(Long formId) {
-        Form form = formRepository.findById(formId)
-                .orElseThrow(() -> new ResourceNotFoundException("Form not found with id: " + formId));
+    public Map<String, Object> getStoryData(Long storyId) {
+        Story story = storyRepository.findById(storyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Story not found with id: " + storyId));
         
-        Map<String, Object> formData = new HashMap<>();
-        formData.put("id", form.getId());
-        formData.put("title", form.getTitle());
-        formData.put("description", form.getDescription());
-        formData.put("type", form.getType().name());
+        Map<String, Object> storyData = new HashMap<>();
+        storyData.put("id", story.getId());
+        storyData.put("title", story.getTitle());
+        storyData.put("content", story.getContent());
+        storyData.put("type", story.getStoryType().name());
         
-        // 사례 돌아보기인 경우 상세 응답 데이터 포함
-        if (form.getType() == FormType.EXPERIENCE_REFLECTION && form.getFormResponse() != null) {
-            try {
-                ObjectMapper objectMapper = new ObjectMapper();
-                Map<String, Object> responseData = objectMapper.readValue(form.getFormResponse(), Map.class);
-                formData.put("responseData", responseData);
-            } catch (Exception e) {
-                log.warn("Failed to parse form response for form {}: {}", formId, e.getMessage());
+        // 경험 돌아보기인 경우 추가 정보 포함
+        if (story.getStoryType() == StoryType.EXPERIENCE_REFLECTION) {
+            if (story.getSituationContext() != null) {
+                storyData.put("situationContext", story.getSituationContext());
+            }
+            if (story.getAnswer1() != null) {
+                storyData.put("answer1", story.getAnswer1());
+            }
+            if (story.getAnswer2() != null) {
+                storyData.put("answer2", story.getAnswer2());
             }
         }
         
-        log.info("Retrieved form data for ID: {}, type: {}", formId, form.getType());
-        return formData;
+        log.info("Retrieved story data for ID: {}, type: {}", storyId, story.getStoryType());
+        return storyData;
     }
 
     // ===== 사례 돌아보기 플로우 메서드들 =====
@@ -242,7 +327,7 @@ public class CardService {
      * 
      * @param situationContextId 선택한 상황 맥락 ID (1~6)
      * @param actionDescription 첫 번째 질문에 대한 답변 (어떤 행동을 했는지)
-     * @return 생성된 Form의 ID
+     * @return 생성된 Story의 ID
      */
     @Transactional
     public Long saveExperienceStep1(Integer situationContextId, String actionDescription) {
@@ -251,168 +336,132 @@ public class CardService {
         // 상황 맥락 유효성 검사
         SituationContext situationContext = SituationContext.findById(situationContextId);
         
-        // JSON 형태로 1단계 응답 저장
-        ObjectMapper objectMapper = new ObjectMapper();
-        Map<String, Object> responseData = new HashMap<>();
-        responseData.put("situationContextId", situationContextId);
-        responseData.put("situationContextTitle", situationContext.getTitle());
-        responseData.put("action", actionDescription);
+        Story story = Story.createExperienceReflection(
+            currentMember.getId(),
+            "경험 돌아보기",
+            situationContext.getTitle(),
+            actionDescription
+        );
         
-        String formResponse;
-        try {
-            formResponse = objectMapper.writeValueAsString(responseData);
-        } catch (Exception e) {
-            throw new RuntimeException("JSON 변환 중 오류가 발생했습니다.", e);
-        }
+        Story savedStory = storyRepository.save(story);
         
-        Form form = Form.builder()
-                .title("사례 돌아보기")
-                .description("상황: " + situationContext.getTitle() + " / 행동: " + actionDescription)
-                .type(FormType.EXPERIENCE_REFLECTION)
-                .formResponse(formResponse)
-                .build();
-        
-        Form savedForm = formRepository.save(form);
-        
-        log.info("Saved experience step1 form: {} for member: {} with context: {}", 
-                savedForm.getId(), currentMember.getId(), situationContext.getTitle());
-        return savedForm.getId();
+        log.info("Saved experience step1 story: {} for member: {} with context: {}", 
+                savedStory.getId(), currentMember.getId(), situationContext.getTitle());
+        return savedStory.getId();
     }
 
     /**
      * 💭 사례 돌아보기 2단계 저장 (생각 질문)
      * 
-     * @param formId 1단계에서 생성된 Form ID
+     * @param storyId 1단계에서 생성된 Story ID
      * @param thoughtDescription 두 번째 질문에 대한 답변 (행동에 대한 생각)
      */
     @Transactional
-    public void saveExperienceStep2(Long formId, String thoughtDescription) {
-        Form form = formRepository.findById(formId)
-                .orElseThrow(() -> new ResourceNotFoundException("Form not found with id: " + formId));
+    public void saveExperienceStep2(Long storyId, String thoughtDescription) {
+        Story story = storyRepository.findById(storyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Story not found with id: " + storyId));
         
-        // 기존 JSON 응답에 2단계 응답 추가
-        ObjectMapper objectMapper = new ObjectMapper();
-        try {
-            Map<String, Object> responseData = objectMapper.readValue(form.getFormResponse(), Map.class);
-            responseData.put("thought", thoughtDescription);
-            
-            String updatedFormResponse = objectMapper.writeValueAsString(responseData);
-            
-            // 새로운 Form 객체를 만들어 저장 (불변 객체 패턴)
-            Form updatedForm = Form.builder()
-                    .id(form.getId())
-                    .title(form.getTitle())
-                    .description(form.getDescription() + " / 생각: " + thoughtDescription)
-                    .type(form.getType())
-                    .formResponse(updatedFormResponse)
-                    .build();
-            
-            formRepository.save(updatedForm);
-            
-            log.info("Updated experience step2 for form: {} with thought response", formId);
-        } catch (Exception e) {
-            throw new RuntimeException("JSON 처리 중 오류가 발생했습니다.", e);
-        }
+        // answer2 필드에 두 번째 답변 저장
+        story.updateAnswer2(thoughtDescription);
+        
+        storyRepository.save(story);
+        
+        log.info("Updated experience step2 for story: {} with thought response", storyId);
     }
 
     @Transactional
     public Long saveFriendStep1(Integer situationId, String friendActionDescription) {
         Member currentMember = getCurrentMember();
         
-        Form form = Form.builder()
-                .title("함께한 추억 떠올리기 - 1단계")
-                .description("순간의 상황: " + situationId + ", 친구 행동: " + friendActionDescription)
-                .type(FormType.FRIEND_STRENGTH)
+        Story story = Story.builder()
+                .memberId(currentMember.getId())
+                .title("함께한 추억 떠올리기")
+                .content("친구와의 추억")
+                .storyType(StoryType.EXPERIENCE_REFLECTION) // 친구 장점도 경험 돌아보기로 분류
+                .situationContext("친구와의 순간 " + situationId)
+                .answer1(friendActionDescription)
                 .build();
         
-        Form savedForm = formRepository.save(form);
+        Story savedStory = storyRepository.save(story);
         
-        log.info("Saved friend step1 form: {} for member: {}", savedForm.getId(), currentMember.getId());
-        return savedForm.getId();
+        log.info("Saved friend step1 story: {} for member: {}", savedStory.getId(), currentMember.getId());
+        return savedStory.getId();
     }
 
     @Transactional
-    public void saveFriendStep2(Long formId, String friendThoughtDescription) {
-        Form form = formRepository.findById(formId)
-                .orElseThrow(() -> new ResourceNotFoundException("Form not found with id: " + formId));
+    public void saveFriendStep2(Long storyId, String friendThoughtDescription) {
+        Story story = storyRepository.findById(storyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Story not found with id: " + storyId));
         
-        // TODO: Form 엔티티에 step2 응답을 저장할 방법 구현
-        // form.setStep2Response(friendThoughtDescription);
+        // answer2 필드에 두 번째 답변 저장
+        story.updateAnswer2(friendThoughtDescription);
         
-        log.info("Updated friend step2 for form: {}", formId);
-    }
-
-    public Map<String, Object> getCoinAndKeywordOptions() {
-        List<Coin> coins = coinRepository.findAll();
+        storyRepository.save(story);
         
-        Map<String, Object> options = new HashMap<>();
-        
-        for (Coin coin : coins) {
-            List<Keyword> keywords = keywordRepository.findByCoinId(coin.getId());
-            
-            Map<String, Object> coinInfo = Map.of(
-                "id", coin.getId(),
-                "name", coin.getName(),
-                "description", coin.getDescription(),
-                "color", coin.getColor(),
-                "keywords", keywords.stream()
-                    .map(keyword -> Map.of(
-                        "id", keyword.getId(),
-                        "name", keyword.getName(),
-                        "description", keyword.getDescription()
-                    ))
-                    .collect(Collectors.toList())
-            );
-            
-            options.put(coin.getName(), coinInfo);
-        }
-        
-        return Map.of("coins", options);
+        log.info("Updated friend step2 for story: {}", storyId);
     }
 
     /**
-     * 🙋‍♀️ 현재 접속한 사용자 정보 가져오기
+     * 🪙 코인과 키워드 옵션 조회
      * 
-     * 지금 웹사이트를 사용하고 있는 사람이 누구인지 알아내는 기능입니다.
+     * 사용자가 카드를 생성할 때 선택할 수 있는 모든 코인과 각 코인에 속한 키워드들을 반환합니다.
+     */
+    public Map<String, Object> getCoinAndKeywordOptions() {
+        List<Coin> allCoins = coinRepository.findAllByOrderByName();
+        
+        Map<String, Object> coinOptions = new HashMap<>();
+        
+        for (Coin coin : allCoins) {
+            List<Keyword> keywords = keywordRepository.findByCoinId(coin.getId());
+            
+            List<Map<String, Object>> keywordOptions = keywords.stream()
+                    .map(keyword -> {
+                        Map<String, Object> keywordMap = new HashMap<>();
+                        keywordMap.put("id", keyword.getId());
+                        keywordMap.put("name", keyword.getName());
+                        keywordMap.put("description", keyword.getDescription() != null ? keyword.getDescription() : "");
+                        return keywordMap;
+                    })
+                    .collect(Collectors.toList());
+            
+            Map<String, Object> coinInfo = new HashMap<>();
+            coinInfo.put("id", coin.getId());
+            coinInfo.put("name", coin.getName());
+            coinInfo.put("description", coin.getDescription() != null ? coin.getDescription() : "");
+            coinInfo.put("color", coin.getColor() != null ? coin.getColor() : "#CCCCCC");
+            coinInfo.put("keywords", keywordOptions);
+            
+            coinOptions.put(coin.getName(), coinInfo);
+        }
+        
+        return Map.of("coins", coinOptions);
+    }
+
+    /**
+     * 현재 로그인한 회원을 조회합니다.
      * 
-     * ⚠️ 현재는 임시로 첫 번째 회원을 사용합니다.
-     * 나중에 실제 로그인 기능이 완성되면 진짜 로그인한 사용자를 찾도록 바뀔 예정이에요!
-     * 
-     * @return 현재 사용자의 정보
-     * @throws RuntimeException 회원이 아무도 없을 때 발생하는 오류
+     * TODO: 실제 인증 시스템이 구현되면 JWT 토큰이나 세션에서 회원 정보를 가져오도록 수정해야 합니다.
+     * 현재는 테스트를 위해 세션에서 memberId를 조회하거나, 없으면 첫 번째 회원을 반환합니다.
      */
     private Member getCurrentMember() {
-        // 세션에서 현재 사용자 ID 가져오기 시도
         try {
-            // RequestContextHolder를 통해 현재 HTTP 세션에 접근
             ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
             HttpServletRequest request = attr.getRequest();
             HttpSession session = request.getSession(false);
             
-            if (session != null) {
-                Object memberIdObj = session.getAttribute("memberId");
-                if (memberIdObj != null) {
-                    UUID memberId = (UUID) memberIdObj;
-                    Optional<Member> member = memberRepository.findById(memberId);
-                    if (member.isPresent()) {
-                        log.info("세션에서 현재 사용자 조회: {} ({})", member.get().getNickname(), member.get().getId());
-                        return member.get();
-                    }
-                }
+            if (session != null && session.getAttribute("memberId") != null) {
+                String memberIdStr = (String) session.getAttribute("memberId");
+                UUID memberId = UUID.fromString(memberIdStr);
+                return memberRepository.findById(memberId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Member not found with id: " + memberId));
             }
         } catch (Exception e) {
-            log.warn("세션에서 사용자 정보를 가져올 수 없음: {}", e.getMessage());
+            log.warn("Failed to get current member from session: {}", e.getMessage());
         }
         
-        // 세션에서 가져올 수 없는 경우 임시로 첫 번째 회원 사용
-        List<Member> members = memberRepository.findAll();
-        
-        if (members.isEmpty()) {
-            throw new RuntimeException("데이터베이스에 등록된 회원이 없습니다. 먼저 카카오 로그인을 통해 회원가입을 완료해주세요.");
-        }
-        
-        Member firstMember = members.get(0);
-        log.info("세션 정보 없음 - 임시로 첫 번째 회원 사용: {} ({})", firstMember.getNickname(), firstMember.getId());
-        return firstMember;
+        // 세션에서 찾을 수 없으면 테스트용으로 첫 번째 회원 반환
+        return memberRepository.findAll().stream()
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("No members found in database"));
     }
 } 

@@ -163,7 +163,42 @@
                 const keywordName = card.keyword
                   ? card.keyword.name
                   : "키워드 없음";
-                const content = card.content || "내용 없음";
+
+                // Story 타입별로 내용 구성
+                let contentHtml = "";
+                if (
+                  card.story &&
+                  card.story.storyType === "EXPERIENCE_REFLECTION"
+                ) {
+                  // 경험 돌아보기인 경우 answer1, answer2 표시
+                  const situationContext =
+                    card.story.situationContext || card.situationContext || "";
+                  const answer1 = card.story.answer1 || "";
+                  const answer2 = card.story.answer2 || "";
+
+                  contentHtml = `
+                    ${
+                      situationContext
+                        ? `<div style="font-size: 14px; color: #666; margin-bottom: 12px; font-weight: 500;">📍 ${situationContext}</div>`
+                        : ""
+                    }
+                    ${
+                      answer1
+                        ? `<div style="margin-bottom: 12px;"><strong>행동:</strong> ${answer1}</div>`
+                        : ""
+                    }
+                    ${
+                      answer2
+                        ? `<div style="margin-bottom: 12px;"><strong>생각:</strong> ${answer2}</div>`
+                        : ""
+                    }
+                  `;
+                } else {
+                  // 일기나 기타 타입인 경우 기본 content 표시
+                  const content =
+                    card.story?.content || card.content || "내용 없음";
+                  contentHtml = `<p class="card-content">${content}</p>`;
+                }
 
                 // 날짜 포맷팅
                 let formattedDate = "";
@@ -179,7 +214,7 @@
                 cardElement.innerHTML = `
                                 <div class="card-coin">${coinName}</div>
                                 <div class="card-keyword">💎 ${keywordName}</div>
-                                <p class="card-content">${content}</p>
+                                ${contentHtml}
                                 ${
                                   formattedDate
                                     ? `<div class="card-date">생성일: ${formattedDate}</div>`
