@@ -20,24 +20,41 @@ import java.util.UUID;
 @Repository
 public interface CardRepository extends JpaRepository<Card, Long> {
 
-    // === 회원별 카드 조회 ===
+    // === 소유자별 카드 조회 ===
 
     /**
-     * 특정 회원이 작성한 모든 카드를 조회합니다 (최신순)
-     * @param memberId 회원 ID
-     * @return 해당 회원이 작성한 카드 목록
+     * 특정 회원이 소유한 모든 카드를 조회합니다 (최신순)
+     * @param ownerId 소유자 ID
+     * @return 해당 회원이 소유한 카드 목록
      */
-    @Query("SELECT c FROM Card c WHERE c.member.id = :memberId ORDER BY c.createdAt DESC")
-    List<Card> findByMemberIdOrderByCreatedAtDesc(@Param("memberId") UUID memberId);
+    List<Card> findByOwnerIdOrderByCreatedAtDesc(UUID ownerId);
 
     /**
-     * 특정 회원이 작성한 카드를 페이징으로 조회합니다 (최신순)
-     * @param memberId 회원 ID
+     * 특정 회원이 소유한 카드를 페이징으로 조회합니다 (최신순)
+     * @param ownerId 소유자 ID
      * @param pageable 페이징 정보
-     * @return 해당 회원이 작성한 카드 페이지
+     * @return 해당 회원이 소유한 카드 페이지
      */
-    @Query("SELECT c FROM Card c WHERE c.member.id = :memberId ORDER BY c.createdAt DESC")
-    Page<Card> findByMemberIdOrderByCreatedAtDesc(@Param("memberId") UUID memberId, Pageable pageable);
+    Page<Card> findByOwnerIdOrderByCreatedAtDesc(UUID ownerId, Pageable pageable);
+
+    // === 생성자별 카드 조회 ===
+
+    /**
+     * 특정 회원이 생성한 모든 카드를 조회합니다 (최신순)
+     * @param creatorId 생성자 ID
+     * @return 해당 회원이 생성한 카드 목록
+     */
+    List<Card> findByCreatorIdOrderByCreatedAtDesc(UUID creatorId);
+
+    /**
+     * 특정 회원이 생성한 카드를 페이징으로 조회합니다 (최신순)
+     * @param creatorId 생성자 ID
+     * @param pageable 페이징 정보
+     * @return 해당 회원이 생성한 카드 페이지
+     */
+    Page<Card> findByCreatorIdOrderByCreatedAtDesc(UUID creatorId, Pageable pageable);
+
+    // === 대상자별 카드 조회 ===
 
     /**
      * 특정 회원이 대상인 모든 카드를 조회합니다 (최신순)
@@ -85,13 +102,13 @@ public interface CardRepository extends JpaRepository<Card, Long> {
     Page<Card> findByContentContainingAndIsPublicTrue(@Param("keyword") String keyword, Pageable pageable);
 
     /**
-     * 특정 회원의 카드 중 내용에 키워드가 포함된 카드를 조회합니다
-     * @param memberId 회원 ID
+     * 특정 소유자의 카드 중 내용에 키워드가 포함된 카드를 조회합니다
+     * @param ownerId 소유자 ID
      * @param keyword 검색 키워드
      * @return 검색 조건에 맞는 카드 목록
      */
-    @Query("SELECT c FROM Card c WHERE c.member.id = :memberId AND c.content LIKE %:keyword% ORDER BY c.createdAt DESC")
-    List<Card> findByMemberIdAndContentContaining(@Param("memberId") UUID memberId, @Param("keyword") String keyword);
+    @Query("SELECT c FROM Card c WHERE c.ownerId = :ownerId AND c.content LIKE %:keyword% ORDER BY c.createdAt DESC")
+    List<Card> findByOwnerIdAndContentContaining(@Param("ownerId") UUID ownerId, @Param("keyword") String keyword);
 
     /**
      * 키워드 이름으로 공개 카드를 검색합니다
@@ -102,15 +119,15 @@ public interface CardRepository extends JpaRepository<Card, Long> {
     @Query("SELECT c FROM Card c WHERE c.keyword.name LIKE %:keywordName% AND c.isPublic = true ORDER BY c.createdAt DESC")
     Page<Card> findByKeywordNameContainingAndIsPublicTrue(@Param("keywordName") String keywordName, Pageable pageable);
 
-    // === 폼/키워드별 조회 ===
+    // === 스토리/키워드별 조회 ===
 
     /**
-     * 특정 폼으로 작성된 모든 카드를 조회합니다
-     * @param formId 폼 ID
-     * @return 해당 폼으로 작성된 카드 목록
+     * 특정 스토리로 작성된 모든 카드를 조회합니다
+     * @param storyId 스토리 ID
+     * @return 해당 스토리로 작성된 카드 목록
      */
-    @Query("SELECT c FROM Card c WHERE c.form.id = :formId ORDER BY c.createdAt DESC")
-    List<Card> findByFormId(@Param("formId") Long formId);
+    @Query("SELECT c FROM Card c WHERE c.story.id = :storyId ORDER BY c.createdAt DESC")
+    List<Card> findByStoryId(@Param("storyId") Long storyId);
 
     /**
      * 특정 키워드로 작성된 모든 카드를 조회합니다
@@ -129,15 +146,39 @@ public interface CardRepository extends JpaRepository<Card, Long> {
     @Query("SELECT c FROM Card c WHERE c.keyword.coin.id = :coinId ORDER BY c.createdAt DESC")
     Page<Card> findByCoinId(@Param("coinId") Long coinId, Pageable pageable);
 
+    // === 선물 카드 조회 ===
+
+    /**
+     * 선물로 받은 카드들을 조회합니다
+     * @param ownerId 소유자 ID
+     * @return 선물 카드 목록
+     */
+    @Query("SELECT c FROM Card c WHERE c.ownerId = :ownerId AND c.isGift = true ORDER BY c.createdAt DESC")
+    List<Card> findGiftCardsByOwnerId(@Param("ownerId") UUID ownerId);
+
+    /**
+     * 특정 생성자가 선물한 카드들을 조회합니다
+     * @param creatorId 생성자 ID
+     * @return 선물한 카드 목록
+     */
+    @Query("SELECT c FROM Card c WHERE c.creatorId = :creatorId AND c.isGift = true ORDER BY c.createdAt DESC")
+    List<Card> findGiftCardsByCreatorId(@Param("creatorId") UUID creatorId);
+
     // === 통계 및 집계 ===
 
     /**
-     * 특정 회원이 작성한 카드 수를 조회합니다
-     * @param memberId 회원 ID
-     * @return 작성한 카드 수
+     * 특정 회원이 생성한 카드 수를 조회합니다
+     * @param creatorId 생성자 ID
+     * @return 생성한 카드 수
      */
-    @Query("SELECT COUNT(c) FROM Card c WHERE c.member.id = :memberId")
-    long countByMemberId(@Param("memberId") UUID memberId);
+    long countByCreatorId(UUID creatorId);
+
+    /**
+     * 특정 회원이 소유한 카드 수를 조회합니다
+     * @param ownerId 소유자 ID
+     * @return 소유한 카드 수
+     */
+    long countByOwnerId(UUID ownerId);
 
     /**
      * 특정 회원이 받은 카드 수를 조회합니다
@@ -176,25 +217,20 @@ public interface CardRepository extends JpaRepository<Card, Long> {
     // === 특수 조회 ===
 
     /**
-     * 두 회원 간의 모든 카드를 조회합니다
-     * @param memberId1 첫 번째 회원 ID
-     * @param memberId2 두 번째 회원 ID
-     * @return 두 회원 간의 카드 목록
-     */
-    @Query("SELECT c FROM Card c WHERE " +
-           "(c.member.id = :memberId1 AND c.targetMember.id = :memberId2) OR " +
-           "(c.member.id = :memberId2 AND c.targetMember.id = :memberId1) " +
-           "ORDER BY c.createdAt DESC")
-    List<Card> findCardsBetweenMembers(@Param("memberId1") UUID memberId1, 
-                                      @Param("memberId2") UUID memberId2);
-
-    /**
      * 자신에 대한 카드(셀프 카드)를 조회합니다
      * @param memberId 회원 ID
      * @return 자신에 대한 카드 목록
      */
-    @Query("SELECT c FROM Card c WHERE c.member.id = :memberId AND c.targetMember.id = :memberId ORDER BY c.createdAt DESC")
+    @Query("SELECT c FROM Card c WHERE c.creatorId = :memberId AND c.targetMember.id = :memberId ORDER BY c.createdAt DESC")
     List<Card> findSelfCardsByMemberId(@Param("memberId") UUID memberId);
+
+    /**
+     * 자신이 만들고 소유한 카드들을 조회합니다
+     * @param memberId 회원 ID
+     * @return 본인 소유 카드 목록
+     */
+    @Query("SELECT c FROM Card c WHERE c.creatorId = :memberId AND c.ownerId = :memberId ORDER BY c.createdAt DESC")
+    List<Card> findOwnCardsByMemberId(@Param("memberId") UUID memberId);
 
     /**
      * 내용이 없는 카드들을 조회합니다
@@ -226,11 +262,21 @@ public interface CardRepository extends JpaRepository<Card, Long> {
                               @Param("isPublic") boolean isPublic);
 
     /**
-     * 특정 회원의 모든 카드를 비공개로 설정합니다
-     * @param memberId 회원 ID
+     * 특정 소유자의 모든 카드를 비공개로 설정합니다
+     * @param ownerId 소유자 ID
      * @return 업데이트된 카드 수
      */
     @Modifying
-    @Query("UPDATE Card c SET c.isPublic = false WHERE c.member.id = :memberId")
-    int makeAllCardsPrivateByMemberId(@Param("memberId") UUID memberId);
+    @Query("UPDATE Card c SET c.isPublic = false WHERE c.ownerId = :ownerId")
+    int makeAllCardsPrivateByOwnerId(@Param("ownerId") UUID ownerId);
+
+    /**
+     * 카드 소유권을 이전합니다 (선물하기)
+     * @param cardId 카드 ID
+     * @param newOwnerId 새로운 소유자 ID
+     * @return 업데이트된 카드 수
+     */
+    @Modifying
+    @Query("UPDATE Card c SET c.ownerId = :newOwnerId, c.isGift = true WHERE c.id = :cardId")
+    int transferCardOwnership(@Param("cardId") Long cardId, @Param("newOwnerId") UUID newOwnerId);
 } 

@@ -1,18 +1,15 @@
 package com.voin.config;
 
 import com.voin.entity.Coin;
-import com.voin.entity.Form;
 import com.voin.entity.Keyword;
-import com.voin.entity.Question;
 import com.voin.repository.CoinRepository;
-import com.voin.repository.FormRepository;
 import com.voin.repository.KeywordRepository;
-import com.voin.repository.QuestionRepository;
-import com.voin.constant.FormType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.event.EventListener;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 
 import java.util.Arrays;
 import java.util.List;
@@ -20,18 +17,18 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class DataInitializer implements CommandLineRunner {
+@Transactional
+public class DataInitializer {
 
     private final CoinRepository coinRepository;
     private final KeywordRepository keywordRepository;
-    private final FormRepository formRepository;
-    private final QuestionRepository questionRepository;
 
-    @Override
-    public void run(String... args) throws Exception {
+    @EventListener(ApplicationReadyEvent.class)
+    public void initializeData() {
+        log.info("Initializing data after application startup...");
         initializeCoins();
         initializeKeywords();
-        initializeForms();
+        log.info("Data initialization completed successfully!");
     }
 
     private void initializeCoins() {
@@ -68,8 +65,8 @@ public class DataInitializer implements CommandLineRunner {
                     .build(),
                 Coin.builder()
                     .name("신념과 실행")
-                    .description("확고한 신념과 강한 실행력으로 목표를 달성하는 가치")
-                    .color("#F8C471")
+                    .description("자신의 가치와 믿음을 실행으로 옮기는 힘")
+                    .color("#F1948A")
                     .build()
         );
 
@@ -83,72 +80,101 @@ public class DataInitializer implements CommandLineRunner {
             return;
         }
 
-        // 1. 관리와 성장
-        Coin managementGrowth = coinRepository.findByName("관리와 성장").orElseThrow();
+        // 저장된 코인들을 다시 조회
+        List<Coin> savedCoins = coinRepository.findAllByOrderByName();
+        
+        if (savedCoins.size() != 6) {
+            throw new RuntimeException("Expected 6 coins but found " + savedCoins.size());
+        }
+
+        Coin managementGrowth = savedCoins.get(0); // 관리와 성장
+        Coin emotionAttitude = savedCoins.get(1);  // 감정과 태도  
+        Coin creativityFocus = savedCoins.get(2);   // 창의와 몰입
+        Coin thinkingSolving = savedCoins.get(3);   // 사고와 해결
+        Coin relationshipEmpathy = savedCoins.get(4); // 관계와 공감
+        Coin beliefExecution = savedCoins.get(5);   // 신념과 실행
+
+        // 관리와 성장 키워드
         List<Keyword> managementKeywords = Arrays.asList(
-                Keyword.builder().coin(managementGrowth).name("끈기").description("목표를 향해 포기하지 않고 꾸준히 나아가는 힘").build(),
-                Keyword.builder().coin(managementGrowth).name("인내심").description("어려움이나 불편함을 참고 견디는 태도").build(),
-                Keyword.builder().coin(managementGrowth).name("성실함").description("맡은 일에 꾸준히 최선을 다하는 태도").build(),
-                Keyword.builder().coin(managementGrowth).name("절제력").description("욕구나 충동을 이성적으로 통제하는 힘").build(),
-                Keyword.builder().coin(managementGrowth).name("침착함").description("감정이나 상황에 흔들리지 않고 차분히 대응하는 태도").build(),
-                Keyword.builder().coin(managementGrowth).name("학습력").description("새로운 지식이나 경험을 빠르게 이해하고 익히는 능력").build(),
-                Keyword.builder().coin(managementGrowth).name("성찰력").description("자신을 되돌아보고 의미를 찾는 내면적 사고 태도").build(),
-                Keyword.builder().coin(managementGrowth).name("적응력").description("새로운 변화에 빠르고 유연하게 적응하는 능력").build(),
-                Keyword.builder().coin(managementGrowth).name("수용성").description("피드백이나 의견을 열린 태도로 받아들이는 자세").build()
+                Keyword.builder().coin(managementGrowth).name("계획성").description("체계적으로 계획을 세우고 실행하는 능력").build(),
+                Keyword.builder().coin(managementGrowth).name("조직력").description("일이나 물건을 효율적으로 정리하고 관리하는 능력").build(),
+                Keyword.builder().coin(managementGrowth).name("끈기").description("어려움이 있어도 포기하지 않고 지속하는 의지").build(),
+                Keyword.builder().coin(managementGrowth).name("성장마인드").description("배움과 발전에 대한 열린 자세와 의지").build(),
+                Keyword.builder().coin(managementGrowth).name("목표지향").description("명확한 목표를 설정하고 달성하려는 의지").build(),
+                Keyword.builder().coin(managementGrowth).name("자기관리").description("자신의 시간과 에너지를 효과적으로 관리하는 능력").build(),
+                Keyword.builder().coin(managementGrowth).name("학습능력").description("새로운 지식과 기술을 빠르게 습득하는 능력").build(),
+                Keyword.builder().coin(managementGrowth).name("개선의지").description("현재 상황을 더 나은 방향으로 개선하려는 의지").build(),
+                Keyword.builder().coin(managementGrowth).name("자기성찰").description("자신의 행동과 생각을 돌아보고 분석하는 능력").build(),
+                Keyword.builder().coin(managementGrowth).name("인내심").description("힘든 상황에서도 참고 견디는 정신력").build(),
+                Keyword.builder().coin(managementGrowth).name("자율성").description("스스로 판단하고 행동할 수 있는 독립적 사고력").build(),
+                Keyword.builder().coin(managementGrowth).name("완결성").description("시작한 일을 끝까지 완료하려는 책임감").build()
         );
 
-        // 2. 감정과 태도
-        Coin emotionAttitude = coinRepository.findByName("감정과 태도").orElseThrow();
+        // 감정과 태도 키워드
         List<Keyword> emotionKeywords = Arrays.asList(
-                Keyword.builder().coin(emotionAttitude).name("유머 감각").description("주변을 웃게 만드는 센스").build(),
-                Keyword.builder().coin(emotionAttitude).name("감수성").description("섬세한 감정과 풍부한 감성으로 세상을 바라보는 능력").build(),
-                Keyword.builder().coin(emotionAttitude).name("표현력").description("감정이나 생각을 솔직하고 풍부하게 표현하는 능력").build(),
-                Keyword.builder().coin(emotionAttitude).name("밝은 에너지").description("주변까지 환하게 만드는 활기찬 에너지").build(),
-                Keyword.builder().coin(emotionAttitude).name("긍정성").description("상황을 긍정적으로 받아들이는 태도").build(),
-                Keyword.builder().coin(emotionAttitude).name("열정").description("무언가에 강한 의욕과 에너지를 갖고 임하는 태도").build()
+                Keyword.builder().coin(emotionAttitude).name("긍정성").description("밝고 낙관적인 마음가짐으로 상황을 바라보는 태도").build(),
+                Keyword.builder().coin(emotionAttitude).name("유머감각").description("상황을 재미있게 만들고 분위기를 밝게 하는 능력").build(),
+                Keyword.builder().coin(emotionAttitude).name("열정").description("일이나 목표에 대한 뜨거운 관심과 의욕").build(),
+                Keyword.builder().coin(emotionAttitude).name("친근함").description("다른 사람에게 편안함과 호감을 주는 성격").build(),
+                Keyword.builder().coin(emotionAttitude).name("차분함").description("급하지 않고 침착하게 상황을 대하는 태도").build(),
+                Keyword.builder().coin(emotionAttitude).name("안정감").description("다른 사람에게 심리적 편안함을 주는 능력").build(),
+                Keyword.builder().coin(emotionAttitude).name("활력").description("생기있고 에너지 넘치는 모습").build(),
+                Keyword.builder().coin(emotionAttitude).name("겸손함").description("자신을 낮추고 다른 사람을 존중하는 태도").build(),
+                Keyword.builder().coin(emotionAttitude).name("정서조절").description("자신의 감정을 적절히 관리하고 표현하는 능력").build(),
+                Keyword.builder().coin(emotionAttitude).name("회복탄력성").description("어려운 상황에서 빠르게 회복하는 능력").build(),
+                Keyword.builder().coin(emotionAttitude).name("감사마음").description("주변에 대한 고마움을 느끼고 표현하는 태도").build(),
+                Keyword.builder().coin(emotionAttitude).name("자신감").description("자신의 능력과 가치를 믿는 마음").build()
         );
 
-        // 3. 창의와 몰입
-        Coin creativityFlow = coinRepository.findByName("창의와 몰입").orElseThrow();
+        // 창의와 몰입 키워드
         List<Keyword> creativityKeywords = Arrays.asList(
-                Keyword.builder().coin(creativityFlow).name("호기심").description("새로운 것에 관심을 갖고 반응하는 태도").build(),
-                Keyword.builder().coin(creativityFlow).name("탐구력").description("알고자 하는 대상을 깊게 연구하고 파고드는 태도").build(),
-                Keyword.builder().coin(creativityFlow).name("창의력").description("기존 틀을 넘어 새로운 아이디어를 떠올리는 능력").build(),
-                Keyword.builder().coin(creativityFlow).name("집중력").description("하나의 일에 주의를 모아 지속하는 태도").build(),
-                Keyword.builder().coin(creativityFlow).name("몰입력").description("하나의 일에 깊이 빠져 몰두하는 태도").build(),
-                Keyword.builder().coin(creativityFlow).name("기획력").description("아이디어를 구체적으로 구조화하는 능력").build()
+                Keyword.builder().coin(creativityFocus).name("창의력").description("기존과 다른 새로운 아이디어를 만들어내는 능력").build(),
+                Keyword.builder().coin(creativityFocus).name("호기심").description("새로운 것에 대한 관심과 탐구하려는 마음").build(),
+                Keyword.builder().coin(creativityFocus).name("집중력").description("한 가지 일에 깊이 몰입할 수 있는 능력").build(),
+                Keyword.builder().coin(creativityFocus).name("상상력").description("현실을 넘어서는 새로운 것을 그려내는 능력").build(),
+                Keyword.builder().coin(creativityFocus).name("예술감각").description("아름다움과 조화를 느끼고 표현하는 능력").build(),
+                Keyword.builder().coin(creativityFocus).name("실험정신").description("새로운 방법을 시도해보려는 도전적 태도").build(),
+                Keyword.builder().coin(creativityFocus).name("몰입력").description("시간 가는 줄 모르고 빠져드는 집중 능력").build(),
+                Keyword.builder().coin(creativityFocus).name("유연성").description("상황에 따라 생각과 행동을 조정하는 능력").build(),
+                Keyword.builder().coin(creativityFocus).name("독창성").description("남과 다른 자신만의 특별한 관점과 아이디어").build(),
+                Keyword.builder().coin(creativityFocus).name("탐구력").description("깊이 있게 파고들어 알아내려는 의지").build(),
+                Keyword.builder().coin(creativityFocus).name("표현력").description("자신의 생각과 감정을 효과적으로 드러내는 능력").build(),
+                Keyword.builder().coin(creativityFocus).name("관찰력").description("세밀한 부분까지 주의 깊게 살펴보는 능력").build()
         );
 
-        // 4. 사고와 해결
-        Coin thinkingSolving = coinRepository.findByName("사고와 해결").orElseThrow();
+        // 사고와 해결 키워드
         List<Keyword> thinkingKeywords = Arrays.asList(
-                Keyword.builder().coin(thinkingSolving).name("판단력").description("주어진 조건에서 가장 적절한 결정을 내리는 능력").build(),
-                Keyword.builder().coin(thinkingSolving).name("논리력").description("생각의 근거를 정리하고, 조리 있게 전개하는 능력").build(),
-                Keyword.builder().coin(thinkingSolving).name("분석력").description("자료나 현상을 논리적으로 파악하고 해석하는 능력").build(),
-                Keyword.builder().coin(thinkingSolving).name("통찰력").description("본질을 꿰뚫어보고 전체를 이해하는 사고력").build(),
-                Keyword.builder().coin(thinkingSolving).name("신중성").description("충동보다 깊은 사고로 판단하는 태도").build(),
-                Keyword.builder().coin(thinkingSolving).name("문제해결력").description("문제를 분석하고 구조적으로 해결해나가는 능력").build(),
-                Keyword.builder().coin(thinkingSolving).name("융통성").description("상황에 맞게 사고와 행동을 유연하게 조절하는 능력").build()
+                Keyword.builder().coin(thinkingSolving).name("논리력").description("체계적이고 합리적으로 생각하는 능력").build(),
+                Keyword.builder().coin(thinkingSolving).name("문제해결").description("복잡한 문제를 분석하고 해결책을 찾는 능력").build(),
+                Keyword.builder().coin(thinkingSolving).name("분석력").description("정보를 세밀하게 분석하고 패턴을 찾는 능력").build(),
+                Keyword.builder().coin(thinkingSolving).name("비판적사고").description("정보를 객관적으로 평가하고 판단하는 능력").build(),
+                Keyword.builder().coin(thinkingSolving).name("통찰력").description("사물의 본질을 꿰뚫어 보는 깊은 이해력").build(),
+                Keyword.builder().coin(thinkingSolving).name("전략적사고").description("장기적 관점에서 계획을 세우는 능력").build(),
+                Keyword.builder().coin(thinkingSolving).name("추론능력").description("주어진 정보로부터 결론을 도출하는 능력").build(),
+                Keyword.builder().coin(thinkingSolving).name("체계화").description("복잡한 정보를 정리하고 구조화하는 능력").build(),
+                Keyword.builder().coin(thinkingSolving).name("판단력").description("상황을 정확히 파악하고 올바른 결정을 내리는 능력").build(),
+                Keyword.builder().coin(thinkingSolving).name("효율성").description("적은 노력으로 최대의 결과를 얻는 능력").build(),
+                Keyword.builder().coin(thinkingSolving).name("정확성").description("실수 없이 정밀하게 일을 처리하는 능력").build(),
+                Keyword.builder().coin(thinkingSolving).name("합리성").description("감정보다는 이성에 기반하여 판단하는 태도").build()
         );
 
-        // 5. 관계와 공감
-        Coin relationshipEmpathy = coinRepository.findByName("관계와 공감").orElseThrow();
+        // 관계와 공감 키워드
         List<Keyword> relationshipKeywords = Arrays.asList(
-                Keyword.builder().coin(relationshipEmpathy).name("공감력").description("타인의 감정을 이해하고 반응하는 능력").build(),
-                Keyword.builder().coin(relationshipEmpathy).name("배려심").description("상대의 입장을 생각하고 배려하는 마음").build(),
-                Keyword.builder().coin(relationshipEmpathy).name("포용력").description("다양성을 인정하고 수용하는 태도").build(),
-                Keyword.builder().coin(relationshipEmpathy).name("경청 태도").description("진심으로 귀 기울여 듣는 자세").build(),
-                Keyword.builder().coin(relationshipEmpathy).name("친화력").description("자연스럽게 어울리고 편안한 관계를 만드는 능력").build(),
-                Keyword.builder().coin(relationshipEmpathy).name("지지력").description("타인을 흔들림 없이 믿고 응원하는 마음의 힘").build(),
-                Keyword.builder().coin(relationshipEmpathy).name("온화함").description("따뜻한 태도로 주변 사람에게 안정감을 주는 성향").build(),
-                Keyword.builder().coin(relationshipEmpathy).name("중재력").description("갈등을 균형 있게 조율하고 해결로 이끄는 능력").build(),
-                Keyword.builder().coin(relationshipEmpathy).name("조율력").description("다양한 의견이나 입장을 균형 있게 조화시키는 능력").build(),
-                Keyword.builder().coin(relationshipEmpathy).name("겸손함").description("자기를 과시하지 않고 타인을 존중하며 소통하는 태도").build(),
-                Keyword.builder().coin(relationshipEmpathy).name("예의 바름").description("예절과 배려를 지키며 상대방을 존중하는 태도").build()
+                Keyword.builder().coin(relationshipEmpathy).name("공감능력").description("다른 사람의 감정과 상황을 이해하는 능력").build(),
+                Keyword.builder().coin(relationshipEmpathy).name("소통능력").description("상대방과 효과적으로 의사소통하는 능력").build(),
+                Keyword.builder().coin(relationshipEmpathy).name("배려심").description("다른 사람을 생각하고 챙기는 마음").build(),
+                Keyword.builder().coin(relationshipEmpathy).name("협력").description("다른 사람과 힘을 합쳐 일을 해내는 능력").build(),
+                Keyword.builder().coin(relationshipEmpathy).name("사교성").description("사람들과 어울리고 관계를 맺는 능력").build(),
+                Keyword.builder().coin(relationshipEmpathy).name("포용력").description("다른 사람의 다름을 받아들이는 넓은 마음").build(),
+                Keyword.builder().coin(relationshipEmpathy).name("친화력").description("사람들과 쉽게 친해지는 능력").build(),
+                Keyword.builder().coin(relationshipEmpathy).name("경청").description("다른 사람의 말을 주의 깊게 듣는 능력").build(),
+                Keyword.builder().coin(relationshipEmpathy).name("화합").description("서로 다른 사람들을 조화롭게 어우르는 능력").build(),
+                Keyword.builder().coin(relationshipEmpathy).name("신뢰감").description("다른 사람에게 믿음과 안정감을 주는 능력").build(),
+                Keyword.builder().coin(relationshipEmpathy).name("중재력").description("갈등 상황에서 조정하고 해결하는 능력").build(),
+                Keyword.builder().coin(relationshipEmpathy).name("격려").description("다른 사람에게 용기와 힘을 주는 능력").build()
         );
 
-        // 6. 신념과 실행
-        Coin beliefExecution = coinRepository.findByName("신념과 실행").orElseThrow();
+        // 신념과 실행 키워드
         List<Keyword> beliefKeywords = Arrays.asList(
                 Keyword.builder().coin(beliefExecution).name("신념").description("자신의 가치와 믿음을 지키는 태도").build(),
                 Keyword.builder().coin(beliefExecution).name("주체성").description("주변에 휘둘리지 않고, 스스로 판단하는 태도").build(),
@@ -161,9 +187,7 @@ public class DataInitializer implements CommandLineRunner {
                 Keyword.builder().coin(beliefExecution).name("실행력").description("계획한 일을 실제로 옮겨서 실행해 나가는 추진력").build(),
                 Keyword.builder().coin(beliefExecution).name("리더십").description("사람들을 이끌고 방향을 제시하는 능력").build(),
                 Keyword.builder().coin(beliefExecution).name("공정성").description("편견 없이 균형 있게 판단하고 존중하는 태도").build(),
-                Keyword.builder().coin(beliefExecution).name("책임감").description("맡은 일이나 역할을 끝까지 해내려는 태도와 의지").build(),
-                Keyword.builder().coin(beliefExecution).name("계획성").description("목표 달성을 위해 체계적으로 준비하는 능력").build(),
-                Keyword.builder().coin(beliefExecution).name("도전력").description("새로운 가능성에 적극적으로 뛰어드는 태도").build()
+                Keyword.builder().coin(beliefExecution).name("책임감").description("맡은 일이나 역할을 끝까지 해내려는 태도와 의지").build()
         );
 
         // 모든 키워드 저장
@@ -174,78 +198,9 @@ public class DataInitializer implements CommandLineRunner {
         keywordRepository.saveAll(relationshipKeywords);
         keywordRepository.saveAll(beliefKeywords);
 
-        int totalKeywords = managementKeywords.size() + emotionKeywords.size() + creativityKeywords.size() 
-                         + thinkingKeywords.size() + relationshipKeywords.size() + beliefKeywords.size();
+        int totalKeywords = managementKeywords.size() + emotionKeywords.size() + creativityKeywords.size() + 
+                           thinkingKeywords.size() + relationshipKeywords.size() + beliefKeywords.size();
         
-        log.info("Initialized {} keywords for all 6 coins", totalKeywords);
-        log.info("관리와 성장: {} keywords", managementKeywords.size());
-        log.info("감정과 태도: {} keywords", emotionKeywords.size());
-        log.info("창의와 몰입: {} keywords", creativityKeywords.size());
-        log.info("사고와 해결: {} keywords", thinkingKeywords.size());
-        log.info("관계와 공감: {} keywords", relationshipKeywords.size());
-        log.info("신념과 실행: {} keywords", beliefKeywords.size());
-    }
-
-    private void initializeForms() {
-        if (formRepository.count() > 0) {
-            log.info("Forms already initialized");
-            return;
-        }
-
-        // 오늘의 일기 폼
-        Form todayDiaryForm = Form.builder()
-                .title("오늘의 일기")
-                .description("오늘 하루를 돌아보며 나의 장점을 발견해보세요")
-                .type(FormType.TODAY_DIARY)
-                .build();
-
-        // 경험 돌아보기 폼
-        Form experienceForm = Form.builder()
-                .title("경험 돌아보기")
-                .description("과거의 경험을 통해 나의 강점을 찾아보세요")
-                .type(FormType.EXPERIENCE_REFLECTION)
-                .build();
-
-        // 친구의 장점 찾아주기 폼
-        Form friendStrengthForm = Form.builder()
-                .title("친구의 장점 찾아주기")
-                .description("친구의 장점을 발견하고 공유해주세요")
-                .type(FormType.FRIEND_STRENGTH)
-                .build();
-
-        formRepository.saveAll(Arrays.asList(todayDiaryForm, experienceForm, friendStrengthForm));
-        log.info("Initialized 3 forms");
-
-        // 폼별 질문 초기화
-        initializeQuestions(todayDiaryForm, experienceForm, friendStrengthForm);
-    }
-
-    private void initializeQuestions(Form todayDiaryForm, Form experienceForm, Form friendStrengthForm) {
-        // 오늘의 일기 질문들
-        List<Question> todayDiaryQuestions = Arrays.asList(
-                Question.builder().form(todayDiaryForm).content("오늘 가장 잘한 일은 무엇인가요?").orderIndex(1).build(),
-                Question.builder().form(todayDiaryForm).content("어떤 순간에 나의 장점이 드러났나요?").orderIndex(2).build(),
-                Question.builder().form(todayDiaryForm).content("오늘 느낀 긍정적인 감정은 무엇인가요?").orderIndex(3).build()
-        );
-
-        // 경험 돌아보기 질문들
-        List<Question> experienceQuestions = Arrays.asList(
-                Question.builder().form(experienceForm).content("기억에 남는 성공 경험을 공유해주세요").orderIndex(1).build(),
-                Question.builder().form(experienceForm).content("그 경험에서 어떤 강점을 발휘했나요?").orderIndex(2).build(),
-                Question.builder().form(experienceForm).content("그 강점을 어떻게 더 발전시킬 수 있을까요?").orderIndex(3).build()
-        );
-
-        // 친구의 장점 찾아주기 질문들
-        List<Question> friendQuestions = Arrays.asList(
-                Question.builder().form(friendStrengthForm).content("친구의 어떤 점이 가장 인상적인가요?").orderIndex(1).build(),
-                Question.builder().form(friendStrengthForm).content("친구가 가진 특별한 능력은 무엇인가요?").orderIndex(2).build(),
-                Question.builder().form(friendStrengthForm).content("친구에게 어떤 응원의 메시지를 전하고 싶나요?").orderIndex(3).build()
-        );
-
-        questionRepository.saveAll(todayDiaryQuestions);
-        questionRepository.saveAll(experienceQuestions);
-        questionRepository.saveAll(friendQuestions);
-
-        log.info("Initialized questions for all forms");
+        log.info("Initialized {} keywords for {} coins", totalKeywords, savedCoins.size());
     }
 } 

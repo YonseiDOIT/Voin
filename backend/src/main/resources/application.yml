@@ -17,6 +17,7 @@ spring:
 
   # JPA 설정
   jpa:
+    defer-datasource-initialization: true # Hibernate 초기화 후 data.sql 실행
     hibernate:
       ddl-auto: create-drop # 개발용: 시작할 때마다 테이블 재생성
     show-sql: true
@@ -94,6 +95,7 @@ spring:
     password: ${DB_PASSWORD:voin_password}
     driver-class-name: org.postgresql.Driver
   jpa:
+    defer-datasource-initialization: true # Hibernate 초기화 후 data.sql 실행
     hibernate:
       ddl-auto: update # 운영용: 기존 데이터 유지
     properties:
@@ -110,6 +112,7 @@ spring:
     username: sa
     password:
   jpa:
+    defer-datasource-initialization: true # Hibernate 초기화 후 data.sql 실행
     hibernate:
       ddl-auto: create-drop
   h2:
