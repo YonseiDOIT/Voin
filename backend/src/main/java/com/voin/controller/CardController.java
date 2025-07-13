@@ -16,6 +16,7 @@ import com.voin.dto.request.CardCreateRequest;
 import com.voin.dto.response.ApiResponse;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -37,7 +38,7 @@ public class CardController {
 
     @GetMapping("/member/{memberId}")
     public ResponseEntity<List<Card>> getCardsByMember(@PathVariable UUID memberId) {
-        List<Card> cards = cardService.findByMemberId(memberId);
+        List<Card> cards = cardService.findByOwnerId(memberId);
         return ResponseEntity.ok(cards);
     }
 
@@ -82,11 +83,11 @@ public class CardController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "내 카드 목록 조회", description = "현재 로그인된 사용자가 생성한 모든 카드를 조회합니다.")
+    @Operation(summary = "내 카드 목록 조회", description = "현재 로그인된 사용자가 생성한 모든 카드를 Story 정보와 함께 조회합니다. 경험 돌아보기 카드의 경우 answer1, answer2 정보도 포함됩니다.")
     @GetMapping("/my-cards")
-    public ResponseEntity<ApiResponse<List<Card>>> getMyCards() {
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getMyCards() {
         try {
-            List<Card> myCards = cardService.findMyCards();
+            List<Map<String, Object>> myCards = cardService.getMyCardsWithStoryData();
             return ResponseEntity.ok(ApiResponse.success("내 카드를 성공적으로 조회했습니다.", myCards));
         } catch (Exception e) {
             logger.error("Error fetching my cards", e);
