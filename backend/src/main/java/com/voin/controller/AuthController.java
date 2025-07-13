@@ -18,9 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.ui.Model;
 import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -58,27 +56,7 @@ public class AuthController {
     @Value("${kakao.client-id}")
     private String clientId;
 
-    /**
-     * 카카오 로그인 테스트 페이지
-     */
-    @Operation(summary = "카카오 로그인 테스트 페이지", 
-               description = "카카오 로그인을 테스트할 수 있는 HTML 페이지를 반환합니다.")
-    @SecurityRequirements // 인증 불필요
-    @GetMapping("/test")
-    public String loginTestPage(Model model) {
-        try {
-            String kakaoAuthUrl = kakaoAuthService.getKakaoAuthUrl();
-            
-            model.addAttribute("kakaoAuthUrl", kakaoAuthUrl);
-            model.addAttribute("clientId", clientId);
-            
-            log.info("카카오 인증 URL 생성: {}", kakaoAuthUrl);
-        } catch (Exception e) {
-            log.error("카카오 인증 URL 생성 실패", e);
-            model.addAttribute("error", "카카오 설정이 올바르지 않습니다: " + e.getMessage());
-        }
-        return "kakao-login-test";
-    }
+
 
     /**
      * 카카오 로그인 콜백 처리
