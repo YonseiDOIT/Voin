@@ -25,7 +25,7 @@ const HomeCoinStatus: React.FC<HomeCoinStatusProps> = ({
             </div>
 
             <div className="flex p-16 flex-col items-center justify-center gap-y-1 col-start-1 row-start-1">
-                <div className="text-grey-96 body-n font-semibold mb-4">{title}</div>
+                <div className="text-grey-97 text-[16px] font-medium mb-4">{title}</div>
                 <div className='mb-4'>
                     <EmptyCoinImage />
                 </div>

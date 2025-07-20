@@ -39,7 +39,7 @@ const LargeTextField = (props: LargeTextFieldProps) => {
             : "border-gray-200"; // 비활성 상태
 
     return (
-        <div className="large-text-field w-full h-full">
+        <div className="large-text-field w-full h-full pb-4">
             {title && <div className={`
                 large-text-field-title
                 ml-2
@@ -75,6 +75,8 @@ const LargeTextField = (props: LargeTextFieldProps) => {
                 onChange={decoratedOnChange}
                 value={value}
                 placeholder={placeholder}></textarea>
+                
+            {/* 하단 오류나 글자 수 출력 부분이 컴포넌트에 안들어가는 문제 있음. 추후에 수정. 일단은 부모 태그에 패딩 넣어놓은 상태 */}
             <div className="flex justify-between mt-1.5 text-xs">
                 <span className={`${error ? "text-red-500" : "text-grey-70"} ml-2`}>
                     {error || description}

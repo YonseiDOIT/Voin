@@ -1,16 +1,85 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 import ProfileImage from '../components/ProfileImage';
 import HomeCoinFind from '../components/home/HomeCoinFind';
 import HomeCoinStatus from '../components/home/HomeCoinStatus';
 import Carousel from '../components/home/Carousel';
-import NavigationBar from '../components/NavigationBar';
-import BottomSheet from '../components/BottomSheet';
+import NavigationBar from '../components/common/NavigationBar';
+import BottomSheet from '../components/common/BottomSheet';
 
 import NotificationIcon from '../assets/svgs/notificationIcon.svg?react';
 
 const Home = () => {
+    const { userInfo, logout, login } = useAuth();
+    const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+
+    // 카카오 로그인 콜백 처리
+    useEffect(() => {
+        const handleKakaoCallback = async () => {
+            const loginSuccess = searchParams.get('login_success');
+            const accessToken = searchParams.get('access_token');
+            const isNewMember = searchParams.get('is_new_member');
+            const nickname = searchParams.get('nickname');
+            const error = searchParams.get('error');
+            const errorMessage = searchParams.get('message');
+
+            console.log('Home page - Checking URL parameters:', {
+                loginSuccess,
+                accessToken: accessToken ? accessToken.substring(0, 20) + '...' : null,
+                isNewMember,
+                nickname,
+                error,
+                errorMessage
+            });
+
+            if (error === 'true') {
+                console.error('카카오 로그인 에러:', errorMessage);
+                alert('로그인 중 오류가 발생했습니다: ' + errorMessage);
+                // URL 파라미터 제거
+                navigate('/login', { replace: true });
+                return;
+            }
+
+            if (loginSuccess === 'true' && accessToken && nickname) {
+                console.log('카카오 로그인 성공 - 토큰 처리 중...');
+                try {
+                    // URL에서 닉네임 추출 및 디코딩
+                    const decodedNickname = decodeURIComponent(nickname);
+                    console.log('Decoded nickname:', decodedNickname);
+                    
+                    // 기존 localStorage 정리 (혹시 모를 충돌 방지)
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('nickname');
+                    localStorage.removeItem('profileImage');
+                    
+                    // AuthContext login 함수 호출 (nickname, profileImage, accessToken 순서)
+                    login(decodedNickname, undefined, accessToken);
+                    console.log('AuthContext login 완료');
+                    
+                    // URL 파라미터 제거하고 홈 페이지 유지
+                    navigate('/', { replace: true });
+                } catch (error) {
+                    console.error('로그인 처리 중 오류:', error);
+                    alert('로그인 처리 중 오류가 발생했습니다.');
+                    navigate('/login', { replace: true });
+                }
+            }
+        };
+
+        handleKakaoCallback();
+    }, [searchParams, login, navigate]);
+
+    const handleLogout = () => {
+        console.log('Logout button clicked');
+        logout();
+        console.log('Logout completed, navigating to login');
+        // 로그아웃 후 명시적으로 로그인 페이지로 리다이렉트
+        navigate('/login');
+    };
+
     useEffect(() => {
         // meta 태그 테마 색상 설정 (AOS 전용) 나중에 없앨듯?
         const themeColorMetaTag = document.querySelector('meta[name="theme-color"]');
@@ -20,13 +89,11 @@ const Home = () => {
         }
 
         document.body.style.background = "linear-gradient(to bottom, #55CFE5, #F7F5F4)";
-        document.body.style.backgroundSize = 'cover';
         themeColorMetaTag.setAttribute('content', "#55cfe5");
 
         // 클리님 함수
         return () => {
             document.body.style.background = '#F7F7F8';
-            document.body.style.backgroundSize = '';
             themeColorMetaTag.setAttribute('content', "#F7F7F8");
         };
     }, []);
@@ -65,13 +132,21 @@ const Home = () => {
             <div className="w-full h-12 px-4 py-2 pt-4 mb-2 flex flex-row items-center">
                 <div className="h-full inline-flex flex-row items-center gap-2">
                     <ProfileImage />
-                    {/* 사용자 이름. 기능 구현 예정 */}
+                    {/* 사용자 이름 */}
                     <div className="min-w-fit">
-                        <span className="text-base text-white font-semibold">사용자이름</span>
+                        <span className="text-base text-white font-semibold">
+                            {userInfo?.nickname || '사용자'}
+                        </span>
                         <span className="text-base text-white font-medium mx-0.5">님</span>
                     </div>
                 </div>
-                <div className='ml-auto h-full inline-flex'>
+                <div className='ml-auto h-full inline-flex items-center gap-2'>
+                    <button 
+                        onClick={handleLogout}
+                        className="px-3 py-1 text-sm text-white/80 hover:text-white border border-white/30 rounded-full hover:bg-white/10"
+                    >
+                        로그아웃
+                    </button>
                     <Link to="/notification" className='inline-flex flex-row items-center'>
                         <NotificationIcon />
                     </Link>
@@ -96,37 +171,37 @@ const Home = () => {
             {/* Bottom Sheet */}
             <BottomSheet title="코인 찾기" isOpen={isSheetOpen} onClose={closeSheet}>
                 <div className="px-1 pt-4 pb-2">
-                    <span className="title-n text-grey-25">나의 장점 찾기</span>
+                    <span className="text-[16px] line-14 font-medium text-grey-60">나의 장점 코인</span>
                 </div>
                 <div className="w-full grid grid-cols-2 gap-2">
-                    <Link to="/todays-diary" className="pt-6 w-full bg-gradient-to-t from-white/0 to-gray-200 rounded-3xl shadow-[0px_5px_15px_-5px_rgba(35,48,59,0.10)] outline-2 outline-offset-[-2px] outline-white inline-flex flex-col justify-start items-start">
+                    <Link to="/todays-diary" className="pt-6 w-full bg-gradient-to-b from-zinc-100 from-0% via-white/0 via-40% to-white/0 to-100% rounded-3xl shadow-[0px_5px_15px_-5px_rgba(35,48,59,0.10)] outline-2 outline-offset-[-2px] outline-white inline-flex flex-col justify-start items-start">
                         <div className="w-full flex flex-col items-center px-3 gap-y-1">
-                            <div className="title-n font-semibold text-[#00BDDE]">오늘의 일기</div>
+                            <div className="text-[16px] font-medium text-grey-30">오늘의 일기</div>
                             <div className="text-center button-n text-grey-60">오늘의 일상을 기록하면서<br />내 장점을 찾아봐요</div>
                         </div>
                         <div className="self-stretch h-28 py-4 inline-flex justify-center items-center">
                             <img className="w-28 h-28" src="https://placehold.co/110x110" />
                         </div>
                     </Link>
-                    <div className="pt-6 w-full bg-gradient-to-t from-white/0 to-gray-200 rounded-3xl shadow-[0px_5px_15px_-5px_rgba(35,48,59,0.10)] outline-2 outline-offset-[-2px] outline-white inline-flex flex-col justify-start items-start">
+                    <Link to="/case-review" className="pt-6 w-full bg-gradient-to-b from-zinc-100 from-0% via-white/0 via-40% to-white/0 to-100% rounded-3xl shadow-[0px_5px_15px_-5px_rgba(35,48,59,0.10)] outline-2 outline-offset-[-2px] outline-white inline-flex flex-col justify-start items-start">
                         <div className="w-full flex flex-col items-center px-3 gap-y-1">
-                            <div className="title-n font-semibold text-[#00BDDE]">사례 돌아보기</div>
+                            <div className="text-[16px] font-medium text-grey-30">사례 돌아보기</div>
                             <div className="text-center button-n text-grey-60">이전 경험을 돌아보면서<br />내 장점을 찾아봐요</div>
                         </div>
                         <div className="self-stretch h-28 py-4 inline-flex justify-center items-center">
                             <img className="w-28 h-28" src="https://placehold.co/110x110" />
                         </div>
-                    </div>
+                    </Link>
                 </div>
                 <div className="px-1 pt-4 pb-2">
-                    <span className="title-n text-grey-25">친구의 장점 찾기</span>
+                    <span className="title-n font-semibold text-grey-60">친구의 장점 찾기</span>
                 </div>
-                    <div className="px-4 py-3 w-full bg-gradient-to-t from-white/0 to-gray-200 rounded-3xl shadow-[0px_5px_15px_-5px_rgba(35,48,59,0.10)] outline-2 outline-offset-[-2px] outline-white inline-flex flex-row items-center">
+                    <div className="px-4 py-3 w-full bg-gradient-to-b from-zinc-100 from-0% via-white/0 via-40% to-white/0 to-100% rounded-3xl shadow-[0px_5px_15px_-5px_rgba(35,48,59,0.10)] outline-2 outline-offset-[-2px] outline-white inline-flex flex-row items-center">
                         <div className="self-stretch h-28 py-4 inline-flex justify-center items-center mr-8">
                             <img className="w-28 h-28" src="https://placehold.co/110x110" />
                         </div>
                         <div className="flex flex-col gap-y-1">
-                            <div className="title-n font-semibold text-[#00BDDE]">함께한 추억 떠올리기</div>
+                            <div className="text-[16px] font-medium text-grey-30">함께한 추억 떠올리기</div>
                             <div className="button-n text-grey-60">친구의 장점을 찾아줄 수 있어요</div>
                         </div>
                     </div>
