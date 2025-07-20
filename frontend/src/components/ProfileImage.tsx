@@ -1,6 +1,5 @@
-// src/components/ProfileImage.tsx
-
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ProfileImageProps {
     /** 이미지 URL */
@@ -10,26 +9,30 @@ interface ProfileImageProps {
 const ProfileImage: React.FC<ProfileImageProps> = ({
     src,
 }) => {
+    const { userInfo } = useAuth();
     const [imageError, setImageError] = useState(false);
+
+    // 실제 사용할 이미지 URL (props로 전달된 것이 우선, 없으면 userInfo에서 가져옴)
+    const imageUrl = src || userInfo?.profileImage;
 
     // src 주소가 변경될 때마다 에러 상태 초기화
     useEffect(() => {
         setImageError(false);
-    }, [src]);
+    }, [imageUrl]);
 
     const handleError = () => {
         setImageError(true);
     };
 
-    const showImage = src && !imageError;
+    const showImage = imageUrl && !imageError;
 
     return (
         <div className={"h-8 aspect-square rounded-full bg-gray-200 flex items-center justify-center text-gray-500"}>
             {showImage ? (
                 <img
-                    src={src}
+                    src={imageUrl}
                     onError={handleError}
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-cover rounded-full"
                 />
             ) : (
                 <DefaultFallbackIcon />

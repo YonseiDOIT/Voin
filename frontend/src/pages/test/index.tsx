@@ -2,8 +2,8 @@ import { Link } from 'react-router-dom';
 import { useState } from 'react';
 
 import TextInput from '../../components/TextInput';
-import ActionButton from '../../components/ActionButton';
-import TopNavigation from '../../components/TopNavigation';
+import ActionButton from '../../components/common/ActionButton';
+import TopNavigation from '../../components/common/TopNavigation';
 
 const IndexPage = () => {
     const [text, setText] = useState('');

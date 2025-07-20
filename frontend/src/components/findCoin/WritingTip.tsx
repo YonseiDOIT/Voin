@@ -1,7 +1,11 @@
 import { useState } from 'react';
 import PencilIcon from '../../assets/svgs/TodaysDiary/Pencil.svg?react';
 
-const WritingTip = () => {
+interface WritingTipProps {
+    tip: string;
+}
+
+const WritingTip = ({ tip }: WritingTipProps) => {
     // 컴포넌트의 확장/축소 상태를 관리하는 state
     const [isExpanded, setIsExpanded] = useState(false);
 
@@ -36,7 +40,7 @@ const WritingTip = () => {
                         }`}
                 >
                     <p className="body-n text-VB-20 leading-relaxed">
-                        거창하지 않아도 괜찮아요. 오늘의 생각, 선택, 감정을 편하게 적어보세요. 일상을 적다 보면, 그 안에서 나만의 장점을 발견할 수 있어요.
+                        {tip}
                     </p>
                 </div>
             </div>

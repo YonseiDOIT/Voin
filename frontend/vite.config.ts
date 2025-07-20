@@ -11,11 +11,31 @@ export default defineConfig({
   server: {
     // https: true, // Dev 서버 HTTPS 활성화
     host: true,
+    port: 5173,
+    strictPort: true,
     https: {
       key: fs.readFileSync('./.certs/key.pem'),
       cert: fs.readFileSync('./.certs/cert.pem'),
     },
+    proxy: {
+      '/auth': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/signup/profile-image': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+      }
+    }
   },
+  appType: 'spa', 
   plugins: [
     react(),
     tailwindcss(),

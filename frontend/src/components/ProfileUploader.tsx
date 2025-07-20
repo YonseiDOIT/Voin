@@ -54,7 +54,12 @@ function canvasPreview(image: HTMLImageElement, canvas: HTMLCanvasElement, crop:
 }
 
 
-export default function ProfileUploader() {
+interface ProfileUploaderProps {
+    defaultImage?: string | null;
+    onChange?: (imageUrl: string | null) => void;
+}
+
+export default function ProfileUploader({ defaultImage, onChange }: ProfileUploaderProps) {
     const [imgSrc, setImgSrc] = useState<string | null>(null);
     const [crop, setCrop] = useState<Crop>();
     const [completedCrop, setCompletedCrop] = useState<Crop>();
@@ -115,6 +120,11 @@ export default function ProfileUploader() {
             const url = URL.createObjectURL(blob);
             setCroppedImageUrl(url);
             setImgSrc(null); // 모달 닫기
+            
+            // 부모 컴포넌트에 변경사항 알림
+            if (onChange) {
+                onChange(url);
+            }
         }, 'image/png');
     };
 
@@ -134,6 +144,12 @@ export default function ProfileUploader() {
                         <img
                             src={croppedImageUrl}
                             alt="Cropped Profile"
+                            className="w-full h-full object-cover"
+                        />
+                    ) : defaultImage ? (
+                        <img
+                            src={defaultImage}
+                            alt="Default Profile"
                             className="w-full h-full object-cover"
                         />
                     ) : (
@@ -197,9 +213,7 @@ export default function ProfileUploader() {
                             선택
                         </button>
                     </footer>
-                </div>
-            )}
-
+                </div>            )}
 
             {/* 크롭된 이미지를 그릴 숨겨진 캔버스 */}
             {completedCrop && (
