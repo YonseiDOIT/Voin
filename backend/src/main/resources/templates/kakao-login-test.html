@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>카카오 로그인 테스트 - Voin</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 600px;
+        margin: 50px auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        background-color: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .login-section {
+        text-align: center;
+        margin: 30px 0;
+      }
+      .kakao-login-btn {
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+      .kakao-login-btn:hover {
+        transform: scale(1.05);
+      }
+      .result-section {
+        margin-top: 30px;
+        padding: 20px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+      }
+      .token-info,
+      .user-info {
+        margin: 15px 0;
+        padding: 10px;
+        background-color: #e9ecef;
+        border-radius: 5px;
+        font-family: monospace;
+        font-size: 12px;
+        word-break: break-all;
+      }
+      .success {
+        color: #28a745;
+      }
+      .error {
+        color: #dc3545;
+      }
+    </style>
+    <!-- 카카오 JavaScript SDK 로드 -->
+    <script
+      src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🍃 Voin 카카오 로그인 테스트</h1>
+
+      <div class="login-section">
+        <p>카카오 로그인을 테스트해보세요!</p>
+        <!-- 카카오 로그인 버튼 -->
+        <img
+          src="https://k.kakaocdn.net/14/dn/btroDszwNrM/I6efHub1SN5KCJqLm1Ovx1/o.jpg"
+          width="222"
+          alt="카카오 로그인 버튼"
+          class="kakao-login-btn"
+          onclick="loginWithKakao()"
+        />
+      </div>
+
+      <div class="result-section">
+        <h3>📋 테스트 결과</h3>
+        <div id="status">로그인 버튼을 클릭해주세요.</div>
+        <div id="token-result" class="token-info" style="display: none"></div>
+        <div id="user-info" class="user-info" style="display: none"></div>
+      </div>
+    </div>
+
+    <script>
+      // 카카오 SDK 초기화 (카카오 앱의 JavaScript 키 사용)
+      Kakao.init("2ac62bc43a0718bcd65126b5dbae3843");
+      console.log("카카오 SDK 초기화 상태:", Kakao.isInitialized());
+
+      function updateStatus(message, isError = false) {
+        const statusElement = document.getElementById("status");
+        statusElement.innerHTML = message;
+        statusElement.className = isError ? "error" : "success";
+      }
+
+      function loginWithKakao() {
+        updateStatus("카카오 로그인 페이지로 이동합니다...");
+
+        Kakao.Auth.authorize({
+          // 이 주소는 카카오 디벨로퍼스에 등록된 Redirect URI와 일치해야 합니다.
+          redirectUri: "http://localhost:8080/auth/kakao/callback",
+        });
+      }
+
+      // 페이지 로드 시 URL에서 파라미터를 확인하여 백엔드 결과 표시
+      window.onload = function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const accessToken = urlParams.get("access_token");
+        const isNewMember = urlParams.get("is_new_member");
+        const error = urlParams.get("error");
+
+        if (accessToken) {
+          // 로그인 성공 시 백엔드에서 받은 JWT 토큰 표시
+          updateStatus("✅ 로그인 성공! JWT 토큰을 받았습니다.");
+          const tokenElement = document.getElementById("token-result");
+          tokenElement.innerHTML = `<strong>JWT 토큰:</strong><br>${accessToken}`;
+          tokenElement.style.display = "block";
+
+          const userInfoElement = document.getElementById("user-info");
+          const nickname = urlParams.get("nickname");
+          userInfoElement.innerHTML = `
+                    <strong>🎯 로그인 결과:</strong><br>
+                    📝 처리 유형: <span class="success">Login</span><br>
+                    🏷️ 닉네임: ${
+                      nickname ? decodeURIComponent(nickname) : "정보 없음"
+                    }<br>
+                    🎫 JWT 토큰: 발급 완료
+                `;
+          userInfoElement.style.display = "block";
+        } else if (isNewMember === "true") {
+          // 신규 회원일 경우
+          const kakaoAccessToken = urlParams.get("kakao_access_token");
+          updateStatus("🚀 신규 회원이시네요! 회원가입이 완료되었습니다.");
+          const tokenElement = document.getElementById("token-result");
+          tokenElement.innerHTML = `<strong>회원가입용 카카오 토큰:</strong><br>${kakaoAccessToken}`;
+          tokenElement.style.display = "block";
+
+          const userInfoElement = document.getElementById("user-info");
+          userInfoElement.innerHTML = `
+                    <strong>🎯 회원가입 결과:</strong><br>
+                    📝 처리 유형: <span class="success">Signup</span><br>
+                    🎉 상태: 회원가입 완료<br>
+                    🎫 JWT 토큰: 발급 완료
+                `;
+          userInfoElement.style.display = "block";
+        } else if (error) {
+          // 에러 발생 시
+          const message = urlParams.get("message");
+          updateStatus(
+            `❌ 오류 발생: ${decodeURIComponent(message || "Unknown error")}`,
+            true
+          );
+        }
+      };
+
+      // 더 이상 사용하지 않는 함수 (기존 코드와의 호환성을 위해 남겨둠)
+      async function checkUserWithBackend(accessToken) {
+        // 이 함수는 이제 사용되지 않습니다.
+        // 모든 처리는 백엔드의 /auth/kakao/callback에서 이루어집니다.
+        console.log("이 함수는 더 이상 사용되지 않습니다.");
+      }
+    </script>
+  </body>
+</html>
