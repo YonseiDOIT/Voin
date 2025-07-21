@@ -14,11 +14,13 @@ export default function CategoryNav({ categories, activeCategoryId, onCategoryCl
     return (
         <nav className="overflow-x-auto whitespace-nowrap no-scrollbar">
             <div className="flex space-x-2">
+                {/* 시작 여백 */}
+                <div className="w-4 flex-shrink-0"></div>
                 {categories.map((category) => (
                     <button
                         key={category.id}
                         onClick={() => onCategoryClick(category.id)}
-                        className={`px-3 py-3 rounded-3xl button-n font-semibold transition-colors duration-300
+                        className={`px-3 py-3 rounded-3xl button-n font-semibold transition-colors duration-300 flex-shrink-0
                         ${activeCategoryId === category.id
                                 ? category.color
                                 : 'bg-grey-97 text-grey-60'
@@ -27,6 +29,8 @@ export default function CategoryNav({ categories, activeCategoryId, onCategoryCl
                         {category.title}
                     </button>
                 ))}
+                {/* 끝 여백 */}
+                <div className="w-4 flex-shrink-0"></div>
             </div>
         </nav>
     );

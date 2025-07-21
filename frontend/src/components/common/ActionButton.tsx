@@ -34,7 +34,7 @@ const ActionButton = ({
                 <HoverBg preserveAspectRatio="none" className={`absolute top-0 left-0 z-[-1] transition-opacity duration-200 ${!disabled && isHovered ? 'opacity-100' : 'opacity-0'} ${hoverBgClassName}`} />
                 <DisabledBg preserveAspectRatio="none" className={`absolute top-0 left-0 z-[-1] transition-opacity duration-200 ${disabled ? 'opacity-100' : 'opacity-0'} ${disabledBgClassName}`} />
                 <div className='flex items-center justify-center w-full h-full z-10'>
-                    <span className={`title-n ${disabled ? "text-grey-90" : "text-white"} font-semibold py-4`}>
+                    <span className={`text-[18px] line-14 ${disabled ? "text-grey-90" : "text-white"} font-semibold py-4`}>
                         {buttonText}
                     </span>
                 </div>

@@ -126,7 +126,7 @@ export default function StrengthSelector({ title, caption, onNext }: StrengthSel
         <div className="w-full max-w-md mx-auto flex flex-col h-full">
             <header className="pt-4">
                 <TopNavigation title={title} caption={caption} />
-                <div className="pt-1 pb-6 px-6">
+                <div className="pt-1 pb-6">
                     <CategoryNav
                         categories={CATEGORIES}
                         activeCategoryId={activeCategoryId}

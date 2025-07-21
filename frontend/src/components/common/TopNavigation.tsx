@@ -20,7 +20,7 @@ export default function TopNavigation({ title="타이틀 텍스트", caption, on
 
     return (
         <header
-            className="flex flex-col items-center w-full px-4 bg-transparent">
+            className="flex flex-col items-center w-full px-4 bg-transparent pt-4">
             <div className="w-full mb-4">
                 <button
                     onClick={handleBackClick}

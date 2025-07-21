@@ -25,15 +25,15 @@ const HomeCoinStatus: React.FC<HomeCoinStatusProps> = ({
             </div>
 
             <div className="flex p-16 flex-col items-center justify-center gap-y-1 col-start-1 row-start-1">
-                <div className="text-grey-97 text-[16px] font-medium mb-4">{title}</div>
+                <div className="text-grey-97 text-[16px] line-14 font-semibold mb-4">{title}</div>
                 <div className='mb-4'>
                     <EmptyCoinImage />
                 </div>
-                <div className="text-white title-n font-semibold">{titleValue}</div>
+                <div className="text-white line-14 text-[20px] font-semibold">{titleValue}</div>
                 {subtitleNumValue ?
-                    <div className="text-grey-99 button-n">{subtitle[0]}{subtitleNumValue}{subtitle[1]}</div>
+                    <div className="text-grey-99 line-15 font-medium text-[13px]">{subtitle[0]}{subtitleNumValue}{subtitle[1]}</div>
                     :
-                    <div className="text-grey-99 button-n">{subtitle[0]}</div>
+                    <div className="text-grey-99 line-15 font-medium text-[13px]">{subtitle[0]}</div>
                 }
             </div>
         </div>

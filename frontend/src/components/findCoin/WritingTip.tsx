@@ -39,7 +39,7 @@ const WritingTip = ({ tip }: WritingTipProps) => {
                     className={`overflow-hidden transition-all duration-300 ease-in-out ${isExpanded ? 'max-h-40 mt-3' : 'max-h-0'
                         }`}
                 >
-                    <p className="body-n text-VB-20 leading-relaxed">
+                    <p className="line-15 text-[15px] font-medium text-VB-20">
                         {tip}
                     </p>
                 </div>
