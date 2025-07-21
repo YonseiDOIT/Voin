@@ -1,131 +1,127 @@
 package com.voin.controller;
 
+import com.voin.dto.request.MemberUpdateRequest;
+import com.voin.dto.request.NicknameUpdateRequest;
+import com.voin.dto.request.ProfileImageUpdateRequest;
 import com.voin.dto.response.ApiResponse;
 import com.voin.dto.response.MemberResponse;
-import com.voin.entity.Member;
 import com.voin.service.MemberService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
-/**
- * 👥 회원 관리 컨트롤러
- * 
- * 이 클래스는 회원과 관련된 모든 기능을 처리합니다.
- * 
- * 주요 기능들:
- * - 👤 회원 정보 조회하기
- * - 🔍 회원 검색하기 (닉네임, 친구코드 등)
- * - ✏️ 회원 정보 수정하기
- * - 📝 새 회원 등록하기
- * - 🗑️ 회원 탈퇴 처리하기
- * 
- * 쉽게 말해서, "회원 관리 사무소" 같은 역할을 해요!
- */
+@Slf4j
 @RestController
-@RequestMapping("/members")
+@RequestMapping("/api/members")
 @RequiredArgsConstructor
-@Tag(name = "👤 Member", description = "사용자 정보 관리")
+@Tag(name = "👤 Member", description = "회원 정보 관리")
 public class MemberController {
 
     private final MemberService memberService;
 
-    @Operation(summary = "전체 회원 조회", description = "등록된 모든 회원 정보를 조회합니다.")
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "회원 조회 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "서버 오류")
-    })
-    @GetMapping
-    public ApiResponse<List<MemberResponse>> getAllMembers() {
-        try {
-            List<Member> members = memberService.getAllMembers();
-            List<MemberResponse> memberResponses = members.stream()
-                    .map(this::convertToMemberResponse)
-                    .collect(Collectors.toList());
-            
-            return ApiResponse.success("전체 회원 조회가 완료되었습니다.", memberResponses);
-        } catch (Exception e) {
-            return ApiResponse.error("회원 조회 중 오류가 발생했습니다: " + e.getMessage());
-        }
+    /**
+     * 내 정보 조회
+     */
+    @Operation(summary = "내 정보 조회", description = "현재 로그인한 사용자의 정보를 조회합니다.")
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<MemberResponse>> getMyInfo() {
+        log.info("Getting current member info");
+        MemberResponse member = memberService.getMyInfo();
+        return ResponseEntity.ok(ApiResponse.success("내 정보를 조회했습니다.", member));
     }
 
-    @Operation(summary = "회원 조회", description = "회원 ID로 회원 정보를 조회합니다.")
-    @GetMapping("/{memberId}")
-    public ResponseEntity<Member> getMember(
-            @Parameter(description = "회원 ID", required = true) @PathVariable UUID memberId) {
-        Member member = memberService.findById(memberId);
-        return ResponseEntity.ok(member);
+    /**
+     * 내 정보 수정
+     */
+    @Operation(summary = "내 정보 수정", description = "현재 로그인한 사용자의 정보를 수정합니다.")
+    @PutMapping("/me")
+    public ResponseEntity<ApiResponse<MemberResponse>> updateMyInfo(
+            @Valid @RequestBody MemberUpdateRequest request) {
+        log.info("Updating current member info");
+        MemberResponse member = memberService.updateMyInfo(request);
+        return ResponseEntity.ok(ApiResponse.success("내 정보가 수정되었습니다.", member));
     }
 
-    @Operation(summary = "카카오 ID로 회원 조회", description = "카카오 ID로 회원 정보를 조회합니다.")
-    @GetMapping("/kakao/{kakaoId}")
-    public ResponseEntity<Member> getMemberByKakaoId(
-            @Parameter(description = "카카오 ID", required = true) @PathVariable String kakaoId) {
-        Optional<Member> member = memberService.findByKakaoId(kakaoId);
-        return member.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    /**
+     * 회원 검색 (닉네임)
+     */
+    @Operation(summary = "회원 검색", description = "닉네임으로 회원을 검색합니다.")
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<List<MemberResponse>>> searchMembers(
+            @Parameter(description = "검색할 닉네임") @RequestParam String nickname) {
+        log.info("Searching members by nickname: {}", nickname);
+        List<MemberResponse> members = memberService.searchByNickname(nickname);
+        return ResponseEntity.ok(ApiResponse.success("회원 검색이 완료되었습니다.", members));
     }
 
-    @GetMapping("/friend-code/{friendCode}")
-    public ResponseEntity<Member> getMemberByFriendCode(@PathVariable String friendCode) {
-        Optional<Member> member = memberService.findByFriendCode(friendCode);
-        return member.map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    /**
+     * 친구 코드로 회원 찾기
+     */
+    @Operation(summary = "친구 코드로 회원 찾기", description = "친구 코드로 특정 회원을 찾습니다.")
+    @GetMapping("/by-friend-code")
+    public ResponseEntity<ApiResponse<MemberResponse>> getMemberByFriendCode(
+            @Parameter(description = "친구 코드") @RequestParam String friendCode) {
+        log.info("Getting member by friend code: {}", friendCode);
+        MemberResponse member = memberService.getMemberByFriendCode(friendCode);
+        return ResponseEntity.ok(ApiResponse.success("회원을 찾았습니다.", member));
     }
 
-    @Operation(summary = "회원 생성", description = "새로운 회원을 생성합니다.")
-    @PostMapping
-    public ResponseEntity<Member> createMember(
-            @Parameter(description = "회원 정보", required = true) @RequestBody Member member) {
-        Member createdMember = memberService.createMember(member);
-        return ResponseEntity.ok(createdMember);
+    /**
+     * 회원 탈퇴
+     */
+    @Operation(summary = "회원 탈퇴", description = "현재 로그인한 사용자의 계정을 삭제합니다.")
+    @DeleteMapping("/me")
+    public ResponseEntity<ApiResponse<Void>> deleteMyAccount() {
+        log.info("Deleting current member account");
+        memberService.deleteMyAccount();
+        return ResponseEntity.ok(ApiResponse.<Void>success("회원 탈퇴가 완료되었습니다.", null));
     }
 
-    @PutMapping("/{memberId}")
-    public ResponseEntity<Member> updateMember(
-            @PathVariable UUID memberId,
-            @RequestBody Member member) {
-        Member updatedMember = memberService.updateMember(memberId, member);
-        return ResponseEntity.ok(updatedMember);
-    }
-
-    @DeleteMapping("/{memberId}")
-    public ResponseEntity<Void> deleteMember(@PathVariable UUID memberId) {
-        memberService.deleteMember(memberId);
-        return ResponseEntity.noContent().build();
-    }
-
-    @GetMapping("/exists/kakao/{kakaoId}")
-    public ResponseEntity<Boolean> existsByKakaoId(@PathVariable String kakaoId) {
-        boolean exists = memberService.existsByKakaoId(kakaoId);
-        return ResponseEntity.ok(exists);
-    }
-
-    @GetMapping("/exists/friend-code/{friendCode}")
-    public ResponseEntity<Boolean> existsByFriendCode(@PathVariable String friendCode) {
-        boolean exists = memberService.existsByFriendCode(friendCode);
-        return ResponseEntity.ok(exists);
-    }
-
-    private MemberResponse convertToMemberResponse(Member member) {
-        return MemberResponse.builder()
-                .id(member.getId())
-                .kakaoId(member.getKakaoId())
-                .nickname(member.getNickname())
-                .profileImage(member.getProfileImage())
-                .friendCode(member.getFriendCode())
-                .isActive(member.getIsActive())
-                .createdAt(member.getCreatedAt())
-                .updatedAt(member.getUpdatedAt())
+    /**
+     * 닉네임만 변경
+     */
+    @Operation(summary = "닉네임 변경", description = "현재 로그인한 사용자의 닉네임만 변경합니다.")
+    @PutMapping("/me/nickname")
+    public ResponseEntity<ApiResponse<MemberResponse>> updateMyNickname(
+            @Valid @RequestBody NicknameUpdateRequest request) {
+        log.info("Updating current member nickname to: {}", request.getNickname());
+        MemberUpdateRequest updateRequest = MemberUpdateRequest.builder()
+                .nickname(request.getNickname())
                 .build();
+        MemberResponse member = memberService.updateMyInfo(updateRequest);
+        return ResponseEntity.ok(ApiResponse.success("닉네임이 변경되었습니다.", member));
+    }
+
+    /**
+     * 프로필 이미지만 변경
+     */
+    @Operation(summary = "프로필 이미지 변경", description = "현재 로그인한 사용자의 프로필 이미지만 변경합니다.")
+    @PutMapping("/me/profile-image")
+    public ResponseEntity<ApiResponse<MemberResponse>> updateMyProfileImage(
+            @Valid @RequestBody ProfileImageUpdateRequest request) {
+        log.info("Updating current member profile image to: {}", request.getProfileImage());
+        MemberUpdateRequest updateRequest = MemberUpdateRequest.builder()
+                .profileImage(request.getProfileImage())
+                .build();
+        MemberResponse member = memberService.updateMyInfo(updateRequest);
+        return ResponseEntity.ok(ApiResponse.success("프로필 이미지가 변경되었습니다.", member));
+    }
+
+    /**
+     * 내 통계 정보 조회
+     */
+    @Operation(summary = "내 통계 조회", description = "내 카드 수, 친구 수 등 통계 정보를 조회합니다.")
+    @GetMapping("/me/stats")
+    public ResponseEntity<ApiResponse<Object>> getMyStats() {
+        log.info("Getting current member statistics");
+        Object stats = memberService.getMyStats();
+        return ResponseEntity.ok(ApiResponse.success("내 통계를 조회했습니다.", stats));
     }
 } 

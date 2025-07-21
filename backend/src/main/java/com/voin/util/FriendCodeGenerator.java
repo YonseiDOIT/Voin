@@ -8,7 +8,7 @@ import java.security.SecureRandom;
 public class FriendCodeGenerator {
 
     private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    private static final int CODE_LENGTH = 8;
+    private static final int CODE_LENGTH = 5;
     private final SecureRandom random = new SecureRandom();
 
     public String generate() {
