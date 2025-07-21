@@ -1,5 +1,6 @@
 package com.voin.controller;
 
+import com.voin.dto.request.KakaoTokenRequest;
 import com.voin.dto.response.ApiResponse;
 import com.voin.dto.response.KakaoLoginResponse;
 import com.voin.entity.Member;
@@ -8,49 +9,21 @@ import com.voin.security.JwtTokenProvider;
 import com.voin.service.KakaoAuthService;
 import com.voin.util.FriendCodeGenerator;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import jakarta.servlet.http.HttpServletRequest;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
+
+import jakarta.validation.Valid;
 import java.util.Map;
 import java.util.Optional;
-import java.net.URLEncoder;
-import java.util.UUID;
 
-/**
- * 🔐 로그인 및 인증 컨트롤러
- * 
- * 이 클래스는 사용자의 로그인과 인증을 처리하는 기능을 담당합니다.
- * 
- * 주요 기능들:
- * - 💛 카카오 로그인 처리하기
- * - 🔄 로그인 콜백 처리하기 (카카오에서 돌아온 정보 받기)
- * - 🧪 로그인 테스트 페이지 보여주기
- * - 📋 로그인 URL 제공하기
- * 
- * 쉽게 말해서, "출입 관리 사무소" 같은 역할을 해요!
- * 누가 들어올 수 있는지, 어떻게 들어오는지를 관리합니다.
- */
 @Slf4j
-@Controller
+@RestController
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@RequestMapping("/auth")
-@Tag(name = "🔐 Auth", description = "카카오 로그인 및 인증 관리")
+@Tag(name = "🔐 Authentication", description = "인증 및 토큰 관리")
 public class AuthController {
 
     private final KakaoAuthService kakaoAuthService;
@@ -58,75 +31,26 @@ public class AuthController {
     private final JwtTokenProvider jwtTokenProvider;
     private final FriendCodeGenerator friendCodeGenerator;
 
-    private static final String FRONTEND_URL = "https://localhost:5173";
-
-    @Value("${kakao.client-id}")
-    private String clientId;
-
     /**
-     * 카카오 로그인 테스트 페이지
+     * 카카오 로그인/회원가입 처리
      */
-    @Operation(summary = "카카오 로그인 테스트 페이지", 
-               description = "카카오 로그인을 테스트할 수 있는 HTML 페이지를 반환합니다.")
-    @SecurityRequirements // 인증 불필요
-    @GetMapping("/test")
-    public String loginTestPage(Model model) {
+    @Operation(summary = "카카오 토큰 검증", description = "프론트엔드에서 받은 카카오 액세스 토큰을 검증하고 JWT를 발급합니다.")
+    @PostMapping("/kakao/verify")
+    public ResponseEntity<ApiResponse<KakaoLoginResponse>> verifyKakaoToken(
+            @Valid @RequestBody KakaoTokenRequest request) {
+        log.info("Verifying Kakao token");
+        
         try {
-            String kakaoAuthUrl = kakaoAuthService.getKakaoAuthUrl();
-            
-            model.addAttribute("kakaoAuthUrl", kakaoAuthUrl);
-            model.addAttribute("clientId", clientId);
-            
-            log.info("카카오 인증 URL 생성: {}", kakaoAuthUrl);
-        } catch (Exception e) {
-            log.error("카카오 인증 URL 생성 실패", e);
-            model.addAttribute("error", "카카오 설정이 올바르지 않습니다: " + e.getMessage());
-        }
-        return "kakao-login-test";
-    }
-
-    /**
-     * 프론트엔드에서 받은 액세스 토큰으로 로그인/회원가입 처리
-     */
-    @Operation(summary = "카카오 토큰으로 로그인/회원가입", 
-               description = "프론트에서 받은 카카오 액세스 토큰으로 사용자를 확인하고 로그인 또는 회원가입을 진행합니다.")
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200", 
-                    description = "처리 성공",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400", 
-                    description = "잘못된 토큰"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "500", 
-                    description = "서버 오류")
-    })
-    @SecurityRequirements // 인증 불필요
-    @PostMapping("/kakao/check")
-    @ResponseBody
-    public ApiResponse<KakaoLoginResponse> checkKakaoUser(@RequestBody Map<String, String> payload) {
-        String accessToken = payload.get("accessToken");
-        if (accessToken == null || accessToken.isBlank()) {
-            return ApiResponse.error("카카오 액세스 토큰이 필요합니다.");
-        }
-
-        try {
-            log.info("카카오 토큰 확인 시작 - 토큰: {}", accessToken.substring(0, Math.min(20, accessToken.length())) + "...");
-            
-            // 1. 토큰으로 카카오 사용자 정보 조회
-            Map<String, Object> userInfo = kakaoAuthService.getUserInfo(accessToken);
+            // 1. 카카오 토큰으로 사용자 정보 조회
+            Map<String, Object> userInfo = kakaoAuthService.getUserInfo(request.getAccessToken());
             String kakaoId = userInfo.get("id").toString();
-            log.info("카카오 사용자 정보 조회 성공 - 카카오 ID: {}", kakaoId);
-
-            // 2. DB에서 회원 정보 확인
+            
+            // 2. DB에서 회원 확인
             Optional<Member> existingMemberOpt = memberRepository.findByKakaoId(kakaoId);
-
+            
             if (existingMemberOpt.isPresent()) {
-                // 4-1. 회원이 존재하면 로그인 처리
+                // 기존 회원 - 로그인
                 Member member = existingMemberOpt.get();
-                log.info("기존 회원 로그인 - 회원 ID: {}, 닉네임: {}", member.getId(), member.getNickname());
-                
                 String jwtToken = jwtTokenProvider.createToken(member.getId().toString());
                 
                 KakaoLoginResponse response = KakaoLoginResponse.builder()
@@ -135,23 +59,19 @@ public class AuthController {
                         .jwtToken(jwtToken)
                         .build();
                         
-                return ApiResponse.success(response);
+                return ResponseEntity.ok(ApiResponse.success("로그인이 완료되었습니다.", response));
             } else {
-                // 4-2. 회원이 없으면 신규 회원가입 처리
-                log.info("신규 회원 가입 처리 시작 - 카카오 ID: {}", kakaoId);
-                
-                // 카카오 사용자 정보에서 닉네임과 프로필 이미지 추출
+                // 신규 회원 - 회원가입
                 Map<String, Object> properties = (Map<String, Object>) userInfo.get("properties");
                 String nickname = properties != null ? (String) properties.get("nickname") : "카카오사용자";
                 String profileImage = properties != null ? (String) properties.get("profile_image_url") : null;
 
-                // 친구 코드 생성 (중복 확인)
+                // 친구 코드 생성
                 String friendCode;
                 do {
                     friendCode = friendCodeGenerator.generate();
                 } while (memberRepository.existsByFriendCode(friendCode));
 
-                // 5. 신규 회원 DB 저장
                 Member newMember = Member.builder()
                         .kakaoId(kakaoId)
                         .nickname(nickname)
@@ -160,8 +80,6 @@ public class AuthController {
                         .build();
                 
                 memberRepository.save(newMember);
-                log.info("신규 회원 가입 완료 - 회원 ID: {}, 닉네임: {}", newMember.getId(), newMember.getNickname());
-
                 String jwtToken = jwtTokenProvider.createToken(newMember.getId().toString());
 
                 KakaoLoginResponse response = KakaoLoginResponse.builder()
@@ -170,223 +88,51 @@ public class AuthController {
                         .jwtToken(jwtToken)
                         .build();
                         
-                return ApiResponse.success(response);
+                return ResponseEntity.ok(ApiResponse.success("회원가입이 완료되었습니다.", response));
             }
-
+            
         } catch (Exception e) {
-            log.error("카카오 로그인 확인 중 오류 발생", e);
-            return ApiResponse.error("카카오 로그인 처리 중 오류가 발생했습니다: " + e.getMessage());
+            log.error("카카오 토큰 검증 중 오류 발생", e);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("카카오 토큰 검증에 실패했습니다: " + e.getMessage()));
         }
     }
 
     /**
-     * 카카오 로그인 콜백 처리
+     * 카카오 로그인 URL 조회
      */
-    @Operation(summary = "카카오 로그인 콜백 처리", 
-               description = "카카오 인증 서버로부터 받은 인가 코드를 처리하여 사용자 정보를 조회합니다.")
-    @SecurityRequirements // 인증 불필요
-    @GetMapping("/kakao/callback")
-    public ResponseEntity<Void> kakaoCallback(
-            @Parameter(description = "카카오로부터 받은 인가 코드", required = true)
-            @RequestParam("code") String code,
-            @Parameter(description = "플로우 테스트에서 왔는지 확인하는 state 파라미터", required = false)
-            @RequestParam(value = "state", required = false) String state,
-            HttpServletRequest request) {
-        String referer = request.getHeader("Referer");
-        log.info("카카오 콜백 처리 시작 - code: {}, state: {}, referer: {}", code, state, referer);
-        
-        // state가 없더라도 referer를 통해 플로우 테스트인지 확인
-        boolean isFromFlowTest = "flow_test".equals(state) || 
-                               (referer != null && referer.contains("flow-test.html"));
-        
-        try {
-            // 1단계: 인가 코드로 토큰 받기
-            log.info("1단계: 액세스 토큰 요청 시작");
-            String accessToken = kakaoAuthService.getAccessToken(code);
-            log.info("1단계 완료: 카카오 액세스 토큰 획득 성공");
-            
-            // 2단계: 사용자 정보 받기
-            log.info("2단계: 사용자 정보 요청 시작");
-            var userInfo = kakaoAuthService.getUserInfo(accessToken);
-            String kakaoId = userInfo.get("id").toString();
-            log.info("2단계 완료: 카카오 사용자 정보 획득 성공 - ID: {}, 닉네임: {}", 
-                    kakaoId, userInfo.get("nickname"));
-            
-            // 3단계: 기존 회원인지 확인
-            Optional<Member> existingMember = memberRepository.findByKakaoId(kakaoId);
-            
-            if (existingMember.isPresent()) {
-                // 기존 회원 - 로그인 처리
-                Member member = existingMember.get();
-                log.info("기존 회원 로그인 - 회원 ID: {}, 닉네임: {}", member.getId(), member.getNickname());
-                
-                // 세션에 사용자 정보 저장
-                request.getSession().setAttribute("memberId", member.getId());
-                request.getSession().setAttribute("nickname", member.getNickname());
-                request.getSession().setMaxInactiveInterval(24 * 60 * 60); // 24시간
-                
-                // JWT 토큰 생성
-                String jwtToken = jwtTokenProvider.createToken(member.getId().toString());
-                log.info("로그인 성공 - JWT 토큰 생성: {}", jwtToken.substring(0, 20) + "...");
-                
-                // 프론트엔드로 리디렉션
-                try {
-                    String targetUrl = FRONTEND_URL + "/?login_success=true&access_token=" + jwtToken + 
-                           "&is_new_member=false&nickname=" + 
-                           URLEncoder.encode(member.getNickname(), StandardCharsets.UTF_8);
-                    URI redirectUri = new URI(targetUrl);
-                    log.info("기존 회원 프론트엔드 리디렉트: {}", redirectUri);
-                    HttpHeaders headers = new HttpHeaders();
-                    headers.setLocation(redirectUri);
-                    return new ResponseEntity<>(headers, HttpStatus.FOUND);
-                } catch (Exception e) {
-                    log.error("기존 회원 프론트엔드 리디렉트 URI 생성 실패", e);
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-                }
-            } else {
-                // 신규 회원 - 회원가입 플로우로 리다이렉트
-                log.info("신규 회원 감지 - 회원가입 플로우로 이동");
-                
-                // 프론트엔드의 회원가입 페이지로 리디렉션
-                try {
-                    String targetUrl = FRONTEND_URL + "/signup?is_new_member=true&kakao_access_token=" + accessToken;
-                    URI redirectUri = new URI(targetUrl);
-                    log.info("신규 회원 프론트엔드 리디렉트: {}", redirectUri);
-                    HttpHeaders headers = new HttpHeaders();
-                    headers.setLocation(redirectUri);
-                    return new ResponseEntity<>(headers, HttpStatus.FOUND);
-                } catch (Exception e) {
-                    log.error("신규 회원 프론트엔드 리디렉트 URI 생성 실패", e);
-                    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-                }
-            }
-            
-        } catch (Exception e) {
-            log.error("카카오 로그인 콜백 처리 실패", e);
-            // 오류 발생 시 프론트엔드 에러 페이지로 리다이렉트
-            try {
-                String errorMessage = URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8);
-                URI errorRedirectUri = new URI(FRONTEND_URL + "/?error=true&message=" + errorMessage);
-                HttpHeaders headers = new HttpHeaders();
-                headers.setLocation(errorRedirectUri);
-                return new ResponseEntity<>(headers, HttpStatus.FOUND);
-            } catch (Exception ex) {
-                log.error("오류 리다이렉트 URI 생성 실패", ex);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-            }
-        }
-    }
-
-    /**
-     * API 테스트용 - 카카오 로그인 URL 반환
-     */
-    @Operation(summary = "카카오 로그인 URL 조회", 
-               description = "카카오 로그인을 위한 인증 URL을 반환합니다.")
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200", 
-                    description = "카카오 로그인 URL 반환 성공",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "500", 
-                    description = "카카오 설정 오류")
-    })
-    @SecurityRequirements // 인증 불필요
+    @Operation(summary = "카카오 로그인 URL", description = "카카오 로그인을 위한 인증 URL을 반환합니다.")
     @GetMapping("/kakao/url")
-    @ResponseBody
-    public ApiResponse<String> getKakaoAuthUrlApi(
-            @Parameter(description = "플로우 테스트에서 호출하는지 여부", required = false)
-            @RequestParam(value = "from_flow", required = false, defaultValue = "false") boolean fromFlow) {
+    public ResponseEntity<ApiResponse<String>> getKakaoAuthUrl() {
+        log.info("Getting Kakao auth URL");
         try {
-            String authUrl = kakaoAuthService.getKakaoAuthUrl(false, fromFlow);
-            return ApiResponse.success(authUrl);
+            String authUrl = kakaoAuthService.getKakaoAuthUrl();
+            return ResponseEntity.ok(ApiResponse.success("카카오 로그인 URL을 조회했습니다.", authUrl));
         } catch (Exception e) {
-            return ApiResponse.error("카카오 설정 오류: " + e.getMessage());
+            log.error("카카오 로그인 URL 조회 중 오류 발생", e);
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("카카오 설정 오류: " + e.getMessage()));
         }
     }
 
     /**
-     * 카카오 앱 연결 끊기 (동의 페이지를 다시 보기 위해)
+     * 토큰 유효성 검증
      */
-    @Operation(summary = "카카오 앱 연결 끊기", 
-               description = "카카오 앱과의 연결을 해제합니다. 연결 해제 후 다시 로그인하면 동의 페이지가 나타납니다.")
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200", 
-                    description = "연결 끊기 성공",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400", 
-                    description = "잘못된 액세스 토큰"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "500", 
-                    description = "연결 끊기 처리 오류")
-    })
-    @PostMapping("/kakao/unlink")
-    @ResponseBody
-    public ApiResponse<Object> unlinkKakaoApp(
-            @Parameter(description = "카카오 액세스 토큰", required = true)
-            @RequestParam("access_token") String accessToken) {
+    @Operation(summary = "토큰 검증", description = "JWT 토큰의 유효성을 검증합니다.")
+    @GetMapping("/validate")
+    public ResponseEntity<ApiResponse<Boolean>> validateToken(
+            @RequestHeader("Authorization") String token) {
+        log.info("Validating JWT token");
         try {
-            var result = kakaoAuthService.unlinkKakaoApp(accessToken);
-            if ((Boolean) result.getOrDefault("success", false)) {
-                return ApiResponse.success(result);
-            } else {
-                return ApiResponse.error(result.get("error").toString());
+            // Bearer 제거
+            if (token.startsWith("Bearer ")) {
+                token = token.substring(7);
             }
+            boolean isValid = jwtTokenProvider.validateToken(token);
+            return ResponseEntity.ok(ApiResponse.success("토큰 검증이 완료되었습니다.", isValid));
         } catch (Exception e) {
-            log.error("카카오 앱 연결 끊기 API 오류", e);
-            return ApiResponse.error("연결 끊기 처리 중 오류가 발생했습니다: " + e.getMessage());
+            log.error("토큰 검증 중 오류 발생", e);
+            return ResponseEntity.ok(ApiResponse.success("토큰이 유효하지 않습니다.", false));
         }
-    }
-
-    /**
-     * 디버깅용 - 콜백 테스트
-     */
-    @Operation(summary = "콜백 엔드포인트 테스트", 
-               description = "카카오 콜백 엔드포인트가 정상 작동하는지 테스트합니다.")
-    @SecurityRequirements // 인증 불필요
-    @GetMapping("/kakao/test-callback")
-    @ResponseBody
-    public ApiResponse<Object> testCallback() {
-        Map<String, Object> testInfo = new HashMap<>();
-        testInfo.put("clientId", clientId);
-        testInfo.put("message", "콜백 엔드포인트가 정상 작동 중입니다");
-        testInfo.put("timestamp", System.currentTimeMillis());
-        return ApiResponse.success(testInfo);
-    }
-    
-    @Operation(summary = "세션 확인", 
-               description = "현재 세션의 로그인 상태를 확인합니다.")
-    @SecurityRequirements // 인증 불필요
-    @GetMapping("/session/check")
-    @ResponseBody
-    public ApiResponse<Object> checkSession(HttpServletRequest request) {
-        Map<String, Object> sessionInfo = new HashMap<>();
-        
-        Object memberId = request.getSession().getAttribute("memberId");
-        Object nickname = request.getSession().getAttribute("nickname");
-        
-        if (memberId != null) {
-            sessionInfo.put("isLoggedIn", true);
-            sessionInfo.put("memberId", memberId);
-            sessionInfo.put("nickname", nickname);
-            sessionInfo.put("sessionId", request.getSession().getId());
-            sessionInfo.put("maxInactiveInterval", request.getSession().getMaxInactiveInterval());
-            return ApiResponse.success("세션이 유효합니다.", sessionInfo);
-        } else {
-            sessionInfo.put("isLoggedIn", false);
-            return ApiResponse.success("세션이 없습니다.", sessionInfo);
-        }
-    }
-    
-    @Operation(summary = "로그아웃", 
-               description = "현재 세션을 무효화합니다.")
-    @SecurityRequirements // 인증 불필요
-    @PostMapping("/logout")
-    @ResponseBody
-    public ApiResponse<Object> logout(HttpServletRequest request) {
-        request.getSession().invalidate();
-        return ApiResponse.success("로그아웃되었습니다.");
     }
 } 

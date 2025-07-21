@@ -24,6 +24,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import com.voin.dto.request.CardCreateRequest;
+import com.voin.dto.response.CardResponse;
 
 import java.util.List;
 import java.util.Map;
@@ -65,42 +66,55 @@ public class CardService {
                 .orElseThrow(() -> new ResourceNotFoundException("Card not found with id: " + cardId));
     }
 
+    @Transactional(readOnly = true)
     public List<Card> findByOwnerId(UUID ownerId) {
-        return cardRepository.findByOwnerIdOrderByCreatedAtDesc(ownerId);
+        // 새로운 구조에서는 사용하지 않는 메서드 - 주석처리
+        // return cardRepository.findByOwnerIdOrderByCreatedAtDesc(ownerId);
+        throw new UnsupportedOperationException("이 메서드는 더 이상 사용되지 않습니다. findByOwner를 사용하세요.");
     }
 
+    @Transactional(readOnly = true)
     public List<Card> findByCreatorId(UUID creatorId) {
-        return cardRepository.findByCreatorIdOrderByCreatedAtDesc(creatorId);
+        // 새로운 구조에서는 사용하지 않는 메서드 - 주석처리
+        // return cardRepository.findByCreatorIdOrderByCreatedAtDesc(creatorId);
+        throw new UnsupportedOperationException("이 메서드는 더 이상 사용되지 않습니다. findByCreator를 사용하세요.");
     }
 
+    @Transactional(readOnly = true)
     public Page<Card> findByOwnerId(UUID ownerId, Pageable pageable) {
-        return cardRepository.findByOwnerIdOrderByCreatedAtDesc(ownerId, pageable);
+        // 새로운 구조에서는 사용하지 않는 메서드 - 주석처리
+        // return cardRepository.findByOwnerIdOrderByCreatedAtDesc(ownerId, pageable);
+        throw new UnsupportedOperationException("이 메서드는 더 이상 사용되지 않습니다.");
     }
 
-    public Page<Card> findPublicCards(Pageable pageable) {
-        return cardRepository.findByIsPublicTrueOrderByCreatedAtDesc(pageable);
-    }
-
+    @Transactional(readOnly = true)
     public Page<Card> searchByContent(String keyword, Pageable pageable) {
-        return cardRepository.findByContentContainingAndIsPublicTrue(keyword, pageable);
+        return cardRepository.searchByContentAndIsPublicTrue(keyword, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Card> findPublicCards() {
+        // 새로운 구조에서는 사용하지 않는 메서드 - 주석처리
+        // return cardRepository.findByOwnerIdOrderByCreatedAtDesc(currentMember.getId());
+        throw new UnsupportedOperationException("이 메서드는 더 이상 사용되지 않습니다.");
     }
 
     public List<Card> findMyCards() {
         Member currentMember = getCurrentMember();
-        return cardRepository.findByOwnerIdOrderByCreatedAtDesc(currentMember.getId());
+        return cardRepository.findByOwnerOrderByCreatedAtDesc(currentMember);
     }
 
     /**
-     * 📋 내 카드 목록 조회 (Story 정보 포함)
+     * 📋 내 카드 목록을 Story 정보와 함께 조회
      * 
-     * 사용자가 생성한 모든 카드와 함께 연결된 Story의 상세 정보를 반환합니다.
-     * 경험 돌아보기의 경우 answer1, answer2 필드 정보도 포함됩니다.
+     * 현재 로그인한 사용자가 소유한 모든 카드를 Story 정보와 함께 반환합니다.
+     * 경험 돌아보기로 만든 카드의 경우 answer1, answer2 정보도 포함됩니다.
      * 
      * @return 카드와 Story 정보가 포함된 데이터 목록
      */
     public List<Map<String, Object>> getMyCardsWithStoryData() {
         Member currentMember = getCurrentMember();
-        List<Card> cards = cardRepository.findByOwnerIdOrderByCreatedAtDesc(currentMember.getId());
+        List<Card> cards = cardRepository.findByOwnerOrderByCreatedAtDesc(currentMember);
         
         return cards.stream().map(card -> {
             Map<String, Object> cardData = new HashMap<>();
@@ -139,18 +153,18 @@ public class CardService {
                 storyData.put("id", card.getStory().getId());
                 storyData.put("title", card.getStory().getTitle());
                 storyData.put("content", card.getStory().getContent());
-                storyData.put("storyType", card.getStory().getStoryType().name());
+                storyData.put("type", card.getStory().getStoryType().name());
                 
                 // 경험 돌아보기인 경우 추가 정보 포함
                 if (card.getStory().getStoryType() == StoryType.EXPERIENCE_REFLECTION) {
-                    if (card.getStory().getSituationContext() != null) {
-                        storyData.put("situationContext", card.getStory().getSituationContext());
-                    }
                     if (card.getStory().getAnswer1() != null) {
                         storyData.put("answer1", card.getStory().getAnswer1());
                     }
                     if (card.getStory().getAnswer2() != null) {
                         storyData.put("answer2", card.getStory().getAnswer2());
+                    }
+                    if (card.getStory().getSituationContext() != null) {
+                        storyData.put("situationContext", card.getStory().getSituationContext());
                     }
                 }
                 
@@ -165,14 +179,14 @@ public class CardService {
     public Card createCard(CardCreateRequest request) {
         Member currentMember = getCurrentMember();
 
-        Story story = storyRepository.findById(request.getFormId())
-                .orElseThrow(() -> new ResourceNotFoundException("Story not found with id: " + request.getFormId()));
+        Story story = storyRepository.findById(request.getStoryId())
+                .orElseThrow(() -> new ResourceNotFoundException("Story not found with id: " + request.getStoryId()));
 
-        if (request.getKeywordIds() == null || request.getKeywordIds().isEmpty()) {
+        if (request.getKeywordId() == null) {
             throw new IllegalArgumentException("Keyword ID는 필수입니다.");
         }
 
-        Long keywordId = request.getKeywordIds().get(0);
+        Long keywordId = request.getKeywordId();
         Keyword keyword = keywordRepository.findById(keywordId)
                 .orElseThrow(() -> new ResourceNotFoundException("Keyword not found with id: " + keywordId));
 
@@ -187,31 +201,20 @@ public class CardService {
         }
 
         // 자신에 대한 카드 생성
-        Card card = Card.createSelfCard(
-            currentMember.getId(),
-            currentMember,
-            story,
-            keyword,
-            story.getContent()
-        );
+        Card card = Card.builder()
+                .creator(currentMember)
+                .owner(currentMember)
+                .targetMember(currentMember)
+                .story(story)
+                .keyword(keyword)
+                .content(story.getContent())
+                .isPublic(false)
+                .isGift(false)
+                .situationContext(situationContext)
+                .build();
         
-        // 상황 맥락 설정
-        if (situationContext != null && !situationContext.trim().isEmpty()) {
-            card = Card.builder()
-                    .creatorId(card.getCreatorId())
-                    .ownerId(card.getOwnerId())
-                    .targetMember(card.getTargetMember())
-                    .story(card.getStory())
-                    .keyword(card.getKeyword())
-                    .content(card.getContent())
-                    .isPublic(card.getIsPublic())
-                    .isGift(card.getIsGift())
-                    .situationContext(situationContext)
-                    .build();
-        }
-
         Card savedCard = cardRepository.save(card);
-        log.info("Created card from story: {} for member: {}", story.getId(), currentMember.getId());
+        log.info("Card created: id={}, keyword={}", savedCard.getId(), keyword.getName());
         return savedCard;
     }
 
@@ -221,8 +224,8 @@ public class CardService {
         
         Card updatedEntity = Card.builder()
                 .id(existingCard.getId())
-                .creatorId(existingCard.getCreatorId())
-                .ownerId(existingCard.getOwnerId())
+                .creator(existingCard.getCreator())
+                .owner(existingCard.getOwner())
                 .targetMember(existingCard.getTargetMember())
                 .story(existingCard.getStory())
                 .keyword(existingCard.getKeyword())
@@ -435,6 +438,152 @@ public class CardService {
         }
         
         return Map.of("coins", coinOptions);
+    }
+
+    /**
+     * 스토리로부터 카드 생성
+     */
+    public CardResponse createCardFromStory(CardCreateRequest request) {
+        UUID currentMemberId = getCurrentMemberId();
+        
+        // 스토리 조회 및 소유자 확인
+        Story story = storyRepository.findById(request.getStoryId())
+                .orElseThrow(() -> new RuntimeException("스토리를 찾을 수 없습니다."));
+        
+        if (!story.getMemberId().equals(currentMemberId)) {
+            throw new RuntimeException("해당 스토리에 대한 권한이 없습니다.");
+        }
+        
+        // 대상 회원 조회 (본인)
+        Member targetMember = memberRepository.findById(currentMemberId)
+                .orElseThrow(() -> new RuntimeException("회원을 찾을 수 없습니다."));
+        
+        // 키워드 조회
+        Keyword keyword = null;
+        if (request.getKeywordId() != null) {
+            keyword = keywordRepository.findById(request.getKeywordId())
+                    .orElseThrow(() -> new RuntimeException("키워드를 찾을 수 없습니다."));
+        }
+        
+        // 카드 생성
+        Card card = Card.builder()
+                .creator(targetMember)
+                .owner(targetMember)
+                .targetMember(targetMember)
+                .story(story)
+                .keyword(keyword)
+                .isPublic(request.getIsPublic() != null ? request.getIsPublic() : true)
+                .build();
+        
+        Card savedCard = cardRepository.save(card);
+        log.info("Card created from story: cardId={}, storyId={}", savedCard.getId(), story.getId());
+        
+        return convertToCardResponse(savedCard, keyword != null ? List.of(keyword) : new ArrayList<>());
+    }
+
+    /**
+     * 카드 조회 (소유자 확인 포함)
+     */
+    public CardResponse getCard(Long cardId) {
+        UUID currentMemberId = getCurrentMemberId();
+        
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new RuntimeException("카드를 찾을 수 없습니다."));
+        
+        // 공개 카드가 아니고 소유자가 다르면 접근 불가
+        if (!card.getIsPublic() && !card.getOwner().getId().equals(currentMemberId)) {
+            throw new RuntimeException("해당 카드에 대한 권한이 없습니다.");
+        }
+        
+        return convertToCardResponse(card, new ArrayList<>());
+    }
+
+    /**
+     * 공개 카드 목록 조회 (페이징)
+     */
+    public Page<CardResponse> getPublicCards(Pageable pageable) {
+        Page<Card> cards = cardRepository.findByIsPublicTrueOrderByCreatedAtDesc(pageable);
+        return cards.map(card -> convertToCardResponse(card, new ArrayList<>()));
+    }
+
+    /**
+     * 카드 공개/비공개 설정 변경
+     */
+    public CardResponse updateCardVisibility(Long cardId, Boolean isPublic) {
+        UUID currentMemberId = getCurrentMemberId();
+        
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new RuntimeException("카드를 찾을 수 없습니다."));
+        
+        // 소유자 확인
+        if (!card.getOwner().getId().equals(currentMemberId)) {
+            throw new RuntimeException("해당 카드에 대한 권한이 없습니다.");
+        }
+        
+        if (Boolean.TRUE.equals(isPublic)) {
+            card.makePublic();
+        } else {
+            card.makePrivate();
+        }
+        Card updatedCard = cardRepository.save(card);
+        
+        log.info("Card visibility updated: cardId={}, isPublic={}", cardId, isPublic);
+        return convertToCardResponse(updatedCard, new ArrayList<>());
+    }
+
+
+
+    /**
+     * 현재 로그인한 사용자 ID 가져오기
+     */
+    private UUID getCurrentMemberId() {
+        // SecurityContextHolder를 사용하는 것이 좋지만, 기존 세션 방식도 지원
+        try {
+            String memberId = org.springframework.security.core.context.SecurityContextHolder
+                    .getContext().getAuthentication().getName();
+            return UUID.fromString(memberId);
+        } catch (Exception e) {
+            // 세션 방식 fallback
+            ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
+            HttpServletRequest request = attr.getRequest();
+            HttpSession session = request.getSession(false);
+            
+            if (session != null) {
+                Object memberIdObj = session.getAttribute("memberId");
+                if (memberIdObj instanceof UUID) {
+                    return (UUID) memberIdObj;
+                }
+            }
+            throw new RuntimeException("로그인이 필요합니다.");
+        }
+    }
+
+    /**
+     * Card 엔티티를 CardResponse DTO로 변환
+     */
+    private CardResponse convertToCardResponse(Card card, List<Keyword> keywords) {
+        // 소유자 닉네임 조회
+        String ownerNickname = "Unknown";
+        try {
+            if (card.getOwner() != null) {
+                ownerNickname = card.getOwner().getNickname();
+            }
+        } catch (Exception e) {
+            log.warn("Failed to get owner nickname for card: {}", card.getId());
+        }
+        
+        return CardResponse.builder()
+                .id(card.getId())
+                .ownerId(card.getOwner() != null ? card.getOwner().getId() : null)
+                .ownerNickname(ownerNickname)
+                .storyId(card.getStory() != null ? card.getStory().getId() : null)
+                .coinName(card.getCoinName())
+                .keywords(keywords.stream().map(Keyword::getName).collect(Collectors.toList()))
+                .content(card.getContent())
+                .isPublic(card.getIsPublic())
+                .createdAt(card.getCreatedAt())
+                .updatedAt(card.getUpdatedAt())
+                .build();
     }
 
     /**
