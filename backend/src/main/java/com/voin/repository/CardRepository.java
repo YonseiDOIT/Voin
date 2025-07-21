@@ -279,4 +279,13 @@ public interface CardRepository extends JpaRepository<Card, Long> {
     @Modifying
     @Query("UPDATE Card c SET c.ownerId = :newOwnerId, c.isGift = true WHERE c.id = :cardId")
     int transferCardOwnership(@Param("cardId") Long cardId, @Param("newOwnerId") UUID newOwnerId);
+
+    // === 친구 카드 조회 ===
+
+    /**
+     * 특정 회원들의 공개 카드를 조회합니다 (최신순)
+     * @param ownerIds 소유자 ID 목록
+     * @return 해당 회원들의 공개 카드 목록
+     */
+    List<Card> findByOwnerIdInAndIsPublicTrueOrderByCreatedAtDesc(List<UUID> ownerIds);
 } 
