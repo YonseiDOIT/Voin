@@ -131,19 +131,20 @@ public class FriendService {
     }
 
     /**
-     * 친구 피드 조회
+     * 친구들의 피드(카드) 가져오기
      */
-    @Transactional(readOnly = true)
     public List<FriendCardResponse> getFriendsFeed() {
-        Member currentMember = getCurrentMember();
+        String currentMemberId = SecurityContextHolder.getContext().getAuthentication().getName();
+        Member currentMember = memberRepository.findById(UUID.fromString(currentMemberId))
+                .orElseThrow(() -> new RuntimeException("로그인한 사용자를 찾을 수 없습니다."));
         
-        // 현재 사용자의 친구 목록 조회 (양방향 친구 관계 고려)
+        // 수락된 친구 관계에서 친구들 목록 가져오기
         List<Member> friends = friendRepository.findAcceptedFriends(currentMember);
         
-        // 친구들의 카드 정보 조회 (공개된 카드만)
-        return cardRepository.findByOwnerIdInAndIsPublicTrueOrderByCreatedAtDesc(
-                friends.stream().map(Member::getId).collect(Collectors.toList()))
-                .stream()
+        // 친구들의 공개 카드만 가져오기
+        List<Card> friendCards = cardRepository.findByOwnerInAndIsPublicTrueOrderByCreatedAtDesc(friends);
+        
+        return friendCards.stream()
                 .map(this::convertToFriendCardResponse)
                 .collect(Collectors.toList());
     }
@@ -169,8 +170,8 @@ public class FriendService {
     private FriendCardResponse convertToFriendCardResponse(Card card) {
         return FriendCardResponse.builder()
                 .cardId(card.getId())
-                .memberId(card.getOwnerId().toString())
-                .memberNickname(card.getTargetMember().getNickname())
+                .memberId(card.getOwner().getId().toString())
+                .memberNickname(card.getOwner().getNickname())
                 .content(card.getContent())
                 .coinType(card.getCoinName())
                 .createdAt(card.getCreatedAt())

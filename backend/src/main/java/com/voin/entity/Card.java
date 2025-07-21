@@ -5,15 +5,14 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
-import java.util.UUID;
-
 /**
  * 사용자가 생성한 장점 카드를 나타내는 엔티티
  * 
  * 카드의 소유권 모델:
- * - creatorId: 카드를 최초로 생성한 회원 (변경되지 않음)
- * - ownerId: 현재 카드를 소유한 회원 (선물을 통해 변경 가능)
+ * - creator: 카드를 최초로 생성한 회원 (변경되지 않음)
+ * - owner: 현재 카드를 소유한 회원 (선물을 통해 변경 가능)
  * - targetMember: 카드에 기록된 장점의 대상이 되는 회원 (변경되지 않음)
+ * - keyword: 카드와 1:1 관계를 맺는 키워드 (1개 카드 = 1개 코인 + 1개 키워드)
  */
 @Entity
 @Table(name = "cards",
@@ -40,18 +39,22 @@ public class Card extends BaseEntity {
     private Long id;
 
     /**
-     * 카드를 최초로 생성한 회원의 ID (변경되지 않음)
+     * 카드를 최초로 생성한 회원 (변경되지 않음)
      */
     @NotNull(message = "생성자는 필수입니다")
-    @Column(name = "creator_id", nullable = false)
-    private UUID creatorId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "creator_id", nullable = false,
+                foreignKey = @ForeignKey(name = "fk_card_creator"))
+    private Member creator;
 
     /**
-     * 현재 카드를 소유한 회원의 ID (선물을 통해 변경 가능)
+     * 현재 카드를 소유한 회원 (선물을 통해 변경 가능)
      */
     @NotNull(message = "소유자는 필수입니다")
-    @Column(name = "owner_id", nullable = false)
-    private UUID ownerId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id", nullable = false,
+                foreignKey = @ForeignKey(name = "fk_card_owner"))
+    private Member owner;
 
     /**
      * 카드의 대상이 되는 회원 (장점을 받는 사람)
@@ -72,10 +75,10 @@ public class Card extends BaseEntity {
     private Story story;
 
     /**
-     * 선택된 키워드
+     * 선택된 키워드 (1:1 관계 - 1개 카드는 1개 키워드만 가짐)
      */
     @NotNull(message = "키워드는 필수입니다")
-    @ManyToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "keyword_id", nullable = false,
                 foreignKey = @ForeignKey(name = "fk_card_keyword"))
     private Keyword keyword;
@@ -152,6 +155,13 @@ public class Card extends BaseEntity {
     }
 
     /**
+     * 카드가 비공개인지 확인합니다
+     */
+    public boolean isPrivate() {
+        return !isPublic();
+    }
+
+    /**
      * 카드가 선물인지 확인합니다
      */
     public boolean isGift() {
@@ -159,106 +169,56 @@ public class Card extends BaseEntity {
     }
 
     /**
-     * 생성자와 소유자가 같은 카드인지 확인합니다 (본인이 만들고 소유한 카드)
+     * 카드를 선물로 설정합니다
      */
-    public boolean isOwnCard() {
-        return creatorId != null && ownerId != null && creatorId.equals(ownerId);
+    public void markAsGift() {
+        this.isGift = true;
     }
 
     /**
-     * 생성자와 대상이 같은 카드인지 확인합니다 (자신에 대한 카드)
+     * 카드 소유권을 변경합니다 (선물 기능)
      */
-    public boolean isSelfCard() {
-        return targetMember != null && creatorId != null && 
-               targetMember.getId().equals(creatorId);
-    }
-
-    /**
-     * 특정 회원이 이 카드의 생성자인지 확인합니다
-     */
-    public boolean isCreatedBy(UUID memberId) {
-        return creatorId != null && creatorId.equals(memberId);
+    public void transferOwnership(Member newOwner) {
+        if (newOwner == null) {
+            throw new IllegalArgumentException("새로운 소유자는 null일 수 없습니다");
+        }
+        this.owner = newOwner;
+        this.markAsGift();
     }
 
     /**
      * 특정 회원이 이 카드의 소유자인지 확인합니다
      */
-    public boolean isOwnedBy(UUID memberId) {
-        return ownerId != null && ownerId.equals(memberId);
+    public boolean isOwnedBy(Member member) {
+        return this.owner != null && this.owner.equals(member);
     }
 
     /**
-     * 특정 회원이 이 카드의 대상인지 확인합니다
+     * 특정 회원이 이 카드의 생성자인지 확인합니다
      */
-    public boolean isTargetOf(Member checkMember) {
-        return targetMember != null && checkMember != null && 
-               targetMember.getId().equals(checkMember.getId());
+    public boolean isCreatedBy(Member member) {
+        return this.creator != null && this.creator.equals(member);
     }
 
     /**
-     * 카드를 다른 회원에게 선물합니다
+     * 특정 회원이 이 카드의 대상자인지 확인합니다
      */
-    public void giftTo(UUID newOwnerId) {
-        if (newOwnerId == null) {
-            throw new IllegalArgumentException("새로운 소유자 ID는 null일 수 없습니다");
-        }
-        if (newOwnerId.equals(this.ownerId)) {
-            throw new IllegalArgumentException("이미 해당 회원의 소유입니다");
-        }
-        
-        this.ownerId = newOwnerId;
-        this.isGift = true;
+    public boolean isTargetedTo(Member member) {
+        return this.targetMember != null && this.targetMember.equals(member);
     }
 
     /**
-     * 카드의 키워드가 속한 코인 이름을 반환합니다
+     * 카드의 코인 정보를 반환합니다 (키워드를 통해 접근)
+     */
+    public Coin getCoin() {
+        return this.keyword != null ? this.keyword.getCoin() : null;
+    }
+
+    /**
+     * 카드의 코인 이름을 반환합니다
      */
     public String getCoinName() {
-        return keyword != null && keyword.getCoin() != null ? 
-               keyword.getCoin().getName() : null;
-    }
-
-    /**
-     * 카드의 간단한 정보를 문자열로 반환합니다
-     */
-    public String getCardInfo() {
-        String keywordName = keyword != null ? keyword.getName() : "알 수 없음";
-        String targetName = targetMember != null ? targetMember.getNickname() : "알 수 없음";
-        String giftStatus = isGift() ? "(선물)" : "";
-        return String.format("[%s] %s님의 카드 %s", keywordName, targetName, giftStatus);
-    }
-
-    // === 정적 팩토리 메서드 ===
-
-    /**
-     * 자신에 대한 카드를 생성합니다
-     */
-    public static Card createSelfCard(UUID creatorId, Member targetMember, Story story, Keyword keyword, String content) {
-        return Card.builder()
-                .creatorId(creatorId)
-                .ownerId(creatorId) // 생성자가 소유자
-                .targetMember(targetMember)
-                .story(story)
-                .keyword(keyword)
-                .content(content)
-                .isPublic(false)
-                .isGift(false)
-                .build();
-    }
-
-    /**
-     * 다른 사람에 대한 카드를 생성합니다
-     */
-    public static Card createForOther(UUID creatorId, Member targetMember, Story story, Keyword keyword, String content) {
-        return Card.builder()
-                .creatorId(creatorId)
-                .ownerId(targetMember.getId()) // 대상이 소유자
-                .targetMember(targetMember)
-                .story(story)
-                .keyword(keyword)
-                .content(content)
-                .isPublic(false)
-                .isGift(true) // 다른 사람을 위한 카드는 선물
-                .build();
+        Coin coin = getCoin();
+        return coin != null ? coin.getName() : "Unknown";
     }
 } 

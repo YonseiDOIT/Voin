@@ -8,6 +8,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -91,6 +93,13 @@ public class Story extends BaseEntity {
     @Column(name = "answer2", length = 2000)
     private String answer2;
 
+    /**
+     * 이 스토리를 통해 생성된 카드들 (양방향 관계)
+     */
+    @OneToMany(mappedBy = "story", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<Card> cards = new ArrayList<>();
+
     // === 비즈니스 메서드 ===
 
     /**
@@ -138,6 +147,36 @@ public class Story extends BaseEntity {
      */
     public boolean isType(StoryType checkType) {
         return this.storyType == checkType;
+    }
+
+    /**
+     * 카드를 추가합니다 (양방향 관계 유지)
+     */
+    public void addCard(Card card) {
+        cards.add(card);
+        // card.setStory(this)는 Card 엔티티에서 처리
+    }
+
+    /**
+     * 카드를 제거합니다 (양방향 관계 유지)
+     */
+    public void removeCard(Card card) {
+        cards.remove(card);
+        // card.setStory(null)는 Card 엔티티에서 처리
+    }
+
+    /**
+     * 이 스토리로 생성된 카드 개수를 반환합니다
+     */
+    public int getCardCount() {
+        return cards.size();
+    }
+
+    /**
+     * 이 스토리에 연결된 카드가 있는지 확인합니다
+     */
+    public boolean hasCards() {
+        return !cards.isEmpty();
     }
 
     /**

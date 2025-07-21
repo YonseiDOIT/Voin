@@ -1,140 +1,93 @@
 package com.voin.controller;
 
+import com.voin.dto.response.ApiResponse;
 import com.voin.entity.Coin;
 import com.voin.entity.Keyword;
-import com.voin.repository.CoinRepository;
-import com.voin.repository.KeywordRepository;
-import com.voin.dto.response.ApiResponse;
+import com.voin.service.MasterDataService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
-import java.util.stream.Collectors;
 
-/**
- * 💎 마스터 데이터 컨트롤러
- * 
- * 이 클래스는 시스템의 기준 데이터를 제공합니다.
- * 
- * 주요 기능들:
- * - 🪙 6개 고정 코인 목록 제공
- * - 🏷️ 55개 키워드 목록 제공
- * - 📊 코인별 키워드 매핑 정보 제공
- * - 🎯 상황 맥락 정보 제공
- * 
- * 이 데이터들은 애플리케이션 시작 시 DataInitializer를 통해 자동 초기화됩니다.
- */
+@Slf4j
 @RestController
 @RequestMapping("/api/master")
 @RequiredArgsConstructor
-@Tag(name = "💎 Master Data", description = "코인, 키워드 등 마스터 데이터")
+@Tag(name = "📚 Master Data", description = "기준 정보 조회 (코인, 키워드, 상황맥락)")
 public class MasterDataController {
 
-    private final CoinRepository coinRepository;
-    private final KeywordRepository keywordRepository;
+    private final MasterDataService masterDataService;
 
-    @Operation(summary = "전체 코인 목록 조회", description = "시스템에 등록된 6개의 고정 코인 목록을 반환합니다.")
-    @SecurityRequirements // 인증 불필요
+    /**
+     * 모든 코인 목록 조회
+     */
+    @Operation(summary = "코인 목록 조회", description = "모든 코인 정보를 조회합니다.")
     @GetMapping("/coins")
     public ResponseEntity<ApiResponse<List<Coin>>> getAllCoins() {
-        try {
-            List<Coin> coins = coinRepository.findAll();
-            return ResponseEntity.ok(ApiResponse.success("코인 목록을 조회했습니다.", coins));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                .body(ApiResponse.error("코인 목록 조회 중 오류가 발생했습니다: " + e.getMessage()));
-        }
+        log.info("Getting all coins");
+        List<Coin> coins = masterDataService.getAllCoins();
+        return ResponseEntity.ok(ApiResponse.success("코인 목록을 조회했습니다.", coins));
     }
 
-    @Operation(summary = "전체 키워드 목록 조회", description = "시스템에 등록된 55개의 키워드 목록을 반환합니다.")
-    @SecurityRequirements // 인증 불필요
-    @GetMapping("/keywords")
-    public ResponseEntity<ApiResponse<List<Keyword>>> getAllKeywords() {
-        try {
-            List<Keyword> keywords = keywordRepository.findAll();
-            return ResponseEntity.ok(ApiResponse.success("키워드 목록을 조회했습니다.", keywords));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                .body(ApiResponse.error("키워드 목록 조회 중 오류가 발생했습니다: " + e.getMessage()));
-        }
-    }
-
-    @Operation(summary = "특정 코인의 키워드 조회", description = "지정된 코인 ID에 속한 키워드들을 반환합니다.")
-    @SecurityRequirements // 인증 불필요
+    /**
+     * 특정 코인의 키워드 목록 조회
+     */
+    @Operation(summary = "코인별 키워드 조회", description = "특정 코인에 속한 키워드들을 조회합니다.")
     @GetMapping("/coins/{coinId}/keywords")
     public ResponseEntity<ApiResponse<List<Keyword>>> getKeywordsByCoin(
-            @PathVariable Long coinId) {
-        try {
-            List<Keyword> keywords = keywordRepository.findByCoinId(coinId);
-            return ResponseEntity.ok(ApiResponse.success("코인별 키워드 목록을 조회했습니다.", keywords));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                .body(ApiResponse.error("코인별 키워드 조회 중 오류가 발생했습니다: " + e.getMessage()));
-        }
+            @Parameter(description = "코인 ID") @PathVariable Long coinId) {
+        log.info("Getting keywords for coin: {}", coinId);
+        List<Keyword> keywords = masterDataService.getKeywordsByCoin(coinId);
+        return ResponseEntity.ok(ApiResponse.success("키워드 목록을 조회했습니다.", keywords));
     }
 
-    @Operation(summary = "코인과 키워드 전체 매핑 조회", description = "모든 코인과 해당 키워드들의 매핑 정보를 반환합니다.")
-    @SecurityRequirements // 인증 불필요
-    @GetMapping("/coins-with-keywords")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getCoinsWithKeywords() {
-        try {
-            List<Coin> coins = coinRepository.findAll();
-            
-            Map<String, Object> result = new HashMap<>();
-            
-            for (Coin coin : coins) {
-                List<Keyword> keywords = keywordRepository.findByCoinId(coin.getId());
-                
-                Map<String, Object> coinInfo = Map.of(
-                    "id", coin.getId(),
-                    "name", coin.getName(),
-                    "description", coin.getDescription(),
-                    "color", coin.getColor(),
-                    "keywords", keywords.stream()
-                        .map(keyword -> Map.of(
-                            "id", keyword.getId(),
-                            "name", keyword.getName(),
-                            "description", keyword.getDescription()
-                        ))
-                        .collect(Collectors.toList())
-                );
-                
-                result.put(coin.getName(), coinInfo);
-            }
-            
-            return ResponseEntity.ok(ApiResponse.success("코인과 키워드 매핑 정보를 조회했습니다.", Map.of("coins", result)));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                .body(ApiResponse.error("코인과 키워드 매핑 조회 중 오류가 발생했습니다: " + e.getMessage()));
-        }
+    /**
+     * 모든 키워드 목록 조회
+     */
+    @Operation(summary = "전체 키워드 조회", description = "모든 키워드를 코인별로 그룹화하여 조회합니다.")
+    @GetMapping("/keywords")
+    public ResponseEntity<ApiResponse<Map<String, List<Keyword>>>> getAllKeywords() {
+        log.info("Getting all keywords grouped by coin");
+        Map<String, List<Keyword>> keywordsByCoin = masterDataService.getKeywordsGroupedByCoin();
+        return ResponseEntity.ok(ApiResponse.success("키워드 목록을 조회했습니다.", keywordsByCoin));
     }
 
-    @Operation(summary = "시스템 통계 정보", description = "등록된 코인, 키워드, 회원, 카드 수 등의 통계 정보를 반환합니다.")
-    @SecurityRequirements // 인증 불필요  
-    @GetMapping("/stats")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getSystemStats() {
-        try {
-            long coinCount = coinRepository.count();
-            long keywordCount = keywordRepository.count();
-            
-            Map<String, Object> stats = Map.of(
-                "coinCount", coinCount,
-                "keywordCount", keywordCount,
-                "expectedCoins", 6,
-                "expectedKeywords", 55,
-                "isDataInitialized", coinCount == 6 && keywordCount == 55
-            );
-            
-            return ResponseEntity.ok(ApiResponse.success("시스템 통계 정보를 조회했습니다.", stats));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                .body(ApiResponse.error("시스템 통계 조회 중 오류가 발생했습니다: " + e.getMessage()));
-        }
+    /**
+     * 상황 맥락 옵션 조회 (사례 돌아보기용)
+     */
+    @Operation(summary = "상황 맥락 조회", description = "사례 돌아보기에서 사용할 상황 맥락 옵션들을 조회합니다.")
+    @GetMapping("/situation-contexts")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getSituationContexts() {
+        log.info("Getting situation contexts");
+        List<Map<String, Object>> contexts = masterDataService.getSituationContexts();
+        return ResponseEntity.ok(ApiResponse.success("상황 맥락 목록을 조회했습니다.", contexts));
+    }
+
+    /**
+     * 스토리 타입 옵션 조회
+     */
+    @Operation(summary = "스토리 타입 조회", description = "스토리 생성 시 선택할 수 있는 타입들을 조회합니다.")
+    @GetMapping("/story-types")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getStoryTypes() {
+        log.info("Getting story types");
+        List<Map<String, Object>> storyTypes = masterDataService.getStoryTypes();
+        return ResponseEntity.ok(ApiResponse.success("스토리 타입 목록을 조회했습니다.", storyTypes));
+    }
+
+    /**
+     * 전체 마스터 데이터 조회 (한 번에 모든 기준 정보 조회)
+     */
+    @Operation(summary = "전체 마스터 데이터", description = "코인, 키워드, 상황맥락 등 모든 기준 정보를 한 번에 조회합니다.")
+    @GetMapping("/all")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getAllMasterData() {
+        log.info("Getting all master data");
+        Map<String, Object> masterData = masterDataService.getAllMasterData();
+        return ResponseEntity.ok(ApiResponse.success("마스터 데이터를 조회했습니다.", masterData));
     }
 } 
