@@ -7,26 +7,26 @@ const NavigationBar = () => {
         <div className="px-8 py-4 bg-gradient-to-b from-white/0 to-white rounded-full shadow-[0px_10px_20px_-5px_rgba(35,48,59,0.05)] outline-1 outline-offset-[-1px] outline-white/70 backdrop-blur-[50px] inline-flex justify-start items-center gap-6 overflow-hidden">
             <div className="w-11 aspect-square">
                 <div className="flex justify-center mb-auto">
-                    <CopyIcon fill="#000" className='opacity-[0.1]' />
+                    <CopyIcon fill="#DBDCDF" />
                 </div>
                 <div className='w-full text-center mt-auto'>
-                    <span className="text-black/10 button-n">피드</span>
+                    <span className="text-grey-95 line-15 font-semibold text-[13px]">피드</span>
                 </div>
             </div>
             <div className="w-11 aspect-square">
                 <div className="flex justify-center">
-                    <HomeIcon fill="#7acedc" />
+                    <HomeIcon fill="#00BEDB" />
                 </div>
                 <div className='w-full text-center'>
-                    <span className="text-sky-300 button-n font-semibold">홈</span>
+                    <span className="text-VB-50 line-15 font-semibold text-[13px]">홈</span>
                 </div>
             </div>
             <div className="w-11 aspect-square">
                 <div className="flex justify-center">
-                    <MoneyBagIcon fill="#000" className='opacity-[0.1]' />
+                    <MoneyBagIcon fill="#DBDCDF" />
                 </div>
                 <div className='w-full text-center'>
-                    <span className="text-black/10 button-n font-semibold whitespace-nowrap">아카이브</span>
+                    <span className="text-grey-95 line-15 font-semibold whitespace-nowrap text-[13px]">아카이브</span>
                 </div>
             </div>
         </div>

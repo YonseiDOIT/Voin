@@ -10,6 +10,9 @@ import NavigationBar from '../components/common/NavigationBar';
 import BottomSheet from '../components/common/BottomSheet';
 
 import NotificationIcon from '../assets/svgs/notificationIcon.svg?react';
+import NoteIcon from '../assets/svgs/TodaysDiary/NoteIcon.svg?react';
+import RelationshipIcon from '../assets/svgs/TodaysDiary/Relationship.svg?react';
+import SearchIcon from '../assets/svgs/TodaysDiary/SearchIcon.svg?react';
 
 const Home = () => {
     const { userInfo, logout, login } = useAuth();
@@ -148,14 +151,14 @@ const Home = () => {
                         로그아웃
                     </button>
                     <Link to="/notification" className='inline-flex flex-row items-center'>
-                        <NotificationIcon />
+                        <NotificationIcon style={{ opacity: 0.7 }}/>
                     </Link>
                 </div>
             </div>
             
             {/* Home Message */}
             <div className='px-6 py-2 mb-14'>
-                <div className="display-n font-bold bg-gradient-to-b from-white to-white/40 bg-clip-text text-transparent">
+                <div className="mt-2 display-n font-bold bg-gradient-to-b from-white to-white/40 bg-clip-text text-transparent">
                     메세지 내용이<br />들어가는 곳으로<br />최대 3줄이 출력됨
                 </div>
             </div>
@@ -171,38 +174,38 @@ const Home = () => {
             {/* Bottom Sheet */}
             <BottomSheet title="코인 찾기" isOpen={isSheetOpen} onClose={closeSheet}>
                 <div className="px-1 pt-4 pb-2">
-                    <span className="text-[16px] line-14 font-medium text-grey-60">나의 장점 코인</span>
+                    <span className="text-[16px] line-14 font-semibold text-grey-60">나의 장점 코인</span>
                 </div>
                 <div className="w-full grid grid-cols-2 gap-2">
                     <Link to="/todays-diary" className="pt-6 w-full bg-gradient-to-b from-zinc-100 from-0% via-white/0 via-40% to-white/0 to-100% rounded-3xl shadow-[0px_5px_15px_-5px_rgba(35,48,59,0.10)] outline-2 outline-offset-[-2px] outline-white inline-flex flex-col justify-start items-start">
                         <div className="w-full flex flex-col items-center px-3 gap-y-1">
-                            <div className="text-[16px] font-medium text-grey-30">오늘의 일기</div>
-                            <div className="text-center button-n text-grey-60">오늘의 일상을 기록하면서<br />내 장점을 찾아봐요</div>
+                            <div className="text-[16px] font-semibold line-14 text-grey-30">오늘의 일기</div>
+                            <div className="text-center line-14 font-medium text-[13px] text-grey-60">오늘의 일상을 기록하면서<br />내 장점을 찾아봐요</div>
                         </div>
                         <div className="self-stretch h-28 py-4 inline-flex justify-center items-center">
-                            <img className="w-28 h-28" src="https://placehold.co/110x110" />
+                            <NoteIcon className="w-28 h-28" />
                         </div>
                     </Link>
                     <Link to="/case-review" className="pt-6 w-full bg-gradient-to-b from-zinc-100 from-0% via-white/0 via-40% to-white/0 to-100% rounded-3xl shadow-[0px_5px_15px_-5px_rgba(35,48,59,0.10)] outline-2 outline-offset-[-2px] outline-white inline-flex flex-col justify-start items-start">
                         <div className="w-full flex flex-col items-center px-3 gap-y-1">
-                            <div className="text-[16px] font-medium text-grey-30">사례 돌아보기</div>
-                            <div className="text-center button-n text-grey-60">이전 경험을 돌아보면서<br />내 장점을 찾아봐요</div>
+                            <div className="text-[16px] font-semibold line-14 text-grey-30">사례 돌아보기</div>
+                            <div className="text-center line-14 font-medium text-[13px] text-grey-60">이전 경험을 돌아보면서<br />내 장점을 찾아봐요</div>
                         </div>
                         <div className="self-stretch h-28 py-4 inline-flex justify-center items-center">
-                            <img className="w-28 h-28" src="https://placehold.co/110x110" />
+                            <SearchIcon className="w-28 h-28" />
                         </div>
                     </Link>
                 </div>
-                <div className="px-1 pt-4 pb-2">
-                    <span className="title-n font-semibold text-grey-60">친구의 장점 찾기</span>
+                <div className="px-1 pt-8 pb-2">
+                    <span className="text-[16px] line-14 font-semibold text-grey-60">친구의 장점 코인</span>
                 </div>
                     <div className="px-4 py-3 w-full bg-gradient-to-b from-zinc-100 from-0% via-white/0 via-40% to-white/0 to-100% rounded-3xl shadow-[0px_5px_15px_-5px_rgba(35,48,59,0.10)] outline-2 outline-offset-[-2px] outline-white inline-flex flex-row items-center">
                         <div className="self-stretch h-28 py-4 inline-flex justify-center items-center mr-8">
-                            <img className="w-28 h-28" src="https://placehold.co/110x110" />
+                            <RelationshipIcon className="w-28 h-28" />
                         </div>
                         <div className="flex flex-col gap-y-1">
-                            <div className="text-[16px] font-medium text-grey-30">함께한 추억 떠올리기</div>
-                            <div className="button-n text-grey-60">친구의 장점을 찾아줄 수 있어요</div>
+                            <div className="text-[16px] font-semibold line-14 text-grey-30">함께한 추억 떠올리기</div>
+                            <div className="line-14 font-medium text-[13px] text-grey-60">친구의 장점을 찾아줄 수 있어요</div>
                         </div>
                     </div>
             </BottomSheet>

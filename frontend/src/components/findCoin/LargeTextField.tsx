@@ -58,16 +58,18 @@ const LargeTextField = (props: LargeTextFieldProps) => {
                     duration-200
                     py-4
                     px-3
-                    text-sm
-                    placeholder:text-gray-400
-                    placeholder:text-sm
+                    line-15
+                    text-[15px]
+                    font-medium
+                    placeholder:text-grey-90
+                    placeholder:text-[15px]
                     focus:outline-none
                     bg-grey-98
                     focus:bg-white
                     resize-none
                     overflow-y-auto
                     h-full
-                    border
+                    border-2
                     ${borderColorClass}
                 `}
                 onFocus={handleFocus}

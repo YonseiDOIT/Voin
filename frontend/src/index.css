@@ -1,3 +1,4 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.css');
 @import "tailwindcss";
 
 @theme {
@@ -36,11 +37,6 @@
     --color-VB-10: oklch(0.35 0.05 203);
 }
 
-@font-face {
-    font-family: 'Pretendard';
-    src: url('/fonts/PretendardVariable.woff2') format('woff2');
-}
-
 html {
     user-select: none;
     -webkit-user-select: none;
@@ -51,7 +47,7 @@ html {
 }
 
 body {
-    font-family: 'Pretendard';
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 
@@ -83,12 +79,6 @@ body {
 
 .body-n {
     font-size: 15px;
-    line-height: 1.5;
-    word-spacing: -2.5%;
-}
-
-.button-n {
-    font-size: 13px;
     line-height: 1.5;
     word-spacing: -2.5%;
 }
