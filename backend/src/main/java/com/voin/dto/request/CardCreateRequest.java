@@ -17,7 +17,7 @@ public class CardCreateRequest {
     private Long coinId;
 
     @Schema(description = "키워드 ID", example = "1")
-    @NotNull(message = "키워드 ID는 필수입니다")
+    @NotNull(message = "키워드 ID는 필수입니다 ")
     private Long keywordId;
 
     @Schema(description = "공개 여부", example = "true")
