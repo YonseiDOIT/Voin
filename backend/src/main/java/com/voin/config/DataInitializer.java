@@ -203,4 +203,4 @@ public class DataInitializer {
         
         log.info("Initialized {} keywords for {} coins", totalKeywords, savedCoins.size());
     }
-} 
+}
