@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @RestController
@@ -71,4 +72,13 @@ public class FriendController {
     public ApiResponse<List<FriendCardResponse>> getFriendsFeed() {
         return ApiResponse.success(friendService.getFriendsFeed());
     }
+
+    // 친구 삭제
+    @Operation(summary = "친구 삭제", description = "친구를 삭제합니다.")
+    @DeleteMapping("/{friendMemberId}")
+    public ApiResponse<Void> deleteFriend(@PathVariable UUID friendMemberId) {
+        friendService.deleteFriend(friendMemberId);
+        return ApiResponse.success(null);
+    }
+
 } 

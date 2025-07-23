@@ -53,11 +53,11 @@ public class Member extends BaseEntity {
     private String profileImage;
 
     /**
-     * 친구 초대용 고유 코드 (8자리)
+     * 친구 초대용 고유 코드 (5자리)
      */
     @NotBlank(message = "친구 코드는 필수입니다")
-    @Size(min = 8, max = 8, message = "친구 코드는 8자리여야 합니다")
-    @Column(name = "friend_code", length = 8, nullable = false, unique = true)
+    @Size(min = 5, max = 5, message = "친구 코드는 5자리여야 합니다")
+    @Column(name = "friend_code", length = 5, nullable = false, unique = true)
     private String friendCode;
 
     /**

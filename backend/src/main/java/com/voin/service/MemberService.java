@@ -143,6 +143,7 @@ public class MemberService {
         return memberRepository.findByFriendCode(friendCode);
     }
 
+
     @Transactional
     public Member createMember(Member member) {
         Member savedMember = memberRepository.save(member);

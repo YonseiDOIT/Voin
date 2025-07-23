@@ -130,6 +130,16 @@ public class FriendService {
         friendRepository.delete(friendRequest);
     }
 
+    @Transactional
+    public void deleteFriend(UUID friendMemberId) {
+        Member currentMember = getCurrentMember();
+        Friend friendship = friendRepository.findAcceptedFriendBetween(currentMember.getId(), friendMemberId)
+                .orElseThrow(() -> new RuntimeException("해당 친구 관계를 찾을 수 없습니다."));
+        friendRepository.delete(friendship);
+        log.info("친구 삭제됨: {} <-> {}", currentMember.getId(), friendMemberId);
+    }
+
+
     /**
      * 친구들의 피드(카드) 가져오기
      */

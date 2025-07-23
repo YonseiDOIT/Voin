@@ -210,3 +210,5 @@ gradle-app.setting
 .DS_Store
 
 !/src/main/resources/application.yml
+
+backend/src/main/resources/application.yml
