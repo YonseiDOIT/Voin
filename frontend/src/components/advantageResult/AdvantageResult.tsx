@@ -1,4 +1,6 @@
 import type { AdvantageResultTheme } from './advantageResultTypes';
+import { useState, useEffect } from 'react';
+import { getAdvantageImage, getCirclePlaceholderUrl } from '../../assets/images/advantageImages';
 
 type AdvantageResultColorPalette = {
     titleStyle: string;
@@ -8,34 +10,34 @@ type AdvantageResultColorPalette = {
 
 const colorPalettes: Record<AdvantageResultTheme, AdvantageResultColorPalette> = {
     'GROWTH': {
-        titleStyle: "text-blue-800",
-        categoryStyle: "bg-blue-100 text-blue-800",
-        backgroundClass: "bg-gradient-to-b from-blue-50 to-white",
+        titleStyle: "text-[#305DAB]",
+        categoryStyle: "bg-[#D0E1FB] text-[#305DAB]",
+        backgroundClass: "bg-gradient-to-b from-[#E0E9F7] to-white",
     },
     'EMOTION': {
-        titleStyle: "text-orange-700",
-        categoryStyle: "bg-orange-300 text-orange-700",
-        backgroundClass: "bg-gradient-to-b from-orange-50 to-white",
+        titleStyle: "text-[#A95800]",
+        categoryStyle: "bg-[#FFC382] text-[#BA4614]",
+        backgroundClass: "bg-gradient-to-b from-[#FAEEE3] to-white",
     },
     'CREATIVITY': {
-        titleStyle: "text-purple-700",
-        categoryStyle: "bg-violet-200 text-purple-700",
-        backgroundClass: "bg-gradient-to-b from-purple-50 to-white",
+        titleStyle: "text-[#7A3BC2]",
+        categoryStyle: "bg-[#DACBF7] text-[#7A3BC2]",
+        backgroundClass: "bg-gradient-to-b from-[#EAE4F7] to-white",
     },
     'PROBLEM_SOLVING': {
-        titleStyle: "text-green-700",
-        categoryStyle: "bg-green-200 text-green-700",
-        backgroundClass: "bg-gradient-to-b from-green-50 to-white",
+        titleStyle: "text-[#007832]",
+        categoryStyle: "bg-[#C7E9D0] text-[#007832]",
+        backgroundClass: "bg-gradient-to-b from-[#EAF3EC] to-white",
     },
     'RELATIONSHIP': {
-        titleStyle: "text-yellow-700",
-        categoryStyle: "bg-yellow-200 text-yellow-700",
-        backgroundClass: "bg-gradient-to-b from-yellow-50 to-white",
+        titleStyle: "text-[#896A00]",
+        categoryStyle: "bg-[#FFEB9C] text-[#896A00]",
+        backgroundClass: "bg-gradient-to-b from-[#F9F2DC] to-white",
     },
     'BELIEFS': {
-        titleStyle: "text-rose-700",
-        categoryStyle: "bg-red-200 text-rose-700",
-        backgroundClass: "bg-gradient-to-b from-red-50 to-white",
+        titleStyle: "text-[#B63043]",
+        categoryStyle: "bg-[#FFB9BB] text-[#B63043]",
+        backgroundClass: "bg-gradient-to-b from-[#F9EDED] to-white",
     },
 };
 
@@ -49,6 +51,31 @@ export interface AdvantageResultProps {
 
 const AdvantageResult = (props: AdvantageResultProps) => {
     const palette = colorPalettes[props.theme];
+    const [imageUrl, setImageUrl] = useState<string>('');
+    const [imageLoading, setImageLoading] = useState<boolean>(true);
+    const [imageError, setImageError] = useState<boolean>(false);
+
+    // 렌더링 시마다 현재 상태 로깅
+    console.log(`AdvantageResult 렌더링 - title: ${props.title}, imageUrl: ${imageUrl}, loading: ${imageLoading}, error: ${imageError}`);
+
+    useEffect(() => {
+        const loadImage = async () => {
+            setImageLoading(true);
+            setImageError(false);
+            try {
+                const imageUrl = await getAdvantageImage(props.title);
+                setImageUrl(imageUrl);
+            } catch (error) {
+                console.error(`이미지 로딩 실패 (${props.title}):`, error);
+                setImageError(true);
+                setImageUrl(getCirclePlaceholderUrl(props.title));
+            }
+            setImageLoading(false);
+        };
+
+        loadImage();
+    }, [props.title]);
+
     return (
         <div className={`
             w-full px-6 py-8
@@ -99,10 +126,38 @@ const AdvantageResult = (props: AdvantageResultProps) => {
                 items-end
                 gap-2
             `}>
-                <img className={`
-                    w-60
-                    h-60
-                `} src="https://placehold.co/240x240" />
+                {imageLoading ? (
+                    // 로딩 중일 때 스켈레톤 또는 스피너
+                    <div className="w-60 h-60 bg-gray-200 rounded-lg animate-pulse flex items-center justify-center">
+                        <span className="text-gray-500 text-sm">이미지 로딩중...</span>
+                    </div>
+                ) : (
+                    <div className="relative w-60 h-60">
+                        <img 
+                            className="w-full h-full object-cover rounded-lg"
+                            src={imageUrl}
+                            alt={`${props.title} 장점 이미지`}
+                            onLoad={() => {
+                                // 로드 성공 시 에러 상태 해제
+                                if (imageError) {
+                                    setImageError(false);
+                                }
+                            }}
+                            onError={(e) => {
+                                // 이미지 로드 실패 시 원형 placeholder로 변경 (조용한 처리)
+                                if (!imageError && !e.currentTarget.src.includes('data:image/svg+xml')) {
+                                    e.currentTarget.src = getCirclePlaceholderUrl(props.title);
+                                    setImageError(true);
+                                }
+                            }}
+                        />
+                        {imageError && (
+                            <div className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                                임시 이미지
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
             <div className={`
                 inline-flex

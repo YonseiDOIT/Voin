@@ -15,31 +15,37 @@ const categories = [
     {
         title: '개인적 일상,\n습관, 선택',
         subtitle: '개인적인 순간',
+        throwData: '개인적 일상, 습관, 선택',
         SvgComponent: () => <HomeIcon />
     },
     {
         title: '인간관계 속\n대화, 행동',
         subtitle: '관계 속의 순간',
+        throwData: '인간관계 속 대화, 행동',
         SvgComponent: () => <HandShakeIcon />
     },
     {
         title: '협력,\n함께한 성취',
         subtitle: '힘을 합친 순간',
+        throwData: '협력, 함께한 성취',
         SvgComponent: () => <BagIcon />
     },
     {
         title: '집중하고\n몰두한 일',
         subtitle: '몰입하는 순간',
+        throwData: '집중하고 몰두한 일',
         SvgComponent: () => <FireIcon />
     },
     {
         title: '낮설고\n새로운 경험',
         subtitle: '도전하는 순간',
+        throwData: '낮설고 새로운 경험',
         SvgComponent: () => <ParachuteIcon />
     },
     {
         title: '다른 특별한 순간',
         subtitle: '그 외의 순간',
+        throwData: '다른 특별한 순간',
         SvgComponent: () => <RainbowIcon />
     }
 ];
@@ -48,9 +54,44 @@ const CaseReviewPage = () => {
     const navigate = useNavigate();
 
     const [selectedCategoryIndex, setSelectedCategoryIndex] = useState<number | null>(null);
+    const [selectedThrowData, setSelectedThrowData] = useState<string | null>(null);
+    const [selectedTitle, setSelectedTitle] = useState<string>('');
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleCategorySelect = (index: number | null) => {
         setSelectedCategoryIndex(index);
+        
+        // 선택된 카테고리의 데이터 저장
+        if (index !== null && categories[index]) {
+            const selectedCategory = categories[index];
+            setSelectedThrowData(selectedCategory.throwData);
+            setSelectedTitle(selectedCategory.title);
+        } else {
+            setSelectedThrowData(null);
+            setSelectedTitle('');
+        }
+    };
+
+    const handleNextClick = () => {
+        if (selectedThrowData && selectedTitle && selectedCategoryIndex !== null) {
+            try {
+                setIsLoading(true);
+
+                navigate('/case-review/write-case-1', {
+                    state: {
+                        caseName: selectedThrowData, // 선택된 케이스명
+                        categoryTitle: selectedTitle,   // 카테고리 제목
+                        categoryIndex: selectedCategoryIndex // 카테고리 인덱스
+                    }
+                });
+                
+            } catch (error) {
+                console.error('데이터 저장 중 오류:', error);
+                alert('데이터 저장 중 오류가 발생했습니다. 다시 시도해주세요.');
+            } finally {
+                setIsLoading(false);
+            }
+        }
     };
 
     return (
@@ -72,8 +113,8 @@ const CaseReviewPage = () => {
                 <div className='relative bg-grey-99 px-6' style={{ paddingBottom: 'calc(env(safe-area-inset-bottom) + 1rem)' }}>
                     <ActionButton
                         buttonText="다음"
-                        onClick={() => {navigate('/case-review/write')}}
-                        disabled={selectedCategoryIndex === null} // 선택된 카테고리가 없으면 버튼 비활성화
+                        onClick={handleNextClick}
+                        disabled={selectedCategoryIndex === null || isLoading} // 선택된 카테고리가 없거나 로딩 중이면 버튼 비활성화
                     />
                 </div>
             </div>

@@ -6,10 +6,13 @@ import SignUp from '../pages/signup/index';
 import TodaysDiary from '../pages/findCoin/todaysDiary/index';
 import TodaysCategory from '../pages/findCoin/todaysDiary/categories/index';
 import Login from '../pages/login/index';
+import KakaoCallback from '../pages/auth/KakaoCallback';
 import CaseReview from '../pages/findCoin/caseReview/index';
-import WriteCase from '../pages/findCoin/caseReview/writeCase/index';
-import CaseReviewCategory from '../pages/findCoin/caseReview/categories/index';
-import AdvantageResultPage from '../pages/findCoin/advantageResult/index';
+import CaseReviewWriteCase1 from '../pages/findCoin/caseReview/writeCase1/index';
+import CaseReviewWriteCase2 from '../pages/findCoin/caseReview/writeCase1/writeCase2/index';
+import CaseReviewCategory from '../pages/findCoin/caseReview/writeCase1/writeCase2/categories/index';
+import CaseReviewAdvantageResult from '../pages/findCoin/caseReview/writeCase1/writeCase2/categories/advantageResult/index';
+import CaseReviewResult from '../pages/findCoin/caseReview/writeCase1/writeCase2/categories/advantageResult/index';
 import React from 'react';
 
 export interface RouteConfig {
@@ -26,6 +29,11 @@ export const routes: RouteConfig[] = [
         isProtected: false,
     },
     {
+        path: '/auth/kakao/callback',
+        component: KakaoCallback,
+        isProtected: false,
+    },
+    {
         path: '/signup',
         component: SignUp,
         isProtected: false,
@@ -35,52 +43,62 @@ export const routes: RouteConfig[] = [
     {
         path: '/',
         component: Home,
-        isProtected: false,
+        isProtected: true,
     },
     {
         path: '/home',
         component: Home,
-        isProtected: false,
+        isProtected: true,
     },
     {
         path: '/notification',
         component: Notification,
-        isProtected: false,
+        isProtected: true,
     },
     {
         path: '/todays-diary',
         component: TodaysDiary,
-        isProtected: false,
+        isProtected: true,
     },
     {
         path: '/todays-diary/categories',
         component: TodaysCategory,
-        isProtected: false,
+        isProtected: true,
     },
     {
         path: '/test',
         component: Test,
-        isProtected: false,
+        isProtected: true,
     },
     {
         path: '/case-review',
         component: CaseReview,
-        isProtected: false,
+        isProtected: true,
     },
     {
-        path: '/case-review/write',
-        component: WriteCase,
-        isProtected: false,
+        path: '/case-review/write-case-1',
+        component: CaseReviewWriteCase1,
+        isProtected: true,
+    },
+    {
+        path: '/case-review/write-case-2',
+        component: CaseReviewWriteCase2,
+        isProtected: true,
     },
     {
         path: '/case-review/categories',
         component: CaseReviewCategory,
-        isProtected: false,
+        isProtected: true,
     },
     {
-        path: '/advantage-result',
-        component: AdvantageResultPage,
-        isProtected: false,
+        path: '/case-review/advantage-result',
+        component: CaseReviewAdvantageResult,
+        isProtected: true,
+    },
+    {
+        path: '/case-review/result',
+        component: CaseReviewResult,
+        isProtected: true,
     },
     // 404 페이지
     {
