@@ -1,31 +1,21 @@
 import AdvantageResult from '../../../../../../../components/advantageResult/AdvantageResult';
 import CaseReviewResult from '../../../../../../../components/advantageResult/CaseReviewResult';
+import ActionButton from '../../../../../../../components/common/ActionButton';
+
 import { getCategoryTheme } from '../../../../../../../components/advantageResult/advantageResultTypes';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useCaseReviewStore } from '../../../../../../../store/useCaseReviewStore';
-
-// 케이스 리뷰 + 장점 선택 통합 데이터 타입 정의
-interface CaseReviewAdvantageData {
-    // 케이스 리뷰 작성 데이터
-    categoryName: string; // 선택한 카테고리명
-    caseName: string;          // 선택한 순간 케이스
-    writtenCase1: string;     // "그때 나는 어떤 행동을 했었나요?" 답변
-    writtenCase2: string;     // "내 행동에 대해 어떻게 생각하나요?" 답변
-    // 선택된 장점 데이터
-    strengthName: string;      // 선택된 강점명
-    strengthDescription: string; // 강점 설명
-    coinColor: string;         // 코인 색상
-    fullDescription: string;   // 상세 설명
-    coinName: string;         // 코인명
-}
 
 const AdvantageResultPage = () => {
 
     const navigate = useNavigate();
     const caseReviewData = useCaseReviewStore((state) => state.data);
 
+
     useEffect(() => {
+        // zustand 데이터 콘솔 출력
+        console.log('[CaseReviewData zustand]', caseReviewData);
         // 데이터가 없으면 이전 페이지로 리다이렉트
         if (!caseReviewData || !caseReviewData.caseName) {
             console.warn('케이스 리뷰 데이터가 없습니다. 강점 선택 페이지로 돌아갑니다.');
@@ -47,24 +37,41 @@ const AdvantageResultPage = () => {
 
     return (
         <div className="w-full h-full overflow-y-auto flex flex-col">
-            {/* 케이스 리뷰 작성 내용 표시 */}
-            <CaseReviewResult 
-                data={{
-                    caseName: caseReviewData.caseName || '',
-                    writtenCase1: caseReviewData.writtenCase1 || '',
-                    writtenCase2: caseReviewData.writtenCase2 || ''
-                }}
-            />
-            
-            {/* 장점 결과 표시 */}
-            <div className="px-4">
+            <div className="w-full px-6 pb-10">
+                <div className="w-full pt-12 pb-6 mb-2">
+                    <span className="w-full pr-2 line-14 text-[24px] font-semibold text-grey-15">
+                        그 순간, 이런 장점이 드러났어요
+                    </span>
+                </div>
                 <AdvantageResult
-                    theme={getCategoryTheme(caseReviewData.categoryName)}
-                    category={caseReviewData.categoryName}
-                    title={caseReviewData.strengthName}
-                    titleDescription={caseReviewData.strengthDescription}
-                    description={caseReviewData.fullDescription}
+                    theme={getCategoryTheme(caseReviewData.categoryName ?? '')}
+                    category={caseReviewData.categoryName ?? ''}
+                    title={caseReviewData.strengthName ?? ''}
+                    titleDescription={caseReviewData.strengthDescription ?? ''}
+                    description={caseReviewData.classify ?? ''}
                 />
+            </div>
+            <div className="w-full px-6">
+                <div className="w-full py-2 px-2 mb-2">
+                    <span className="w-full line-14 text-[20px] font-semibold text-grey-15">
+                        코인이 발견된 기억 속 순간
+                    </span>
+                </div>
+                <CaseReviewResult
+                    data={{
+                        caseName: caseReviewData.caseName ?? '',
+                        writtenCase1: caseReviewData.writtenCase1 ?? '',
+                        writtenCase2: caseReviewData.writtenCase2 ?? ''
+                    }}
+                />
+                <div className="w-full pb-4 pt-8 mt-24">
+                    {/* TODO: 다음 단계로 버튼 추가 */}
+                    <ActionButton
+                        buttonText='다음'
+                        onClick={() => navigate('/case-review/comment-and-image')}
+                        disabled={!caseReviewData.caseName}
+                    />
+                </div>
             </div>
         </div>
     );

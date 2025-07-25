@@ -13,6 +13,8 @@ import CaseReviewWriteCase2 from '../pages/findCoin/caseReview/writeCase1/writeC
 import CaseReviewCategory from '../pages/findCoin/caseReview/writeCase1/writeCase2/categories/index';
 import CaseReviewAdvantageResult from '../pages/findCoin/caseReview/writeCase1/writeCase2/categories/advantageResult/index';
 import CaseReviewResult from '../pages/findCoin/caseReview/writeCase1/writeCase2/categories/advantageResult/index';
+import CaseReviewCommentAndImage from '../pages/findCoin/caseReview/writeCase1/writeCase2/categories/advantageResult/commentAndImage/index';
+import CaseReviewFinalResult from '../pages/findCoin/caseReview/writeCase1/writeCase2/categories/advantageResult/commentAndImage/finalResult/index';
 import React from 'react';
 
 export interface RouteConfig {
@@ -98,6 +100,16 @@ export const routes: RouteConfig[] = [
     {
         path: '/case-review/result',
         component: CaseReviewResult,
+        isProtected: true,
+    },
+    {
+        path: '/case-review/comment-and-image',
+        component: CaseReviewCommentAndImage,
+        isProtected: true,
+    },
+    {
+        path: '/case-review/final-result',
+        component: CaseReviewFinalResult,
         isProtected: true,
     },
     // 404 페이지

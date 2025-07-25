@@ -1,48 +1,42 @@
-import { useLocation } from 'react-router-dom';
 
 interface CaseReviewResultProps {
-    caseName: string;
-    writtenCase1: string;
-    writtenCase2: string;
+    data: {
+        caseName: string;
+        writtenCase1: string;
+        writtenCase2: string;
+        uploadedImage?: string;
+    };
 }
 
-const CaseReviewResult: React.FC<CaseReviewResultProps> = ({ caseName, writtenCase1, writtenCase2 }) => {
-    const location = useLocation();
-    const locationData = location.state as CaseReviewResultProps;
-    const displayData = locationData || { caseName, writtenCase1, writtenCase2 };
-    
+const CaseReviewResult: React.FC<CaseReviewResultProps> = ({ data }) => {
     return (
-        <div className="bg-gray-50 p-4 m-4 rounded-lg">
-            <h3 className="text-lg font-semibold mb-3 text-gray-800">
-                케이스 리뷰 결과
-            </h3>
-            
-            {displayData.caseName && (
+        <div className={`w-full flex flex-col bg-white rounded-[32px] pb-6 px-[10px] shadow-[0px_5px_15px_-5px_rgba(35,48,59,0.10)]
+            ${data.uploadedImage ? 'pt-[10px]' : 'pt-2'}`}>
+            {data.uploadedImage && (
                 <div className="mb-4">
-                    <p className="text-sm text-gray-600 mb-1">선택한 순간</p>
-                    <p className="text-base font-medium text-gray-800">
-                        {displayData.caseName}
-                    </p>
+                    <img src={data.uploadedImage} alt="Uploaded" className="w-full h-[190px] rounded-[22px] object-cover" />
                 </div>
             )}
-            
-            {displayData.writtenCase1 && (
-                <div className="mb-4">
-                    <p className="text-sm text-gray-600 mb-1">케이스 1</p>
-                    <p className="text-base text-gray-800">
-                        {displayData.writtenCase1}
-                    </p>
-                </div>
-            )}
-            
-            {displayData.writtenCase2 && (
-                <div className="mb-4">
-                    <p className="text-sm text-gray-600 mb-1">케이스 2</p>
-                    <p className="text-base text-gray-800">
-                        {displayData.writtenCase2}
-                    </p>
-                </div>
-            )}
+            <div className="my-4 px-2">
+                <p className="line-15 text-[14px] font-semibold text-grey-80 mb-2">떠올린 상황</p>
+                <p className="line-15 text-[15px] font-semibold text-grey-40">
+                    {data.caseName ? data.caseName : '선택된 순간이 없습니다.'}
+                </p>
+            </div>
+            <div className="self-stretch h-0 mx-2 outline-1 outline-offset-[-0.50px] outline-gray-200"></div>
+            <div className="my-4 px-2">
+                <p className="line-15 text-[14px] font-semibold text-grey-80 mb-2">순간 속 행동</p>
+                <p className="line-15 text-[15px] font-medium text-grey-40 break-words whitespace-pre-line">
+                    {data.writtenCase1 ? data.writtenCase1 : '작성된 내용이 없습니다.'}
+                </p>
+            </div>
+            <div className="self-stretch h-0 mx-2 outline-1 outline-offset-[-0.50px] outline-gray-200"></div>
+            <div className="mt-4 px-2">
+                <p className="line-15 text-[14px] font-semibold text-grey-80 mb-2">행동에 대한 생각</p>
+                <p className="line-15 text-[15px] font-medium text-grey-40 break-words whitespace-pre-line">
+                    {data.writtenCase2 ? data.writtenCase2 : '작성된 내용이 없습니다.'}
+                </p>
+            </div>
         </div>
     );
 };

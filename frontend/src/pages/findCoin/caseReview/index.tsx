@@ -1,8 +1,9 @@
 import SelectCaseCategory from "../../../components/caseReview/SelectCaseCategory"
 import TopNavigation from "../../../components/common/TopNavigation";
 import ActionButton from "../../../components/common/ActionButton";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useCaseReviewStore } from '../../../store/useCaseReviewStore';
 
 import HomeIcon from '../../../assets/svgs/caseReview/homeIcon.svg?react';
 import HandShakeIcon from '../../../assets/svgs/caseReview/handshakeIcon.svg?react';
@@ -72,19 +73,21 @@ const CaseReviewPage = () => {
         }
     };
 
+    const setCaseReviewData = useCaseReviewStore((state) => state.setData);
+    const caseReviewData = useCaseReviewStore((state) => state.data);
+
+    useEffect(() => {
+        console.log('[CaseReviewData zustand]', caseReviewData);
+    }, []);
+
     const handleNextClick = () => {
         if (selectedThrowData && selectedTitle && selectedCategoryIndex !== null) {
             try {
                 setIsLoading(true);
-
-                navigate('/case-review/write-case-1', {
-                    state: {
-                        caseName: selectedThrowData, // 선택된 케이스명
-                        categoryTitle: selectedTitle,   // 카테고리 제목
-                        categoryIndex: selectedCategoryIndex // 카테고리 인덱스
-                    }
+                setCaseReviewData({
+                    caseName: selectedThrowData,
                 });
-                
+                navigate('/case-review/write-case-1');
             } catch (error) {
                 console.error('데이터 저장 중 오류:', error);
                 alert('데이터 저장 중 오류가 발생했습니다. 다시 시도해주세요.');

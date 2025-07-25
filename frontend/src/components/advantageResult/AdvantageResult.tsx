@@ -1,6 +1,7 @@
 import type { AdvantageResultTheme } from './advantageResultTypes';
 import { useState, useEffect } from 'react';
 import { getAdvantageImage, getCirclePlaceholderUrl } from '../../assets/images/advantageImages';
+import { useCaseReviewStore } from '../../store/useCaseReviewStore';
 
 type AdvantageResultColorPalette = {
     titleStyle: string;
@@ -41,40 +42,53 @@ const colorPalettes: Record<AdvantageResultTheme, AdvantageResultColorPalette> =
     },
 };
 
+
+// props는 선택적으로 유지하되, 없으면 zustand에서 읽어오도록 처리
 export interface AdvantageResultProps {
-    theme: AdvantageResultTheme;
-    category: string;
-    title: string;
-    titleDescription: string;
-    description: string;
+    theme?: AdvantageResultTheme;
+    category?: string;
+    title?: string;
+    titleDescription?: string;
+    description?: string;
 }
 
+
 const AdvantageResult = (props: AdvantageResultProps) => {
-    const palette = colorPalettes[props.theme];
+    // zustand에서 데이터 읽기
+    const caseReviewData = useCaseReviewStore((state) => state.data);
+    // props 우선, 없으면 zustand 값 사용
+    const theme = props.theme ?? ('GROWTH');
+    const category = props.category ?? caseReviewData.categoryName ?? '';
+    const title = props.title ?? caseReviewData.strengthName ?? '';
+    const titleDescription = props.titleDescription ?? caseReviewData.strengthDescription ?? '';
+    const description = props.description ?? caseReviewData.fullDescription ?? '';
+
+    const palette = colorPalettes[theme];
     const [imageUrl, setImageUrl] = useState<string>('');
     const [imageLoading, setImageLoading] = useState<boolean>(true);
     const [imageError, setImageError] = useState<boolean>(false);
-
-    // 렌더링 시마다 현재 상태 로깅
-    console.log(`AdvantageResult 렌더링 - title: ${props.title}, imageUrl: ${imageUrl}, loading: ${imageLoading}, error: ${imageError}`);
 
     useEffect(() => {
         const loadImage = async () => {
             setImageLoading(true);
             setImageError(false);
             try {
-                const imageUrl = await getAdvantageImage(props.title);
+                const imageUrl = await getAdvantageImage(title);
                 setImageUrl(imageUrl);
             } catch (error) {
-                console.error(`이미지 로딩 실패 (${props.title}):`, error);
+                console.error(`이미지 로딩 실패 (${title}):`, error);
                 setImageError(true);
-                setImageUrl(getCirclePlaceholderUrl(props.title));
+                setImageUrl(getCirclePlaceholderUrl(title));
             }
             setImageLoading(false);
         };
-
-        loadImage();
-    }, [props.title]);
+        if (title) {
+            loadImage();
+        } else {
+            setImageUrl('');
+            setImageLoading(false);
+        }
+    }, [title]);
 
     return (
         <div className={`
@@ -96,7 +110,7 @@ const AdvantageResult = (props: AdvantageResultProps) => {
             `}>
                 <div data-active="True" data-color="Blue" data-count="False" data-type="Category" className={`p-3 ${palette.categoryStyle} rounded-3xl inline-flex justify-center items-center gap-2`}>
                     <span className={`${palette.titleStyle} body-n font-semibold`}>
-                        {props.category}
+                        {category}
                     </span>
                 </div>
                 <div className={`
@@ -109,7 +123,7 @@ const AdvantageResult = (props: AdvantageResultProps) => {
                     gap-1
                 `}>
                     <span className={`${palette.titleStyle} text-3xl font-bold leading-10`}>
-                        {props.title}
+                        {title}
                     </span>
                     <span className={`
                         self-stretch
@@ -117,7 +131,7 @@ const AdvantageResult = (props: AdvantageResultProps) => {
                         text-lg
                         font-medium
                         leading-relaxed
-                    `}>{props.titleDescription}</span>
+                    `}>{titleDescription}</span>
                 </div>
             </div>
             <div className={`
@@ -136,7 +150,7 @@ const AdvantageResult = (props: AdvantageResultProps) => {
                         <img 
                             className="w-full h-full object-cover rounded-lg"
                             src={imageUrl}
-                            alt={`${props.title} 장점 이미지`}
+                            alt={`${title} 장점 이미지`}
                             onLoad={() => {
                                 // 로드 성공 시 에러 상태 해제
                                 if (imageError) {
@@ -146,7 +160,7 @@ const AdvantageResult = (props: AdvantageResultProps) => {
                             onError={(e) => {
                                 // 이미지 로드 실패 시 원형 placeholder로 변경 (조용한 처리)
                                 if (!imageError && !e.currentTarget.src.includes('data:image/svg+xml')) {
-                                    e.currentTarget.src = getCirclePlaceholderUrl(props.title);
+                                    e.currentTarget.src = getCirclePlaceholderUrl(title);
                                     setImageError(true);
                                 }
                             }}
@@ -173,7 +187,7 @@ const AdvantageResult = (props: AdvantageResultProps) => {
                     text-grey-40
                     body-n
                     font-medium
-                `}>{props.description}</span>
+                `}>{description}</span>
             </div>
         </div>
     )

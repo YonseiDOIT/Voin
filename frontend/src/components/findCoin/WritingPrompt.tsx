@@ -3,8 +3,9 @@ import WritingTip from './WritingTip';
 import LargeTextField from './LargeTextField';
 import ActionButton from '../common/ActionButton';
 import BottomSheet from '../common/BottomSheet';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
+import { useCaseReviewStore } from '../../store/useCaseReviewStore';
 
 import AiCoinIcon from '../../assets/svgs/TodaysDiary/AiCoin.svg?react';
 import SearchCoinIcon from '../../assets/svgs/TodaysDiary/SearchCoin.svg?react';
@@ -18,7 +19,10 @@ interface WritingPromptProps {
     minLength?: number;
     showBottomSheet?: boolean; // BottomSheet 표시 여부를 제어하는 파라미터
     dataKey?: string; // 저장할 데이터의 키 (예: 'writtenCase1', 'writtenCase2')
+    onSubmit?: (text: string) => void | Promise<void>;
 }
+
+import { useEffect } from 'react';
 
 export default function WritingPrompt({ 
     title, 
@@ -28,32 +32,43 @@ export default function WritingPrompt({
     maxLength = 500,
     minLength = 40,
     showBottomSheet = false,
-    dataKey
+    dataKey,
+    onSubmit
 }: WritingPromptProps) {
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [diaryContent, setDiaryContent] = useState<string>('');
     const navigate = useNavigate();
-    const location = useLocation();
     
     const openSheet = () => setIsSheetOpen(true);
     const closeSheet = () => setIsSheetOpen(false);
-    
-    // 버튼 클릭 핸들러: showBottomSheet가 true면 BottomSheet 열기, false면 바로 다음 페이지로 이동
+    const setCaseReviewData = useCaseReviewStore((state) => state.setData);
+    const caseReviewData = useCaseReviewStore((state) => state.data);
+
+    useEffect(() => {
+        console.log('[CaseReviewData zustand]', caseReviewData);
+    }, [caseReviewData]);
+
+    // 버튼 클릭 핸들러: showBottomSheet가 true면 BottomSheet 열기, false면 zustand에 저장 후 다음 페이지로 이동
     const handleButtonClick = () => {
         if (showBottomSheet) {
             openSheet();
         } else {
-            // 기존 state 데이터를 가져와서 현재 입력 데이터 추가
-            const existingData = location.state || {};
-            const newData = {
-                ...existingData,
-                [dataKey || 'content']: diaryContent.trim()
-            };
-            
-            navigate(directLinkTo, { state: newData });
+            setCaseReviewData({ [dataKey || 'content']: diaryContent.trim() });
+            if (onSubmit) {
+                onSubmit(diaryContent.trim());
+            }
+            navigate(directLinkTo);
         }
     };
-    
+
+    const BottomSheetButtonClick = () => {
+        setCaseReviewData({ [dataKey || 'content']: diaryContent.trim() });
+        if (onSubmit) {
+            onSubmit(diaryContent.trim());
+        }
+        navigate(directLinkTo);
+    };
+
     const isContentTooShort = diaryContent.trim().length > 0 && diaryContent.trim().length < minLength;
     const errorMessage = isContentTooShort ? `최소 ${minLength}자 이상 입력해주세요.` : null;
     
@@ -91,7 +106,7 @@ export default function WritingPrompt({
                                 <AiCoinIcon className="w-28 h-28" />
                             </div>
                         </div>
-                        <Link to={directLinkTo} className="aspect-[1/1.33] pt-6 w-full bg-gradient-to-b from-zinc-100 from-0% via-white/0 via-40% to-white/0 to-100% rounded-3xl shadow-[0px_5px_15px_-5px_rgba(35,48,59,0.10)] outline-2 outline-offset-[-2px] outline-white inline-flex flex-col justify-start items-start">
+                        <button onClick={BottomSheetButtonClick} className="aspect-[1/1.33] pt-6 w-full bg-gradient-to-b from-zinc-100 from-0% via-white/0 via-40% to-white/0 to-100% rounded-3xl shadow-[0px_5px_15px_-5px_rgba(35,48,59,0.10)] outline-2 outline-offset-[-2px] outline-white inline-flex flex-col justify-start items-start">
                             <div className="w-full flex flex-col items-center px-3 gap-y-1">
                                 <div className="text-[16px] font-semibold line-14 text-grey-30">직접 찾기</div>
                                 <div className="text-center line-14 font-medium text-[13px] text-grey-60">일상을 돌아보며,<br />직접 내 장점을 골라봐요</div>
@@ -99,7 +114,7 @@ export default function WritingPrompt({
                             <div className="self-stretch py-4 inline-flex justify-center items-center">
                                 <SearchCoinIcon className="w-28 h-28" />
                             </div>
-                        </Link>
+                        </button>
                     </div>
                 </BottomSheet>
             )}
