@@ -62,10 +62,12 @@ public class GptService {
                         - 요약의 마무리는 긍정적 결과나 변화가 있었음을 자연스럽게 담아야 합니다.
                         - 설명체, 나열형은 피하고, 따뜻하고 공감할 수 있는 UX Writing 스타일로 작성합니다.
 
-                        ### 출력 형식
+                        ### 출력 형식 (반드시 이 형식을 정확히 따라야 함)
                         장점 카테고리: [카테고리명]
                         키워드: [키워드명]
-                        요약 내용: [요약]
+                        요약 내용: [50~60자 요약문]
+
+                        ⚠️ 중요: 위 3개 항목을 반드시 모두 포함해야 합니다. 어떤 항목도 생략하지 마세요.
 
                         ### 장점 카테고리와 키워드 정의
 
@@ -174,31 +176,39 @@ public class GptService {
         Map<String, String> result = new HashMap<>();
         
         try {
-            // 정규식을 사용하여 각 항목 추출
-            Pattern categoryPattern = Pattern.compile("장점 카테고리:\\s*(.+)", Pattern.CASE_INSENSITIVE);
-            Pattern keywordPattern = Pattern.compile("키워드:\\s*(.+)", Pattern.CASE_INSENSITIVE);
-            Pattern summaryPattern = Pattern.compile("요약 내용:\\s*(.+)", Pattern.CASE_INSENSITIVE);
+            log.debug("GPT 원본 응답: {}", content);
+            
+            // 정규식을 사용하여 각 항목 추출 (더 유연한 패턴 사용)
+            Pattern categoryPattern = Pattern.compile("장점\\s*카테고리\\s*[:：]\\s*(.+)", Pattern.CASE_INSENSITIVE);
+            Pattern keywordPattern = Pattern.compile("키워드\\s*[:：]\\s*(.+)", Pattern.CASE_INSENSITIVE);
+            Pattern summaryPattern = Pattern.compile("요약\\s*내용\\s*[:：]\\s*(.+)", Pattern.CASE_INSENSITIVE);
             
             Matcher categoryMatcher = categoryPattern.matcher(content);
             Matcher keywordMatcher = keywordPattern.matcher(content);
             Matcher summaryMatcher = summaryPattern.matcher(content);
             
             if (categoryMatcher.find()) {
-                result.put("category", categoryMatcher.group(1).trim());
+                String category = categoryMatcher.group(1).trim();
+                result.put("category", category);
+                log.debug("파싱된 카테고리: {}", category);
             }
             
             if (keywordMatcher.find()) {
-                result.put("keyword", keywordMatcher.group(1).trim());
+                String keyword = keywordMatcher.group(1).trim();
+                result.put("keyword", keyword);
+                log.debug("파싱된 키워드: {}", keyword);
             }
             
             if (summaryMatcher.find()) {
-                result.put("summary", summaryMatcher.group(1).trim());
+                String summary = summaryMatcher.group(1).trim();
+                result.put("summary", summary);
+                log.debug("파싱된 요약: {}", summary);
             }
             
-            // 파싱 실패 시 원본 텍스트도 포함
+            // 파싱 실패 시 원본 텍스트도 포함하고 기본값 설정
             if (result.isEmpty()) {
                 // 기존 형식 "감정과 태도" : (유머 감각) 파싱 시도
-                Pattern oldFormatPattern = Pattern.compile("\"(.+?)\"\\s*:\\s*\\((.+?)\\)");
+                Pattern oldFormatPattern = Pattern.compile("\"(.+?)\"\\s*[:：]\\s*\\((.+?)\\)");
                 Matcher oldFormatMatcher = oldFormatPattern.matcher(content);
                 
                 if (oldFormatMatcher.find()) {
@@ -208,15 +218,36 @@ public class GptService {
                 } else {
                     result.put("rawContent", content);
                     result.put("error", "응답 형식을 파싱할 수 없습니다.");
+                    result.put("category", "");
+                    result.put("keyword", "");
+                    result.put("summary", "");
                 }
+            }
+            
+            // summary가 없는 경우 빈 문자열로 설정
+            if (!result.containsKey("summary")) {
+                result.put("summary", "");
+                log.warn("요약 내용이 파싱되지 않았습니다. 빈 문자열로 설정합니다.");
+            }
+            
+            // category나 keyword가 없는 경우도 빈 문자열로 설정
+            if (!result.containsKey("category")) {
+                result.put("category", "");
+            }
+            if (!result.containsKey("keyword")) {
+                result.put("keyword", "");
             }
             
         } catch (Exception e) {
             log.error("GPT 응답 파싱 중 오류 발생: {}", content, e);
             result.put("rawContent", content);
             result.put("error", "파싱 중 오류가 발생했습니다: " + e.getMessage());
+            result.put("category", "");
+            result.put("keyword", "");
+            result.put("summary", "");
         }
         
+        log.debug("최종 파싱 결과: {}", result);
         return result;
     }
 
