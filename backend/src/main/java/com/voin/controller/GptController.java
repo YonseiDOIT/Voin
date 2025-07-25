@@ -20,4 +20,10 @@ public class GptController {
         Map<String, String> result = gptService.classifyValue(userInput);
         return ResponseEntity.ok(ApiResponse.success("분류가 완료되었습니다.", result));
     }
+
+    @PostMapping("/summarize")
+    public String summarize(@RequestBody String userInput) {
+        return gptService.summarizeOnly(userInput);
+    }
+
 }
