@@ -15,4 +15,10 @@ public class GptController {
     public String classify(@RequestBody String userInput) {
         return gptService.classifyValue(userInput);
     }
+
+    @PostMapping("/summarize")
+    public String summarize(@RequestBody String userInput) {
+        return gptService.summarizeOnly(userInput);
+    }
+
 }

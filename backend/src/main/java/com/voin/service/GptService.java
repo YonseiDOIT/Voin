@@ -48,6 +48,39 @@ public class GptService {
             return message.get("content").toString().trim();
         }
 
-        return "응답이 없습니다 😥";
+        return "응답이 없습니다";
     }
+
+    public String summarizeOnly(String userInput) {
+        String url = "https://api.openai.com/v1/chat/completions";
+
+        GptRequest request = new GptRequest();
+        request.setModel(gptConfig.getModel());
+        request.setMessages(List.of(
+                new GptMessage("system", "너는 사용자가 작성한 내용을 50~60자 사이로 자연스럽고 풍부하게 요약하는 AI야. 반드시 아래 지침을 따르세요.\\n\\n### 요약 작성 지침\\n- 반드시 존댓말(\"~했어요\") 어미를 사용합니다.\\n- '~셨어요'와 같은 높임 표현은 사용하지 말고, '~했어요' 형식으로만 작성합니다.\\n- 감탄형 표현(예: 멋져요, 대단해요 등)은 사용하지 않습니다.\\n- 사용자의 행동, 감정, 결과가 함께 드러나도록 요약합니다.\\n- 긍정적인 시각에서 사실 중심으로 요약하며, 따뜻하고 공감할 수 있는 UX Writing 스타일로 작성합니다.\\n- 반드시 50자 미만이 되지 않도록 하고, 가능하면 60자에 가깝게 작성합니다.\\n- 설명체, 나열형은 사용하지 않습니다."),
+                new GptMessage("user", userInput)
+        ));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(gptConfig.getSecretKey());
+
+        HttpEntity<GptRequest> httpRequest = new HttpEntity<>(request, headers);
+
+        ResponseEntity<GptResponse> response = restTemplate.exchange(
+                url,
+                HttpMethod.POST,
+                httpRequest,
+                GptResponse.class
+        );
+
+        var choices = response.getBody().getChoices();
+        if (choices != null && !choices.isEmpty()) {
+            var message = (Map<String, Object>) choices.get(0).get("message");
+            return message.get("content").toString().trim();
+        }
+
+        return "응답이 없습니다";
+    }
+
 }
