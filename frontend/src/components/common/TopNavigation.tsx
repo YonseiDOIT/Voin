@@ -36,7 +36,7 @@ export default function TopNavigation({ title="타이틀 텍스트", caption, on
             </div>
 
             <div className="w-full pl-2 pr-4 mb-6">
-                <div className={`mb-2 font-semibold leading-loose text-grey-15 ${TitleEnlarge ? 'text-3xl' : 'text-2xl'}`}>{title}</div>
+                <div className={`mb-2 font-semibold line-14 text-grey-15 ${TitleEnlarge ? 'text-3xl' : 'text-2xl'} whitespace-pre-line`}>{title}</div>
                 {caption && <div className="body-n text-grey-70">{caption}</div>}
             </div>
         </header>

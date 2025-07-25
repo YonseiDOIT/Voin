@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+// import { useKakaoCallback } from '../hooks/useKakaoCallback';
 
 import ProfileImage from '../components/ProfileImage';
 import HomeCoinFind from '../components/home/HomeCoinFind';
@@ -15,65 +16,11 @@ import RelationshipIcon from '../assets/svgs/TodaysDiary/Relationship.svg?react'
 import SearchIcon from '../assets/svgs/TodaysDiary/SearchIcon.svg?react';
 
 const Home = () => {
-    const { userInfo, logout, login } = useAuth();
+    const { userInfo, logout } = useAuth();
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
-
-    // 카카오 로그인 콜백 처리
-    useEffect(() => {
-        const handleKakaoCallback = async () => {
-            const loginSuccess = searchParams.get('login_success');
-            const accessToken = searchParams.get('access_token');
-            const isNewMember = searchParams.get('is_new_member');
-            const nickname = searchParams.get('nickname');
-            const error = searchParams.get('error');
-            const errorMessage = searchParams.get('message');
-
-            console.log('Home page - Checking URL parameters:', {
-                loginSuccess,
-                accessToken: accessToken ? accessToken.substring(0, 20) + '...' : null,
-                isNewMember,
-                nickname,
-                error,
-                errorMessage
-            });
-
-            if (error === 'true') {
-                console.error('카카오 로그인 에러:', errorMessage);
-                alert('로그인 중 오류가 발생했습니다: ' + errorMessage);
-                // URL 파라미터 제거
-                navigate('/login', { replace: true });
-                return;
-            }
-
-            if (loginSuccess === 'true' && accessToken && nickname) {
-                console.log('카카오 로그인 성공 - 토큰 처리 중...');
-                try {
-                    // URL에서 닉네임 추출 및 디코딩
-                    const decodedNickname = decodeURIComponent(nickname);
-                    console.log('Decoded nickname:', decodedNickname);
-                    
-                    // 기존 localStorage 정리 (혹시 모를 충돌 방지)
-                    localStorage.removeItem('accessToken');
-                    localStorage.removeItem('nickname');
-                    localStorage.removeItem('profileImage');
-                    
-                    // AuthContext login 함수 호출 (nickname, profileImage, accessToken 순서)
-                    login(decodedNickname, undefined, accessToken);
-                    console.log('AuthContext login 완료');
-                    
-                    // URL 파라미터 제거하고 홈 페이지 유지
-                    navigate('/', { replace: true });
-                } catch (error) {
-                    console.error('로그인 처리 중 오류:', error);
-                    alert('로그인 처리 중 오류가 발생했습니다.');
-                    navigate('/login', { replace: true });
-                }
-            }
-        };
-
-        handleKakaoCallback();
-    }, [searchParams, login, navigate]);
+    
+    // 카카오 콜백 처리 (백엔드에서 리다이렉트된 경우)
+    // const { isProcessing } = useKakaoCallback();
 
     const handleLogout = () => {
         console.log('Logout button clicked');
@@ -131,6 +78,12 @@ const Home = () => {
 
     return (
         <div className="w-full h-full flex flex-col">
+            {/* 더미 유저 표시 (개발용) */}
+            {userInfo && userInfo.id.startsWith('dummy-user') && (
+                <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-2 text-sm">
+                    🚀 개발 모드: 더미 유저 "{userInfo.nickname}"로 로그인됨
+                </div>
+            )}
             {/* Header */}
             <div className="w-full h-12 px-4 py-2 pt-4 mb-2 flex flex-row items-center">
                 <div className="h-full inline-flex flex-row items-center gap-2">

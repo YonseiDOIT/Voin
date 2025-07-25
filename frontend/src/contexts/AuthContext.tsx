@@ -1,13 +1,19 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import type { ReactNode } from 'react';
+import type { Member, LoginResponse } from '../services/authService';
+import { authService } from '../services/authService';
 
 interface AuthContextType {
     isAuthenticated: boolean;
-    userInfo: {
-        nickname: string;
-        profileImage?: string;
-    } | null;
-    login: (nickname: string, profileImage?: string, accessToken?: string) => void;
+    userInfo: Member | null;
+    isLoading: boolean;
+    login: (accessToken: string) => Promise<void>;
+    loginWithCode: (code: string) => Promise<void>;
+    loginWithBackendCallback: (code: string) => Promise<void>;
+    loginWithKakaoPopup: () => Promise<LoginResponse>;
+    loginWithKakaoSDK: () => Promise<LoginResponse>;
+    loginWithDummy: () => Promise<void>; // 더미 로그인 기능 추가
+    setAuthData: (jwtToken: string, member: Member) => void;
     logout: () => void;
     checkAuthStatus: () => Promise<boolean>;
 }
@@ -28,126 +34,246 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-    const [userInfo, setUserInfo] = useState<{ nickname: string; profileImage?: string } | null>(null);
+    const [userInfo, setUserInfo] = useState<Member | null>(null);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
 
-    const login = (nickname: string, profileImage?: string, accessToken?: string) => {
-        console.log('Login called with:', { nickname, profileImage, accessToken });
+    const login = async (accessToken: string): Promise<void> => {
+        try {
+            setIsLoading(true);
+            console.log('Login 시작:', { accessToken: accessToken.substring(0, 20) + '...' });
+            
+            // 카카오 액세스 토큰으로 JWT 발급
+            const loginData = await authService.verifyKakaoToken(accessToken);
+            
+            // JWT 토큰과 사용자 정보 저장
+            authService.storeToken(loginData.jwtToken);
+            authService.storeUserInfo(loginData.member);
+            
+            // 상태 업데이트
+            setIsAuthenticated(true);
+            setUserInfo(loginData.member);
+            
+            console.log('Login 성공:', { member: loginData.member });
+        } catch (error) {
+            console.error('Login 실패:', error);
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const loginWithCode = async (code: string): Promise<void> => {
+        try {
+            setIsLoading(true);
+            console.log('LoginWithCode 시작:', { code: code.substring(0, 20) + '...' });
+            
+            // 카카오 인증 코드로 JWT 발급
+            const loginData = await authService.verifyKakaoCode(code);
+            
+            // JWT 토큰과 사용자 정보 저장
+            authService.storeToken(loginData.jwtToken);
+            authService.storeUserInfo(loginData.member);
+            
+            // 상태 업데이트
+            setIsAuthenticated(true);
+            setUserInfo(loginData.member);
+            
+            console.log('LoginWithCode 성공:', { member: loginData.member });
+        } catch (error) {
+            console.error('LoginWithCode 실패:', error);
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const loginWithBackendCallback = async (code: string): Promise<void> => {
+        try {
+            setIsLoading(true);
+            console.log('LoginWithBackendCallback 시작:', { code: code.substring(0, 20) + '...' });
+            
+            // 백엔드 콜백으로 JWT 발급
+            const loginData = await authService.handleBackendCallback(code);
+            
+            // JWT 토큰과 사용자 정보 저장
+            authService.storeToken(loginData.jwtToken);
+            authService.storeUserInfo(loginData.member);
+            
+            // 상태 업데이트
+            setIsAuthenticated(true);
+            setUserInfo(loginData.member);
+            
+            console.log('LoginWithBackendCallback 성공:', { member: loginData.member });
+        } catch (error) {
+            console.error('LoginWithBackendCallback 실패:', error);
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // 팝업으로 카카오 로그인 (백엔드 수정 없이 사용)
+    const loginWithKakaoPopup = async (): Promise<LoginResponse> => {
+        setIsLoading(true);
+        try {
+            console.log('팝업 카카오 로그인 시작');
+            
+            const response = await authService.handleKakaoLoginWithPopup();
+            
+            // JWT 토큰과 사용자 정보 저장
+            authService.storeToken(response.jwtToken);
+            authService.storeUserInfo(response.member);
+            
+            // 상태 업데이트
+            setIsAuthenticated(true);
+            setUserInfo(response.member);
+            
+            console.log('팝업 카카오 로그인 성공:', { member: response.member });
+            return response;
+        } catch (error) {
+            console.error('팝업 카카오 로그인 실패:', error);
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // Kakao SDK로 로그인 (가장 간단한 방법)
+    const loginWithKakaoSDK = async (): Promise<LoginResponse> => {
+        setIsLoading(true);
+        try {
+            console.log('Kakao SDK 로그인 시작');
+            
+            const response = await authService.loginWithKakaoSDK();
+            
+            // JWT 토큰과 사용자 정보 저장
+            authService.storeToken(response.jwtToken);
+            authService.storeUserInfo(response.member);
+            
+            // 상태 업데이트
+            setIsAuthenticated(true);
+            setUserInfo(response.member);
+            
+            console.log('Kakao SDK 로그인 성공:', { member: response.member });
+            return response;
+        } catch (error) {
+            console.error('Kakao SDK 로그인 실패:', error);
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    // 더미 유저로 로그인 (개발용)
+    const loginWithDummy = async (): Promise<void> => {
+        try {
+            setIsLoading(true);
+            console.log('더미 유저 로그인 시작...');
+            
+            const response = await authService.loginWithDummyUser();
+            
+            // 상태 업데이트
+            setIsAuthenticated(true);
+            setUserInfo(response.member);
+            
+            console.log('더미 유저 로그인 성공:', { member: response.member });
+        } catch (error) {
+            console.error('더미 유저 로그인 실패:', error);
+            throw error;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const setAuthData = (jwtToken: string, member: Member) => {
+        console.log('SetAuthData 호출:', { jwtToken: jwtToken.substring(0, 20) + '...', member });
+        
+        // JWT 토큰과 사용자 정보 저장
+        authService.storeToken(jwtToken);
+        authService.storeUserInfo(member);
+        
+        // 상태 업데이트
         setIsAuthenticated(true);
-        setUserInfo({ nickname, profileImage });
-        localStorage.setItem('nickname', nickname);
-        if (profileImage) {
-            localStorage.setItem('profileImage', profileImage);
-        }
-        if (accessToken) {
-            localStorage.setItem('accessToken', accessToken);
-        }
-        console.log('Login completed, isAuthenticated set to true');
+        setUserInfo(member);
+        
+        console.log('SetAuthData 완료');
     };
 
     const logout = () => {
-        console.log('Logout called');
+        console.log('Logout 호출');
         setIsAuthenticated(false);
         setUserInfo(null);
         
-        // localStorage 완전 정리
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('nickname');
-        localStorage.removeItem('profileImage');
+        // 저장된 인증 데이터 삭제
+        authService.clearAuthData();
         
-        // 추가 정리 - 혹시 다른 키들도 정리
-        Object.keys(localStorage).forEach(key => {
-            if (key.startsWith('auth_') || key.startsWith('user_') || key.startsWith('kakao_')) {
-                localStorage.removeItem(key);
-            }
-        });
-        
-        console.log('Logout completed, localStorage cleared');
-        
-        // 상태 완전 초기화 확인
-        setTimeout(() => {
-            setIsAuthenticated(false);
-            setUserInfo(null);
-            console.log('Logout timeout completed, states reset');
-        }, 100);
+        console.log('Logout 완료');
     };
 
-    const checkAuthStatus = async (): Promise<boolean> => {
+    const checkAuthStatus = useCallback(async (): Promise<boolean> => {
         try {
-            const accessToken = localStorage.getItem('accessToken');
-            const nickname = localStorage.getItem('nickname');
+            setIsLoading(true);
+            
+            const jwtToken = authService.getStoredToken();
+            const storedUserInfo = authService.getStoredUserInfo();
 
-            if (!accessToken) {
+            if (!jwtToken || !storedUserInfo) {
+                console.log('저장된 토큰 또는 사용자 정보 없음');
                 return false;
             }
 
-            // 백엔드에서 토큰 유효성 검사
-            const response = await fetch('/api/auth/validate', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${accessToken}`
-                },
-                credentials: 'include'
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                if (data.success) {
-                    setIsAuthenticated(true);
-                    setUserInfo({
-                        nickname: data.nickname || nickname || '',
-                        profileImage: data.profileImage || localStorage.getItem('profileImage') || undefined
-                    });
-                    return true;
-                }
+            // JWT 토큰 유효성 검증
+            const isValid = await authService.validateToken(jwtToken);
+            
+            if (isValid) {
+                setIsAuthenticated(true);
+                setUserInfo(storedUserInfo);
+                console.log('인증 상태 유효:', { userInfo: storedUserInfo });
+                return true;
+            } else {
+                console.log('토큰 유효하지 않음, 로그아웃 처리');
+                logout();
+                return false;
             }
-
-            // 토큰이 유효하지 않으면 로그아웃 처리
-            logout();
-            return false;
         } catch (error) {
-            console.error('Auth check error:', error);
+            console.error('인증 상태 확인 실패:', error);
             logout();
             return false;
+        } finally {
+            setIsLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         // 초기 로드 시 인증 상태 확인
         const initAuth = async () => {
             try {
-                const accessToken = localStorage.getItem('accessToken');
-                const nickname = localStorage.getItem('nickname');
-                console.log('AuthContext initAuth - checking localStorage:', { accessToken, nickname });
-
-                if (accessToken && nickname) {
-                    // 간단한 로컬 스토리지 기반 인증 (백엔드 검증 없이)
-                    console.log('AuthContext initAuth - found tokens, setting authenticated');
-                    setIsAuthenticated(true);
-                    setUserInfo({
-                        nickname,
-                        profileImage: localStorage.getItem('profileImage') || undefined
-                    });
-                } else {
-                    // 토큰이나 닉네임이 없으면 명시적으로 로그아웃 상태로 설정
-                    console.log('AuthContext initAuth - no tokens found, setting unauthenticated');
-                    setIsAuthenticated(false);
-                    setUserInfo(null);
-                }
+                console.log('AuthContext 초기화 시작');
+                await checkAuthStatus();
             } catch (error) {
-                console.error('Auth initialization error:', error);
+                console.error('Auth 초기화 실패:', error);
                 setIsAuthenticated(false);
                 setUserInfo(null);
+            } finally {
+                setIsLoading(false);
             }
         };
 
         initAuth();
-    }, []);
+    }, [checkAuthStatus]);
 
     return (
         <AuthContext.Provider value={{
             isAuthenticated,
             userInfo,
+            isLoading,
             login,
+            loginWithCode,
+            loginWithBackendCallback,
+            loginWithKakaoPopup,
+            loginWithKakaoSDK,
+            loginWithDummy,
+            setAuthData,
             logout,
             checkAuthStatus
         }}>

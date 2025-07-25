@@ -1,4 +1,7 @@
 import type { AdvantageResultTheme } from './advantageResultTypes';
+import { useState, useEffect } from 'react';
+import { getAdvantageImage, getCirclePlaceholderUrl } from '../../assets/images/advantageImages';
+import { useCaseReviewStore } from '../../store/useCaseReviewStore';
 
 type AdvantageResultColorPalette = {
     titleStyle: string;
@@ -8,47 +11,85 @@ type AdvantageResultColorPalette = {
 
 const colorPalettes: Record<AdvantageResultTheme, AdvantageResultColorPalette> = {
     'GROWTH': {
-        titleStyle: "text-blue-800",
-        categoryStyle: "bg-blue-100 text-blue-800",
-        backgroundClass: "bg-gradient-to-b from-blue-50 to-white",
+        titleStyle: "text-[#305DAB]",
+        categoryStyle: "bg-[#D0E1FB] text-[#305DAB]",
+        backgroundClass: "bg-gradient-to-b from-[#E0E9F7] to-white",
     },
     'EMOTION': {
-        titleStyle: "text-orange-700",
-        categoryStyle: "bg-orange-300 text-orange-700",
-        backgroundClass: "bg-gradient-to-b from-orange-50 to-white",
+        titleStyle: "text-[#A95800]",
+        categoryStyle: "bg-[#FFC382] text-[#BA4614]",
+        backgroundClass: "bg-gradient-to-b from-[#FAEEE3] to-white",
     },
     'CREATIVITY': {
-        titleStyle: "text-purple-700",
-        categoryStyle: "bg-violet-200 text-purple-700",
-        backgroundClass: "bg-gradient-to-b from-purple-50 to-white",
+        titleStyle: "text-[#7A3BC2]",
+        categoryStyle: "bg-[#DACBF7] text-[#7A3BC2]",
+        backgroundClass: "bg-gradient-to-b from-[#EAE4F7] to-white",
     },
     'PROBLEM_SOLVING': {
-        titleStyle: "text-green-700",
-        categoryStyle: "bg-green-200 text-green-700",
-        backgroundClass: "bg-gradient-to-b from-green-50 to-white",
+        titleStyle: "text-[#007832]",
+        categoryStyle: "bg-[#C7E9D0] text-[#007832]",
+        backgroundClass: "bg-gradient-to-b from-[#EAF3EC] to-white",
     },
     'RELATIONSHIP': {
-        titleStyle: "text-yellow-700",
-        categoryStyle: "bg-yellow-200 text-yellow-700",
-        backgroundClass: "bg-gradient-to-b from-yellow-50 to-white",
+        titleStyle: "text-[#896A00]",
+        categoryStyle: "bg-[#FFEB9C] text-[#896A00]",
+        backgroundClass: "bg-gradient-to-b from-[#F9F2DC] to-white",
     },
     'BELIEFS': {
-        titleStyle: "text-rose-700",
-        categoryStyle: "bg-red-200 text-rose-700",
-        backgroundClass: "bg-gradient-to-b from-red-50 to-white",
+        titleStyle: "text-[#B63043]",
+        categoryStyle: "bg-[#FFB9BB] text-[#B63043]",
+        backgroundClass: "bg-gradient-to-b from-[#F9EDED] to-white",
     },
 };
 
+
+// props는 선택적으로 유지하되, 없으면 zustand에서 읽어오도록 처리
 export interface AdvantageResultProps {
-    theme: AdvantageResultTheme;
-    category: string;
-    title: string;
-    titleDescription: string;
-    description: string;
+    theme?: AdvantageResultTheme;
+    category?: string;
+    title?: string;
+    titleDescription?: string;
+    description?: string;
 }
 
+
 const AdvantageResult = (props: AdvantageResultProps) => {
-    const palette = colorPalettes[props.theme];
+    // zustand에서 데이터 읽기
+    const caseReviewData = useCaseReviewStore((state) => state.data);
+    // props 우선, 없으면 zustand 값 사용
+    const theme = props.theme ?? ('GROWTH');
+    const category = props.category ?? caseReviewData.categoryName ?? '';
+    const title = props.title ?? caseReviewData.strengthName ?? '';
+    const titleDescription = props.titleDescription ?? caseReviewData.strengthDescription ?? '';
+    const description = props.description ?? caseReviewData.fullDescription ?? '';
+
+    const palette = colorPalettes[theme];
+    const [imageUrl, setImageUrl] = useState<string>('');
+    const [imageLoading, setImageLoading] = useState<boolean>(true);
+    const [imageError, setImageError] = useState<boolean>(false);
+
+    useEffect(() => {
+        const loadImage = async () => {
+            setImageLoading(true);
+            setImageError(false);
+            try {
+                const imageUrl = await getAdvantageImage(title);
+                setImageUrl(imageUrl);
+            } catch (error) {
+                console.error(`이미지 로딩 실패 (${title}):`, error);
+                setImageError(true);
+                setImageUrl(getCirclePlaceholderUrl(title));
+            }
+            setImageLoading(false);
+        };
+        if (title) {
+            loadImage();
+        } else {
+            setImageUrl('');
+            setImageLoading(false);
+        }
+    }, [title]);
+
     return (
         <div className={`
             w-full px-6 py-8
@@ -69,7 +110,7 @@ const AdvantageResult = (props: AdvantageResultProps) => {
             `}>
                 <div data-active="True" data-color="Blue" data-count="False" data-type="Category" className={`p-3 ${palette.categoryStyle} rounded-3xl inline-flex justify-center items-center gap-2`}>
                     <span className={`${palette.titleStyle} body-n font-semibold`}>
-                        {props.category}
+                        {category}
                     </span>
                 </div>
                 <div className={`
@@ -82,7 +123,7 @@ const AdvantageResult = (props: AdvantageResultProps) => {
                     gap-1
                 `}>
                     <span className={`${palette.titleStyle} text-3xl font-bold leading-10`}>
-                        {props.title}
+                        {title}
                     </span>
                     <span className={`
                         self-stretch
@@ -90,7 +131,7 @@ const AdvantageResult = (props: AdvantageResultProps) => {
                         text-lg
                         font-medium
                         leading-relaxed
-                    `}>{props.titleDescription}</span>
+                    `}>{titleDescription}</span>
                 </div>
             </div>
             <div className={`
@@ -99,10 +140,38 @@ const AdvantageResult = (props: AdvantageResultProps) => {
                 items-end
                 gap-2
             `}>
-                <img className={`
-                    w-60
-                    h-60
-                `} src="https://placehold.co/240x240" />
+                {imageLoading ? (
+                    // 로딩 중일 때 스켈레톤 또는 스피너
+                    <div className="w-60 h-60 bg-gray-200 rounded-lg animate-pulse flex items-center justify-center">
+                        <span className="text-gray-500 text-sm">이미지 로딩중...</span>
+                    </div>
+                ) : (
+                    <div className="relative w-60 h-60">
+                        <img 
+                            className="w-full h-full object-cover rounded-lg"
+                            src={imageUrl}
+                            alt={`${title} 장점 이미지`}
+                            onLoad={() => {
+                                // 로드 성공 시 에러 상태 해제
+                                if (imageError) {
+                                    setImageError(false);
+                                }
+                            }}
+                            onError={(e) => {
+                                // 이미지 로드 실패 시 원형 placeholder로 변경 (조용한 처리)
+                                if (!imageError && !e.currentTarget.src.includes('data:image/svg+xml')) {
+                                    e.currentTarget.src = getCirclePlaceholderUrl(title);
+                                    setImageError(true);
+                                }
+                            }}
+                        />
+                        {imageError && (
+                            <div className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                                임시 이미지
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
             <div className={`
                 inline-flex
@@ -118,7 +187,7 @@ const AdvantageResult = (props: AdvantageResultProps) => {
                     text-grey-40
                     body-n
                     font-medium
-                `}>{props.description}</span>
+                `}>{description}</span>
             </div>
         </div>
     )

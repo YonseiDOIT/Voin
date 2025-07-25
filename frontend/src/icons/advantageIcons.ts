@@ -8,7 +8,7 @@ import 성실함Icon from '../assets/svgs/advantageCategory/growth/성실함.svg
 import 침착함Icon from '../assets/svgs/advantageCategory/growth/침착함.svg?react';
 import 학습력Icon from '../assets/svgs/advantageCategory/growth/학습력.svg?react';
 import 적응력Icon from '../assets/svgs/advantageCategory/growth/적응력.svg?react';
-import 수용력Icon from '../assets/svgs/advantageCategory/growth/수용력.svg?react';
+import 수용성Icon from '../assets/svgs/advantageCategory/growth/수용성.svg?react';
 import 성찰력Icon from '../assets/svgs/advantageCategory/growth/성찰력.svg?react';
 import 절제력Icon from '../assets/svgs/advantageCategory/growth/절제력.svg?react';
 
@@ -77,7 +77,7 @@ export const iconMap = {
     '침착함': 침착함Icon,
     '학습력': 학습력Icon,
     '적응력': 적응력Icon,
-    '수용력': 수용력Icon,
+    '수용성': 수용성Icon,
     '성찰력': 성찰력Icon,
     '절제력': 절제력Icon,
     

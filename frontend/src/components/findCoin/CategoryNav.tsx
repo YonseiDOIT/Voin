@@ -1,8 +1,4 @@
-interface Category {
-    id: string;
-    title: string;
-    color: string;
-}
+import type { Category } from '../../constants/categories';
 
 interface CategoryNavProps {
     categories: Category[];
@@ -14,7 +10,6 @@ export default function CategoryNav({ categories, activeCategoryId, onCategoryCl
     return (
         <nav className="overflow-x-auto whitespace-nowrap no-scrollbar">
             <div className="flex space-x-2">
-                {/* 시작 여백 */}
                 <div className="w-4 flex-shrink-0"></div>
                 {categories.map((category) => (
                     <button

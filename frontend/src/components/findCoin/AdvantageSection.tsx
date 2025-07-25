@@ -5,6 +5,7 @@ import { DynamicIcon } from '../common/DynamicIcon';
 
 interface Props {
     id: string;
+    categoryTitle: string;
     items: string[];
     onMount: (id: string, element: HTMLElement) => void;
     onUnmount: (id: string) => void;
@@ -13,21 +14,21 @@ interface Props {
     isFirst?: boolean;
 }
 
-function AdvantageSection({ id, items, onMount, onUnmount, onSelectItem, selectedItems, isFirst = false }: Props) {
+function AdvantageSection({ id, categoryTitle, items, onMount, onUnmount, onSelectItem, selectedItems, isFirst = false }: Props) {
     const sectionRef = useRef<HTMLElement>(null);
 
     // 카테고리별 색상 매핑 (비선택 상태에서만 사용)
-    const getCategoryColor = (categoryId: string) => {
+    const getCategoryColor = () => {
         const colorMap: Record<string, string> = {
-            'growth': '#E0E9F7',
-            'emotion': '#FAEEE3',
-            'creativity': '#EAE4F7',
-            'problemSolving': '#EAF3EC',
-            'relationship': '#F9F2DC',
-            'Beliefs': '#F9EDED',
+            '관리와 성장': '#E0E9F7',
+            '감정과 태도': '#FAEEE3',
+            '창의와 몰입': '#EAE4F7',
+            '사고와 해결': '#EAF3EC',
+            '관계와 공감': '#F9F2DC',
+            '신념과 실행': '#F9EDED',
         };
 
-        return colorMap[categoryId] || colorMap['growth'];
+        return colorMap[categoryTitle] || colorMap['관리와 성장'];
     };
 
     useEffect(() => {
@@ -65,7 +66,7 @@ function AdvantageSection({ id, items, onMount, onUnmount, onSelectItem, selecte
                                     <defs>
                                         <linearGradient id={`gradient_${id}_${item.replace(/\s+/g, '')}`} x1="60" y1="120" x2="60" y2="5" gradientUnits="userSpaceOnUse">
                                             <stop offset="0.1" stopColor="white" stopOpacity="0"/>
-                                            <stop offset="1" stopColor={getCategoryColor(id)}/>
+                                            <stop offset="1" stopColor={getCategoryColor()}/>
                                         </linearGradient>
                                         <linearGradient id={`gradient_stroke_${id}_${item.replace(/\s+/g, '')}`} x1="60" y1="5" x2="60" y2="120" gradientUnits="userSpaceOnUse">
                                             <stop stopColor="white"/>
