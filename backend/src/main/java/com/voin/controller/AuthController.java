@@ -62,9 +62,11 @@ public class AuthController {
                 return ResponseEntity.ok(ApiResponse.success("로그인이 완료되었습니다.", response));
             } else {
                 // 신규 회원 - 회원가입
-                Map<String, Object> properties = (Map<String, Object>) userInfo.get("properties");
-                String nickname = properties != null ? (String) properties.get("nickname") : "카카오사용자";
-                String profileImage = properties != null ? (String) properties.get("profile_image_url") : null;
+                // KakaoAuthService에서 직접 userInfo Map에 저장한 값들을 사용
+                String nickname = userInfo.get("nickname") != null ? 
+                    userInfo.get("nickname").toString() : "카카오사용자";
+                String profileImage = userInfo.get("profile_image") != null ? 
+                    userInfo.get("profile_image").toString() : null;
 
                 // 친구 코드 생성
                 String friendCode;
