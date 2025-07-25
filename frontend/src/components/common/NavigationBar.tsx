@@ -1,6 +1,6 @@
-import CopyIcon from '../../assets/svgs/navigationBar/copy.svg?react';
-import HomeIcon from '../../assets/svgs/navigationBar/home.svg?react';
-import MoneyBagIcon from '../../assets/svgs/navigationBar/money-bag.svg?react';
+import CopyIcon from '@/assets/svgs/navigationBar/copy.svg?react';
+import HomeIcon from '@/assets/svgs/navigationBar/home.svg?react';
+import MoneyBagIcon from '@/assets/svgs/navigationBar/money-bag.svg?react';
 
 const NavigationBar = () => {
     return (

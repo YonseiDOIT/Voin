@@ -1,7 +1,7 @@
-import type { AdvantageResultTheme } from './advantageResultTypes';
+import type { AdvantageResultTheme } from '@/components/advantageResult/advantageResultTypes';
 import { useState, useEffect } from 'react';
-import { getAdvantageImage, getCirclePlaceholderUrl } from '../../assets/images/advantageImages';
-import { useCaseReviewStore } from '../../store/useCaseReviewStore';
+import { getAdvantageImage, getCirclePlaceholderUrl } from '@/assets/images/advantageImages';
+import { useActivityStore } from '@/store/useActivityStore';
 
 type AdvantageResultColorPalette = {
     titleStyle: string;
@@ -55,13 +55,13 @@ export interface AdvantageResultProps {
 
 const AdvantageResult = (props: AdvantageResultProps) => {
     // zustand에서 데이터 읽기
-    const caseReviewData = useCaseReviewStore((state) => state.data);
+    const activityData = useActivityStore((state) => state.data);
     // props 우선, 없으면 zustand 값 사용
     const theme = props.theme ?? ('GROWTH');
-    const category = props.category ?? caseReviewData.categoryName ?? '';
-    const title = props.title ?? caseReviewData.strengthName ?? '';
-    const titleDescription = props.titleDescription ?? caseReviewData.strengthDescription ?? '';
-    const description = props.description ?? caseReviewData.fullDescription ?? '';
+    const category = props.category ?? activityData.categoryName ?? '';
+    const title = props.title ?? activityData.strengthName ?? '';
+    const titleDescription = props.titleDescription ?? activityData.strengthDescription ?? '';
+    const description = props.description ?? activityData.fullDescription ?? '';
 
     const palette = colorPalettes[theme];
     const [imageUrl, setImageUrl] = useState<string>('');
@@ -94,7 +94,7 @@ const AdvantageResult = (props: AdvantageResultProps) => {
         <div className={`
             w-full px-6 py-8
             ${palette.backgroundClass}
-            rounded-[32px]
+            rounded-[24px]
             shadow-[0px_5px_15px_-5px_rgba(35,48,59,0.10)]
             outline-2 outline-offset-[-2px] outline-white
             inline-flex flex-col justify-start items-center gap-8
@@ -109,7 +109,7 @@ const AdvantageResult = (props: AdvantageResultProps) => {
                 gap-4
             `}>
                 <div data-active="True" data-color="Blue" data-count="False" data-type="Category" className={`p-3 ${palette.categoryStyle} rounded-3xl inline-flex justify-center items-center gap-2`}>
-                    <span className={`${palette.titleStyle} body-n font-semibold`}>
+                    <span className={`${palette.titleStyle} line-16px text-[15px] font-semibold`}>
                         {category}
                     </span>
                 </div>
@@ -122,15 +122,14 @@ const AdvantageResult = (props: AdvantageResultProps) => {
                     items-start
                     gap-1
                 `}>
-                    <span className={`${palette.titleStyle} text-3xl font-bold leading-10`}>
+                    <span className={`${palette.titleStyle} text-[28px] font-bold line-14`}>
                         {title}
                     </span>
                     <span className={`
                         self-stretch
                         text-grey-50
-                        text-lg
-                        font-medium
-                        leading-relaxed
+                        text-[18px]
+                        line-14
                     `}>{titleDescription}</span>
                 </div>
             </div>
@@ -147,7 +146,7 @@ const AdvantageResult = (props: AdvantageResultProps) => {
                     </div>
                 ) : (
                     <div className="relative w-60 h-60">
-                        <img 
+                        <img
                             className="w-full h-full object-cover rounded-lg"
                             src={imageUrl}
                             alt={`${title} 장점 이미지`}
@@ -178,15 +177,15 @@ const AdvantageResult = (props: AdvantageResultProps) => {
                 justify-start
                 items-center
                 gap-2
+                h-auto
             `}>
                 <span className={`
                     flex-1
                     w-full
-                    h-16
                     justify-center
                     text-grey-40
-                    body-n
-                    font-medium
+                    text-[16px]
+                    line-15
                 `}>{description}</span>
             </div>
         </div>

@@ -1,14 +1,15 @@
-import AdvantageResult from "../../../../../../../../../components/advantageResult/AdvantageResult";
-import TopNavigation from "../../../../../../../../../components/common/TopNavigation";
-import CaseReviewResult from "../../../../../../../../../components/advantageResult/CaseReviewResult";
-import CommentResult from "../../../../../../../../../components/advantageResult/CommentResult";
+import AdvantageResult from "@/components/advantageResult/AdvantageResult";
+import TopNavigation from "@/components/common/TopNavigation";
+import CaseReviewResult from "@/components/advantageResult/CaseReviewResult";
+import CommentResult from "@/components/advantageResult/CommentResult";
+import ToastMessage from "@/components/ToastMessage";
 
-import { useCaseReviewStore } from "../../../../../../../../../store/useCaseReviewStore";
-import { getCategoryTheme } from '../../../../../../../../../components/advantageResult/advantageResultTypes';
+import { useActivityStore } from "@/store/useActivityStore";
+import { getCategoryTheme } from '@/components/advantageResult/advantageResultTypes';
 import { useNavigate } from "react-router-dom";
 
 const FinalResult = () => {
-    const caseReviewData = useCaseReviewStore((state) => state.data);
+    const activityData = useActivityStore((state) => state.data);
     const navigate = useNavigate();
 
     return (
@@ -17,15 +18,15 @@ const FinalResult = () => {
                 title="나의 코인"
                 onBackClick={() => { navigate('/home'); }}
             />
-            {caseReviewData && (
+            {activityData && (
                 <div className="w-full px-6">
                     <div className="w-full mb-8">
                         <AdvantageResult
-                            theme={getCategoryTheme(caseReviewData.categoryName ?? '')}
-                            category={caseReviewData.categoryName ?? ''}
-                            title={caseReviewData.strengthName ?? ''}
-                            titleDescription={caseReviewData.strengthDescription ?? ''}
-                            description={caseReviewData.classify ?? ''}
+                            theme={getCategoryTheme(activityData.categoryName ?? '')}
+                            category={activityData.categoryName ?? ''}
+                            title={activityData.strengthName ?? ''}
+                            titleDescription={activityData.strengthDescription ?? ''}
+                            description={activityData.classify ?? ''}
                         />
                     </div>
                     <div className="w-full py-2 px-2 mb-2">
@@ -36,10 +37,10 @@ const FinalResult = () => {
                     <div className="w-full mb-8">
                         <CaseReviewResult
                             data={{
-                                uploadedImage: caseReviewData.uploadedImage,
-                                caseName: caseReviewData.caseName ?? '',
-                                writtenCase1: caseReviewData.writtenCase1 ?? '',
-                                writtenCase2: caseReviewData.writtenCase2 ?? ''
+                                uploadedImage: activityData.uploadedImage,
+                                caseName: activityData.caseName ?? '',
+                                writtenCase1: activityData.writtenCase1 ?? '',
+                                writtenCase2: activityData.writtenCase2 ?? ''
                             }}
                         />
                     </div>
@@ -50,11 +51,12 @@ const FinalResult = () => {
                     </div>
                     <div className="w-full mb-18">
                         <CommentResult
-                            comment={caseReviewData.comment}
+                            comment={activityData.comment}
                         />
                     </div>
                 </div>
             )}
+            <ToastMessage message="코인 찾기가 완료되었어요!" />
         </div>
     );
 };

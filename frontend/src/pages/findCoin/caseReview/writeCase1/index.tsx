@@ -1,4 +1,4 @@
-import WritingPrompt from '../../../../components/findCoin/WritingPrompt';
+import WritingPrompt from '@/components/findCoin/WritingPrompt';
 
 const WriteCase = () => {
     return (

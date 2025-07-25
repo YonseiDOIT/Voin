@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { authService } from '../services/authService';
+import { useAuthStore } from '@/store/useAuthStore';
+import { authService } from '@/services/authService';
 
 interface CallbackData {
     jwtToken?: string;
@@ -15,7 +15,7 @@ interface CallbackData {
 export const useKakaoCallback = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const { loginWithCode, setAuthData } = useAuth();
+    const { loginWithCode, setAuthData } = useAuthStore((state) => state.actions);
     const [isProcessing, setIsProcessing] = useState(false);
 
     useEffect(() => {

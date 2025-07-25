@@ -1,12 +1,12 @@
-import { useCaseReviewStore } from '../../store/useCaseReviewStore';
+import { useActivityStore } from '@/store/useActivityStore';
 import React, { useRef, useState } from 'react';
 
-import CameraIcon from '../../assets/svgs/ProfileUploader/camera.svg?react';
+import CameraIcon from '@/assets/svgs/ProfileUploader/camera.svg?react';
 
 const ImageUploader = () => {
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const setCaseReviewData = useCaseReviewStore((state) => state.setData);
+    const setActivityData = useActivityStore((state) => state.setData);
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -15,7 +15,7 @@ const ImageUploader = () => {
             reader.onloadend = () => {
                 const result = reader.result as string;
                 setPreviewUrl(result);
-                setCaseReviewData({ uploadedImage: result });
+                setActivityData({ uploadedImage: result });
             };
             reader.readAsDataURL(file);
         }
@@ -28,7 +28,7 @@ const ImageUploader = () => {
     const handleRemoveImage = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.stopPropagation();
         setPreviewUrl(null);
-        setCaseReviewData({ uploadedImage: undefined });
+        setActivityData({ uploadedImage: undefined });
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
 

@@ -31,14 +31,14 @@ public class GptService {
         request.setModel(gptConfig.getModel());
         request.setMessages(List.of(
                 new GptMessage("system", """
-                        너는 사용자가 작성한 다양한 유형의 글(일상 기록, 자신의 사례 회고, 친구의 사례 회고)에서 장점 카테고리와 키워드를 정확하게 분류하고, 50~60자 분량의 존댓말로 자연스럽고 풍부하게 요약하는 AI야. 반드시 아래 절차와 정의를 따르며, 입력이 동일하면 항상 동일한 결과를 내야 해.
+                너는 사용자가 작성한 다양한 유형의 글(일상 기록, 자신의 사례 회고, 친구의 사례 회고)에서 장점 카테고리와 키워드를 정확하게 분류하고, 50~60자 분량의 존댓말로 자연스럽고 풍부하게 요약하는 AI야. 반드시 아래 절차와 정의를 따르며, 입력이 동일하면 항상 동일한 결과를 내야 해.
 
                         ### 절차
                         1. 사용자의 문단에서 가장 중심이 되는 가치, 신념, 행동의 동기를 파악합니다.
                         2. 아래 '장점 카테고리와 키워드 정의' 중 가장 적절한 카테고리 1개, 키워드 1개를 선택합니다.
                         3. 반드시 정의된 목록 내에서만 선택하고, 정의와 일치하는지 검토합니다.
-                        4. 선택 후, 사용자의 문단을 50~60자 사이의 분량으로, 자연스럽고 풍부하게 요약합니다.
-                        - 반드시 50자 미만이 되지 않도록 하며, 가능하면 60자에 가깝게 작성합니다.
+                        4. 선택 후, 사용자가 작성한 내용을 50~60자 사이의 분량으로, 자연스럽고 풍부하게 요약합니다.
+                        - 반드시 50자 미만, 60자가 초과되지 않도록 하며, 가능하면 60자에 가깝게 작성합니다.
                         - 사용자의 행동, 감정, 결과가 함께 드러나도록 충분한 정보를 담아야 합니다.
                         - 불필요하게 간략하게 줄이지 말고, 사용자의 가치와 변화를 드러내는 한 문장으로 작성하세요.
 
@@ -135,7 +135,7 @@ public class GptService {
                         - 책임감: 맡은 일이나 역할을 끝까지 해내려는 태도와 의지
                         - 계획성: 목표 달성을 위해 체계적으로 준비하는 능력
                         - 도전력: 새로운 가능성에 적극적으로 뛰어드는 태도
-                        """),
+                """),
                 new GptMessage("user", userInput)
         ));
 
@@ -259,37 +259,4 @@ public class GptService {
         result.put("error", errorMessage);
         return result;
     }
-
-    public String summarizeOnly(String userInput) {
-        String url = "https://api.openai.com/v1/chat/completions";
-
-        GptRequest request = new GptRequest();
-        request.setModel(gptConfig.getModel());
-        request.setMessages(List.of(
-                new GptMessage("system", "너는 사용자가 작성한 내용을 50~60자 사이로 자연스럽고 풍부하게 요약하는 AI야. 반드시 아래 지침을 따르세요.\\n\\n### 요약 작성 지침\\n- 반드시 존댓말(\"~했어요\") 어미를 사용합니다.\\n- '~셨어요'와 같은 높임 표현은 사용하지 말고, '~했어요' 형식으로만 작성합니다.\\n- 감탄형 표현(예: 멋져요, 대단해요 등)은 사용하지 않습니다.\\n- 사용자의 행동, 감정, 결과가 함께 드러나도록 요약합니다.\\n- 긍정적인 시각에서 사실 중심으로 요약하며, 따뜻하고 공감할 수 있는 UX Writing 스타일로 작성합니다.\\n- 반드시 50자 미만이 되지 않도록 하고, 가능하면 60자에 가깝게 작성합니다.\\n- 설명체, 나열형은 사용하지 않습니다."),
-                new GptMessage("user", userInput)
-        ));
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.setBearerAuth(gptConfig.getSecretKey());
-
-        HttpEntity<GptRequest> httpRequest = new HttpEntity<>(request, headers);
-
-        ResponseEntity<GptResponse> response = restTemplate.exchange(
-                url,
-                HttpMethod.POST,
-                httpRequest,
-                GptResponse.class
-        );
-
-        var choices = response.getBody().getChoices();
-        if (choices != null && !choices.isEmpty()) {
-            var message = (Map<String, Object>) choices.get(0).get("message");
-            return message.get("content").toString().trim();
-        }
-
-        return "응답이 없습니다";
-    }
-
 }

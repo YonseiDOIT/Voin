@@ -1,22 +1,26 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-// import { useKakaoCallback } from '../hooks/useKakaoCallback';
+import { useAuthStore } from '@/store/useAuthStore';
+// import { useKakaoCallback } from '@/hooks/useKakaoCallback';
 
-import ProfileImage from '../components/ProfileImage';
-import HomeCoinFind from '../components/home/HomeCoinFind';
-import HomeCoinStatus from '../components/home/HomeCoinStatus';
-import Carousel from '../components/home/Carousel';
-import NavigationBar from '../components/common/NavigationBar';
-import BottomSheet from '../components/common/BottomSheet';
+import ProfileImage from '@/components/ProfileImage';
+import HomeCoinFind from '@/components/home/HomeCoinFind';
+import HomeCoinStatus from '@/components/home/HomeCoinStatus';
+import Carousel from '@/components/home/Carousel';
+import NavigationBar from '@/components/common/NavigationBar';
+import BottomSheet from '@/components/common/BottomSheet';
 
-import NotificationIcon from '../assets/svgs/notificationIcon.svg?react';
-import NoteIcon from '../assets/svgs/TodaysDiary/NoteIcon.svg?react';
-import RelationshipIcon from '../assets/svgs/TodaysDiary/Relationship.svg?react';
-import SearchIcon from '../assets/svgs/TodaysDiary/SearchIcon.svg?react';
+import NotificationIcon from '@/assets/svgs/notificationIcon.svg?react';
+import NoteIcon from '@/assets/svgs/TodaysDiary/NoteIcon.svg?react';
+import RelationshipIcon from '@/assets/svgs/TodaysDiary/Relationship.svg?react';
+import SearchIcon from '@/assets/svgs/TodaysDiary/SearchIcon.svg?react';
+
+import 공감력화이트Icon from '@/assets/svgs/공감력화이트.svg?react';
+import 리더십화이트Icon from '@/assets/svgs/리더십화이트.svg?react';
+import 이첫레img from '@/assets/images/6c98263fb5c7d5cd2ffe6cfeca32d4eed4fde21e.png'
 
 const Home = () => {
-    const { userInfo, logout } = useAuth();
+    const { userInfo, actions } = useAuthStore();
     const navigate = useNavigate();
     
     // 카카오 콜백 처리 (백엔드에서 리다이렉트된 경우)
@@ -24,7 +28,7 @@ const Home = () => {
 
     const handleLogout = () => {
         console.log('Logout button clicked');
-        logout();
+        actions.logout();
         console.log('Logout completed, navigating to login');
         // 로그아웃 후 명시적으로 로그인 페이지로 리다이렉트
         navigate('/login');
@@ -60,24 +64,50 @@ const Home = () => {
         <HomeCoinStatus
             title="가장 많이 받은 코인"
             titleValue="공감력"
-            subtitle={["지금까지 ", "개를 찾아냈어요"]} // Numvalue를 중간에 넣기 위해 배열로 전달
+            subtitle={["지금까지 ", "개를 찾아냈어요"]}
             subtitleNumValue={7}
+            icon={
+                <공감력화이트Icon
+                    className="h-16 w-16"
+                />
+            }
         />,
         <HomeCoinStatus
             title="최근 새로 찾은 코인"
             titleValue="리더십"
             subtitle={["새로운 모습을 발견했네요!"]}
+            icon={
+                <리더십화이트Icon
+                    className="h-16 w-16"
+                />
+            }
         />,
         <HomeCoinStatus
             title="코인을 많이 나눈 친구"
             titleValue="김도청"
             subtitle={["코인을 ", "회 주고 받았어요"]}
             subtitleNumValue={5}
+            image={이첫레img}
         />
     ]
 
+    // 모든 SVG 요소를 흰색으로 강제 지정하는 글로벌 스타일 추가
+    // (uniqueId 없이도 적용)
+    const globalWhiteSvgStyle = `
+        .home-svg-white svg path,
+        .home-svg-white svg circle,
+        .home-svg-white svg rect,
+        .home-svg-white svg polygon,
+        .home-svg-white svg ellipse,
+        .home-svg-white svg line {
+            fill: white !important;
+            stroke: white !important;
+        }
+    `;
+
     return (
         <div className="w-full h-full flex flex-col">
+            <style>{globalWhiteSvgStyle}</style>
             {/* 더미 유저 표시 (개발용) */}
             {userInfo && userInfo.id.startsWith('dummy-user') && (
                 <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-2 text-sm">
@@ -91,7 +121,7 @@ const Home = () => {
                     {/* 사용자 이름 */}
                     <div className="min-w-fit">
                         <span className="text-base text-white font-semibold">
-                            {userInfo?.nickname || '사용자'}
+                            {userInfo?.nickname || '아름답고미운새'}
                         </span>
                         <span className="text-base text-white font-medium mx-0.5">님</span>
                     </div>
@@ -112,7 +142,7 @@ const Home = () => {
             {/* Home Message */}
             <div className='px-6 py-2 mb-14'>
                 <div className="mt-2 display-n font-bold bg-gradient-to-b from-white to-white/40 bg-clip-text text-transparent">
-                    메세지 내용이<br />들어가는 곳으로<br />최대 3줄이 출력됨
+                    무심코 지나쳤지만<br />장점이 빛난 순간이<br />있을 거예요.
                 </div>
             </div>
 
@@ -152,7 +182,7 @@ const Home = () => {
                 <div className="px-1 pt-8 pb-2">
                     <span className="text-[16px] line-14 font-semibold text-grey-60">친구의 장점 코인</span>
                 </div>
-                    <div className="px-4 py-3 w-full bg-gradient-to-b from-zinc-100 from-0% via-white/0 via-40% to-white/0 to-100% rounded-3xl shadow-[0px_5px_15px_-5px_rgba(35,48,59,0.10)] outline-2 outline-offset-[-2px] outline-white inline-flex flex-row items-center">
+                    <Link to="/memories-together" className="px-4 py-3 w-full bg-gradient-to-b from-zinc-100 from-0% via-white/0 via-40% to-white/0 to-100% rounded-3xl shadow-[0px_5px_15px_-5px_rgba(35,48,59,0.10)] outline-2 outline-offset-[-2px] outline-white inline-flex flex-row items-center">
                         <div className="self-stretch h-28 py-4 inline-flex justify-center items-center mr-8">
                             <RelationshipIcon className="w-28 h-28" />
                         </div>
@@ -160,7 +190,7 @@ const Home = () => {
                             <div className="text-[16px] font-semibold line-14 text-grey-30">함께한 추억 떠올리기</div>
                             <div className="line-14 font-medium text-[13px] text-grey-60">친구의 장점을 찾아줄 수 있어요</div>
                         </div>
-                    </div>
+                    </Link>
             </BottomSheet>
         </div>
     )

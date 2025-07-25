@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import PencilIcon from '../../assets/svgs/TodaysDiary/Pencil.svg?react';
+import PencilIcon from '@/assets/svgs/TodaysDiary/Pencil.svg?react';
 
 interface WritingTipProps {
     tip: string;

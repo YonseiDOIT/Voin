@@ -1,16 +1,16 @@
-import SelectCaseCategory from "../../../components/caseReview/SelectCaseCategory"
-import TopNavigation from "../../../components/common/TopNavigation";
-import ActionButton from "../../../components/common/ActionButton";
+import SelectCaseCategory from "@/components/caseReview/SelectCaseCategory"
+import TopNavigation from "@/components/common/TopNavigation";
+import ActionButton from "@/components/common/ActionButton";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCaseReviewStore } from '../../../store/useCaseReviewStore';
+import { useActivityStore } from '@/store/useActivityStore';
 
-import HomeIcon from '../../../assets/svgs/caseReview/homeIcon.svg?react';
-import HandShakeIcon from '../../../assets/svgs/caseReview/handshakeIcon.svg?react';
-import BagIcon from '../../../assets/svgs/caseReview/bagIcon.svg?react';
-import FireIcon from '../../../assets/svgs/caseReview/fireIcon.svg?react';
-import ParachuteIcon from '../../../assets/svgs/caseReview/parachuteIcon.svg?react';
-import RainbowIcon from '../../../assets/svgs/caseReview/rainbowIcon.svg?react';
+import HomeIcon from '@/assets/svgs/caseReview/homeIcon.svg?react';
+import HandShakeIcon from '@/assets/svgs/caseReview/handshakeIcon.svg?react';
+import BagIcon from '@/assets/svgs/caseReview/bagIcon.svg?react';
+import FireIcon from '@/assets/svgs/caseReview/fireIcon.svg?react';
+import ParachuteIcon from '@/assets/svgs/caseReview/parachuteIcon.svg?react';
+import RainbowIcon from '@/assets/svgs/caseReview/rainbowIcon.svg?react';
 
 const categories = [
     {
@@ -73,18 +73,18 @@ const CaseReviewPage = () => {
         }
     };
 
-    const setCaseReviewData = useCaseReviewStore((state) => state.setData);
-    const caseReviewData = useCaseReviewStore((state) => state.data);
+    const setActivityData = useActivityStore((state) => state.setData);
+    const activityData = useActivityStore((state) => state.data);
 
     useEffect(() => {
-        console.log('[CaseReviewData zustand]', caseReviewData);
+        console.log('[ActivityData zustand]', activityData);
     }, []);
 
     const handleNextClick = () => {
         if (selectedThrowData && selectedTitle && selectedCategoryIndex !== null) {
             try {
                 setIsLoading(true);
-                setCaseReviewData({
+                setActivityData({
                     caseName: selectedThrowData,
                 });
                 navigate('/case-review/write-case-1');

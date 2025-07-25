@@ -1,30 +1,30 @@
-import AdvantageResult from '../../../../../../../components/advantageResult/AdvantageResult';
-import CaseReviewResult from '../../../../../../../components/advantageResult/CaseReviewResult';
-import ActionButton from '../../../../../../../components/common/ActionButton';
+import AdvantageResult from '@/components/advantageResult/AdvantageResult';
+import CaseReviewResult from '@/components/advantageResult/CaseReviewResult';
+import ActionButton from '@/components/common/ActionButton';
 
-import { getCategoryTheme } from '../../../../../../../components/advantageResult/advantageResultTypes';
+import { getCategoryTheme } from '@/components/advantageResult/advantageResultTypes';
 import { useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
-import { useCaseReviewStore } from '../../../../../../../store/useCaseReviewStore';
+import { useActivityStore } from '@/store/useActivityStore';
 
 const AdvantageResultPage = () => {
 
     const navigate = useNavigate();
-    const caseReviewData = useCaseReviewStore((state) => state.data);
+    const activityData = useActivityStore((state) => state.data);
 
 
     useEffect(() => {
         // zustand 데이터 콘솔 출력
-        console.log('[CaseReviewData zustand]', caseReviewData);
+        console.log('[CaseReviewData zustand]', activityData);
         // 데이터가 없으면 이전 페이지로 리다이렉트
-        if (!caseReviewData || !caseReviewData.caseName) {
+        if (!activityData || !activityData.caseName) {
             console.warn('케이스 리뷰 데이터가 없습니다. 강점 선택 페이지로 돌아갑니다.');
             navigate('/case-review/categories', { replace: true });
         }
-    }, [caseReviewData, navigate]);
+    }, [activityData, navigate]);
 
     // 데이터가 없으면 로딩 상태 표시
-    if (!caseReviewData || !caseReviewData.caseName) {
+    if (!activityData || !activityData.caseName) {
         return (
             <div className="w-full h-full flex items-center justify-center">
                 <div className="text-center">
@@ -44,14 +44,14 @@ const AdvantageResultPage = () => {
                     </span>
                 </div>
                 <AdvantageResult
-                    theme={getCategoryTheme(caseReviewData.categoryName ?? '')}
-                    category={caseReviewData.categoryName ?? ''}
-                    title={caseReviewData.strengthName ?? ''}
-                    titleDescription={caseReviewData.strengthDescription ?? ''}
-                    description={caseReviewData.classify ?? ''}
+                    theme={getCategoryTheme(activityData.categoryName ?? '')}
+                    category={activityData.categoryName ?? ''}
+                    title={activityData.strengthName ?? ''}
+                    titleDescription={activityData.strengthDescription ?? ''}
+                    description={activityData.classify ?? ''}
                 />
             </div>
-            <div className="w-full px-6">
+            <div className="w-full px-6 pb-24">
                 <div className="w-full py-2 px-2 mb-2">
                     <span className="w-full line-14 text-[20px] font-semibold text-grey-15">
                         코인이 발견된 기억 속 순간
@@ -59,17 +59,17 @@ const AdvantageResultPage = () => {
                 </div>
                 <CaseReviewResult
                     data={{
-                        caseName: caseReviewData.caseName ?? '',
-                        writtenCase1: caseReviewData.writtenCase1 ?? '',
-                        writtenCase2: caseReviewData.writtenCase2 ?? ''
+                        caseName: activityData.caseName ?? '',
+                        writtenCase1: activityData.writtenCase1 ?? '',
+                        writtenCase2: activityData.writtenCase2 ?? ''
                     }}
                 />
-                <div className="w-full pb-4 pt-8 mt-24">
+                <div className="fixed bottom-4 left-0 w-full pb-4 px-6 pt-8">
                     {/* TODO: 다음 단계로 버튼 추가 */}
                     <ActionButton
                         buttonText='다음'
-                        onClick={() => navigate('/case-review/comment-and-image')}
-                        disabled={!caseReviewData.caseName}
+                        onClick={() => navigate('/todays-diary/comment-and-image')}
+                        disabled={!activityData}
                     />
                 </div>
             </div>

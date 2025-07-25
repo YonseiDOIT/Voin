@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 
-import EnabledButtonImage from "../../assets/svgs/TodaysDiary/EnabledButton.svg?react";
-import { DynamicIcon } from '../common/DynamicIcon';
+import EnabledButtonImage from "@/assets/svgs/TodaysDiary/EnabledButton.svg?react";
+import { DynamicIcon } from '@/components/common/DynamicIcon';
 
 interface Props {
     id: string;

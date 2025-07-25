@@ -1,15 +1,15 @@
-import TopNavigation from "../../../../../../../../components/common/TopNavigation";
-import ImageUploader from "../../../../../../../../components/advantageResult/ImageUploader";
-import LargeTextField from "../../../../../../../../components/findCoin/LargeTextField";
-import ActionButton from "../../../../../../../../components/common/ActionButton";
+import TopNavigation from "@/components/common/TopNavigation";
+import ImageUploader from "@/components/advantageResult/ImageUploader";
+import LargeTextField from "@/components/findCoin/LargeTextField";
+import ActionButton from "@/components/common/ActionButton";
 
 import { useState } from "react";
-import { useCaseReviewStore } from "../../../../../../../../store/useCaseReviewStore";
+import { useActivityStore } from "@/store/useActivityStore";
 import { useNavigate } from "react-router-dom";
 
 const CommentAndImage = () => {
     const [comment, setComment] = useState("");
-    const setCaseReviewData = useCaseReviewStore((state) => state.setData);
+    const setActivityData = useActivityStore((state) => state.setData);
     const navigate = useNavigate();
 
     return (
@@ -31,9 +31,9 @@ const CommentAndImage = () => {
                     <ActionButton
                         buttonText="완료"
                         onClick={() => {
-                            setCaseReviewData({
+                            setActivityData({
                                 comment: comment.trim(),
-                                uploadedImage: useCaseReviewStore.getState().data.uploadedImage,
+                                uploadedImage: useActivityStore.getState().data.uploadedImage,
                             });
                             navigate('/case-review/final-result');
                         }}

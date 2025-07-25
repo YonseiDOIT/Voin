@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuthStore } from '@/store/useAuthStore';
+
+import 아미새image from '@/assets/images/9e476176d040dbba92dedbb1e7f3d47eee4b0f12.png'
 
 interface ProfileImageProps {
     /** 이미지 URL */
@@ -9,7 +11,7 @@ interface ProfileImageProps {
 const ProfileImage: React.FC<ProfileImageProps> = ({
     src,
 }) => {
-    const { userInfo } = useAuth();
+    const userInfo = useAuthStore((state) => state.userInfo);
     const [imageError, setImageError] = useState(false);
 
     // 실제 사용할 이미지 URL (props로 전달된 것이 우선, 없으면 userInfo에서 가져옴)
@@ -35,7 +37,8 @@ const ProfileImage: React.FC<ProfileImageProps> = ({
                     className="h-full w-full object-cover rounded-full"
                 />
             ) : (
-                <DefaultFallbackIcon />
+                // <DefaultFallbackIcon />
+                <img src={아미새image} alt="대체 이미지" className="h-full w-full object-cover rounded-full" />
             )}
         </div>
     );

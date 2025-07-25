@@ -1,5 +1,5 @@
-import DisabledButtonImage from "../../assets/svgs/caseReview/DisabledButton.svg?react";
-import EnabledButtonImage from "../../assets/svgs/caseReview/EnabledButton.svg?react";
+import DisabledButtonImage from "@/assets/svgs/caseReview/DisabledButton.svg?react";
+import EnabledButtonImage from "@/assets/svgs/caseReview/EnabledButton.svg?react";
 
 import React, { useState } from 'react';
 

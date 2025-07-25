@@ -1,11 +1,12 @@
-import TopNavigation from '../../components/common/TopNavigation';
-import ProfileUploader from '../../components/ProfileUploader';
-import TextInput from '../../components/TextInput';
-import ActionButton from '../../components/common/ActionButton';
+import TopNavigation from '@/components/common/TopNavigation';
+import ProfileUploader from '@/components/ProfileUploader';
+import TextInput from '@/components/TextInput';
+import ActionButton from '@/components/common/ActionButton';
 
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuthStore } from '@/store/useAuthStore';
+import type { Member } from '@/services/authService';
 
 const SignUp = () => {
     const [nickname, setNickname] = useState<string>('');
@@ -15,7 +16,7 @@ const SignUp = () => {
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const { login } = useAuth();
+    const { setAuthData } = useAuthStore((state) => state.actions);
 
     useEffect(() => {
         const fetchKakaoProfile = async () => {
@@ -98,49 +99,42 @@ const SignUp = () => {
 
     const handleButtonClick = async () => {
         try {
-            // URL 파라미터에서 카카오 토큰 정보 확인
             const kakaoAccessToken = searchParams.get('kakao_access_token');
-            
             if (!kakaoAccessToken) {
                 alert('카카오 로그인 정보가 없습니다. 다시 로그인해주세요.');
                 navigate('/login');
                 return;
             }
 
-            // 백엔드 회원가입 완료 API 호출 (프록시 사용)
             const response = await fetch('/signup/profile-image', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     accessToken: kakaoAccessToken,
                     nickname: nickname,
-                    profileImage: finalProfileImage || profileImage // 수정된 이미지가 있으면 사용, 없으면 기본 카카오 이미지 사용
+                    profileImage: finalProfileImage || profileImage,
                 }),
-                credentials: 'include'
+                credentials: 'include',
             });
 
             if (!response.ok) {
-                throw new Error('회원가입 요청 실패');
+                const errorText = await response.text();
+                throw new Error(`회원가입 요청 실패: ${response.status} ${errorText}`);
             }
 
-            const data = await response.json();
-            
-            if (data.success) {
-                // 회원가입 성공 - AuthContext에 로그인 정보 저장
-                // 백엔드에서 반환한 새로운 accessToken 사용, 없으면 기존 kakaoAccessToken 사용
-                const newAccessToken = data.accessToken || kakaoAccessToken;
-                
-                // AuthContext login 함수 호출 (nickname, profileImage, accessToken 순서)
-                login(nickname, finalProfileImage || profileImage || undefined, newAccessToken);
+            const apiResponse = await response.json();
+
+            if (apiResponse.success && apiResponse.data) {
+                // 백엔드에서 받은 JWT와 사용자 정보로 로그인 상태 설정
+                const { jwtToken, member }: { jwtToken: string; member: Member } = apiResponse.data;
+                setAuthData(jwtToken, member);
                 navigate('/home');
             } else {
-                throw new Error(data.message || '회원가입 실패');
+                throw new Error(apiResponse.message || '회원가입에 실패했습니다.');
             }
         } catch (error) {
             console.error('회원가입 오류:', error);
-            const errorMessage = error instanceof Error ? error.message : '회원가입에 실패했습니다.';
+            const errorMessage = error instanceof Error ? error.message : '회원가입 중 알 수 없는 오류가 발생했습니다.';
             alert(errorMessage);
         }
     };

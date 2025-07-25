@@ -1,7 +1,7 @@
 import React from 'react';
 
-import HomeCoinImage from '../../assets/svgs/Home_Coin_Case.svg?url';
-import HomeCoinAdd from '../../assets/svgs/Home_Coin_Add.svg?react';
+import HomeCoinImage from '@/assets/svgs/Home_Coin_Case.svg?url';
+import HomeCoinAdd from '@/assets/svgs/Home_Coin_Add.svg?react';
 
 interface HomeCoinFindProps {
     onButtonClick?: () => void

@@ -1,6 +1,6 @@
-import StrengthSelector from '../../../../../../components/findCoin/StrengthSelector';
+import StrengthSelector from '@/components/findCoin/StrengthSelector';
 import { useNavigate } from 'react-router-dom';
-import { useCaseReviewStore } from '../../../../../../store/useCaseReviewStore';
+import { useActivityStore } from '@/store/useActivityStore';
 import { useEffect, useState } from 'react';
 
 // API 응답 타입 정의
@@ -24,7 +24,7 @@ export default function CaseReviewCategory() {
     const navigate = useNavigate();
     const [keywordData, setKeywordData] = useState<{ [key: string]: KeywordData[] }>({});
     const [isLoading, setIsLoading] = useState(true);
-    const setCaseReviewData = useCaseReviewStore((state) => state.setData);
+    const setActivityData = useActivityStore((state) => state.setData);
 
     useEffect(() => {
         (async () => {
@@ -47,7 +47,7 @@ export default function CaseReviewCategory() {
         if (!categoryData) return;
         const selectedKeyword = categoryData.find(keyword => keyword.name === selectedItem.item);
         if (!selectedKeyword) return;
-        setCaseReviewData({
+        setActivityData({
             categoryName: selectedItem.category.replace('category_', ''),
             strengthName: selectedKeyword.name,
             strengthDescription: selectedKeyword.description,

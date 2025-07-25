@@ -1,121 +1,114 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
-import { authService } from "../../services/authService";
+import { useAuthStore } from "@/store/useAuthStore";
+import { authService } from "@/services/authService";
+import useEmblaCarousel from 'embla-carousel-react';
+import type { EmblaCarouselType } from 'embla-carousel';
 
-import Carousel from "../../components/home/Carousel";
+import KakaoImage from "@/assets/svgs/login/kakao.svg?react";
 
-import KakaoImage from "../../assets/svgs/login/kakao.svg?react";
+// onBoard 폴더의 이미지들을 직접 import 합니다.
+import onBoardImage1 from '@/assets/images/onBoard/onboarding_01.png';
+import onBoardImage2 from '@/assets/images/onBoard/onboarding_02.png';
+import onBoardImage3 from '@/assets/images/onBoard/onboarding_03.png';
+import onBoardImage4 from '@/assets/images/onBoard/onboarding_04.png';
+
+const onBoardImages = [onBoardImage1, onBoardImage2, onBoardImage3, onBoardImage4];
+
+const onBoardTexts = [
+    <div><span>일상 속 순간이 장점이 되는</span><br /><span className="text-VB-40">Voin에 오신 걸 환영해요</span></div>,
+    <div><span>일상 속 순간을 기록하고</span><br /><span className="text-VB-40">나와 친구의 장점을 발견해요</span></div>,
+    <div><span>일상 속 순간이 장점이 되는</span><br /><span className="text-VB-40">Voin에 오신 걸 환영해요</span></div>,
+    <div><span>일상 속 순간이 장점이 되는</span><br /><span className="text-VB-40">Voin에 오신 걸 환영해요</span></div>,
+];
+
 
 const Login = () => {
     const navigate = useNavigate();
-    const { isAuthenticated, isLoading, loginWithKakaoSDK, loginWithDummy } = useAuth();
+    const { isAuthenticated, isLoading } = useAuthStore();
     const [isLoginLoading, setIsLoginLoading] = useState(false);
 
+    const [emblaRef, emblaApi] = useEmblaCarousel({ align: 'center', loop: true });
+    const [selectedIndex, setSelectedIndex] = useState(0);
+    const [scrollSnaps, setScrollSnaps] = useState<number[]>([]);
+
     useEffect(() => {
-        console.log('Login page useEffect - isAuthenticated:', isAuthenticated);
-        
-        // 로딩 중이면 대기
-        if (isLoading) {
-            return;
-        }
-        
-        // 이미 로그인된 사용자는 홈으로 리다이렉트
+        if (!emblaApi) return;
+        const onUpdate = (api: EmblaCarouselType) => {
+            setScrollSnaps(api.scrollSnapList());
+            setSelectedIndex(api.selectedScrollSnap());
+        };
+        emblaApi.on('select', onUpdate);
+        emblaApi.on('reInit', onUpdate);
+        onUpdate(emblaApi);
+        return () => {
+            emblaApi.off('select', onUpdate);
+            emblaApi.off('reInit', onUpdate);
+        };
+    }, [emblaApi]);
+
+    useEffect(() => {
+        if (isLoading) return;
         if (isAuthenticated) {
-            console.log('User is authenticated, redirecting to home');
             navigate('/home', { replace: true });
             return;
         }
-
-        console.log('User is not authenticated, showing login page');
-        
-        // 혹시 남아있는 구버전 인증 정보 정리
-        authService.clearAuthData();
-        
-        // 로그인 페이지에서는 배경 설정
-        document.body.style.background = "#D9D9D9";
-
-        return () => {
-            document.body.style.background = '#F7F7F8';
-        };
+        authService.logout();
     }, [isAuthenticated, isLoading, navigate]);
 
-    const carouselItems = [
-        <div className="w-full px-5 pb-4 text-center text-2xl font-semibold">온보딩에 들어갈<br />내용 입니다 1</div>,
-        <div className="w-full px-5 pb-4 text-center text-2xl font-semibold">온보딩에 들어갈<br />내용 입니다 2</div>,
-        <div className="w-full px-5 pb-4 text-center text-2xl font-semibold">온보딩에 들어갈<br />내용 입니다 3</div>
-    ];
+    const imageCarouselItems = onBoardImages.map((imageSrc, index) => (
+        <img key={index} src={imageSrc} alt={`onboarding image ${index + 1}`} className="max-h-full w-auto object-contain" />
+    ));
 
-    const handleKakaoLogin = async () => {
-        if (isLoginLoading) return; // 중복 클릭 방지
-        
+    const handleKakaoLogin = () => {
+        if (isLoginLoading) return;
+        setIsLoginLoading(true);
         try {
-            setIsLoginLoading(true);
-            console.log('카카오 로그인 시작...');
-            
-            // Kakao SDK 로드 확인
-            if (typeof window.Kakao === 'undefined') {
-                throw new Error('Kakao SDK가 로드되지 않았습니다. 페이지를 새로고침해보세요.');
-            }
-            
-            console.log('Kakao SDK 상태:', {
-                loaded: typeof window.Kakao !== 'undefined',
-                initialized: window.Kakao?.isInitialized?.()
-            });
-            
-            await loginWithKakaoSDK();
-            
-            console.log('카카오 로그인 성공, 홈으로 이동');
-            navigate('/home', { replace: true });
+            authService.loginWithKakao();
         } catch (error) {
-            console.error('카카오 로그인 오류 상세:', error);
-            
-            // 에러 타입에 따라 다른 메시지 표시
-            let errorMessage = '카카오 로그인에 실패했습니다.';
-            if (error instanceof Error) {
-                if (error.message.includes('Kakao SDK')) {
-                    errorMessage = 'Kakao SDK 로딩 문제입니다. 페이지를 새로고침해보세요.';
-                } else if (error.message.includes('사용자가 취소')) {
-                    errorMessage = '로그인이 취소되었습니다.';
-                } else {
-                    errorMessage = `로그인 실패: ${error.message}`;
-                }
-            }
-            
-            alert(errorMessage);
-        } finally {
-            setIsLoginLoading(false);
-        }
-    };
-
-    // 더미 로그인 함수 (개발용)
-    const handleDummyLogin = async () => {
-        if (isLoginLoading) return; // 중복 클릭 방지
-        
-        try {
-            setIsLoginLoading(true);
-            console.log('더미 로그인 시작...');
-            
-            await loginWithDummy();
-            
-            console.log('더미 로그인 성공, 홈으로 이동');
-            navigate('/home', { replace: true });
-        } catch (error) {
-            console.error('더미 로그인 오류:', error);
-            alert('더미 로그인에 실패했습니다.');
-        } finally {
+            console.error('카카오 로그인 시작 오류:', error);
+            alert('카카오 로그인 과정에 문제가 발생했습니다.');
             setIsLoginLoading(false);
         }
     };
 
     return (
-        <div className="h-full w-full flex flex-col">
-            <div className="fixed bottom-0 bg-white w-full pt-8 pb-4 flex flex-col"
-                style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-                <Carousel slides={carouselItems} />
+        <div className="fixed inset-0 flex flex-col justify-end bg-transparent">
+            {/* 상단 이미지 캐러셀 영역 */}
+            <div className="w-full " ref={emblaRef}>
+                <div className="flex">
+                    {imageCarouselItems.map((slide, index) => (
+                        <div className="flex-shrink-0 w-full flex items-center justify-center" key={index}>
+                            {slide}
+                        </div>
+                    ))}
+                </div>
+            </div>
 
-                <div className="w-full px-6 mt-28 pb-4 space-y-4">
-                    {/* 카카오 로그인 버튼 */}
+            {/* 하단 컨텐츠 영역 */}
+            <div className="bg-white w-full pt-6 flex flex-col rounded-t-2xl"
+                style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
+                
+                {/* 텍스트 표시 영역 */}
+                <div className="w-full px-5 h-24 flex items-center justify-center text-center text-2xl font-semibold">
+                    {onBoardTexts[selectedIndex]}
+                </div>
+
+                {/* Dots */}
+                <div className="flex flex-wrap justify-center items-center mt-2">
+                    {scrollSnaps.map((_, index) => (
+                        <button
+                            key={index}
+                            onClick={() => emblaApi?.scrollTo(index)}
+                            className={`w-1.5 h-1.5 rounded-full bg-gray-200 mx-1 transition-all duration-200 ${
+                                index === selectedIndex ? 'w-5 !bg-cyan-300' : ''
+                            }`}
+                        />
+                    ))}
+                </div>
+
+                {/* 카카오 로그인 버튼 */}
+                <div className="w-full px-6 mt-25 pb-2">
                     <button
                         className={`w-full py-4 gap-x-4 flex flex-row items-center justify-center bg-[#FEE500] rounded-full transition-opacity ${
                             isLoginLoading ? 'opacity-70 cursor-not-allowed' : 'hover:opacity-90'
@@ -139,24 +132,6 @@ const Login = () => {
                             </>
                         )}
                     </button>
-
-                    {/* 더미 로그인 버튼 (개발용) */}
-                    <div className="space-y-2">
-                        <div className="text-center text-sm text-gray-500">
-                            개발 및 테스트용 (실제 서비스에서는 제거됩니다)
-                        </div>
-                        <button
-                            className={`w-full py-4 gap-x-4 flex flex-row items-center justify-center bg-gray-300 rounded-full transition-opacity border-2 border-dashed border-gray-400 ${
-                                isLoginLoading ? 'opacity-70 cursor-not-allowed' : 'hover:opacity-90'
-                            }`}
-                            onClick={handleDummyLogin}
-                            disabled={isLoginLoading}
-                        >
-                            <div className="body-n text-[#191919] font-semibold">
-                                🚀 더미 유저로 로그인 (개발용)
-                            </div>
-                        </button>
-                    </div>
                 </div>
             </div>
         </div>

@@ -1,5 +1,5 @@
-// import NotificationList from "../../components/NotificationList";
-import NotificationItem from "../../components/notification/NotificationItem";
+// import NotificationList from "@/components/NotificationList";
+import NotificationItem from "@/components/notification/NotificationItem";
 import { Link } from 'react-router-dom';
 
 const NotificationPage = () => {

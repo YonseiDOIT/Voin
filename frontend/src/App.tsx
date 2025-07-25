@@ -1,5 +1,5 @@
-import ProtectedRoute from './components/ProtectedRoute';
-import { routes } from './routes/routeConfig';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import { routes } from '@/routes/routeConfig';
 import { Route, Routes } from "react-router-dom";
 
 function App() {

@@ -1,8 +1,8 @@
 import { type MouseEvent, useState } from 'react';
 
-import DefaultBg from '../../assets/svgs/Button/default.svg?react'
-import DisabledBg from '../../assets/svgs/Button/disabled.svg?react'
-import HoverBg from '../../assets/svgs/Button/hover.svg?react'
+import DefaultBg from '@/assets/svgs/Button/default.svg?react'
+import DisabledBg from '@/assets/svgs/Button/disabled.svg?react'
+import HoverBg from '@/assets/svgs/Button/hover.svg?react'
 
 interface ActionButtonProps {
     buttonText: string;

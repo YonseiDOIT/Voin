@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import mkcert from 'vite-plugin-mkcert'
 import svgr from 'vite-plugin-svgr';
+import tsconfigPaths from 'vite-tsconfig-paths';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -30,6 +31,7 @@ export default defineConfig({
     tailwindcss(),
     mkcert(),
     svgr(),
+    tsconfigPaths(),
     VitePWA({
       registerType: 'autoUpdate', // 서비스 워커 업데이트 방식 설정
       devOptions: {

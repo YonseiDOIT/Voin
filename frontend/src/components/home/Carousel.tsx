@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import useEmblaCarousel from 'embla-carousel-react'
 import type { EmblaCarouselType } from 'embla-carousel';
-import '../../emblaCarousel.css'
+import '@/emblaCarousel.css'
 
 type PropType = {
     slides: React.ReactNode[]
