@@ -29,26 +29,23 @@ public class SecurityConfig {
         http
             .csrf(csrf -> csrf.disable())
             .headers(headers -> headers.frameOptions().disable())
-            .sessionManagement(session -> 
-                session.maximumSessions(1) // 한 사용자당 최대 1개 세션
-                       .maxSessionsPreventsLogin(false)) // 새 로그인 시 기존 세션 무효화
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                // 인증이 필요 없는 공개 경로들
                 .requestMatchers("/auth/**", "/", "/index.html", "/signup/**", 
                                "/h2-console/**", "/swagger-ui/**", "/api-docs/**", 
-                               "/api/**").permitAll() // 모든 API 허용, 애플리케이션에서 로그인 체크
-                .anyRequest().permitAll()); // 전체 허용, JavaScript에서 로그인 체크
-//                 .csrf(csrf -> csrf.disable())
-//                 .headers(headers -> headers.frameOptions().disable())
-//                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-//                 .authorizeHttpRequests(auth -> auth
-//                         .requestMatchers("/auth/**", "/error", "/swagger-ui.html", "/v3/api-docs/**", "/h2-console/**").permitAll()
-//                         .anyRequest().authenticated()
-//                 )
-//                 .exceptionHandling(ex -> ex
-//                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
-//                         .accessDeniedHandler(jwtAccessDeniedHandler)
-//                 )
-//                 .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
+                               "/v3/api-docs/**", "/swagger-ui.html", "/error").permitAll()
+                // 인증이 필요한 API 경로들
+                .requestMatchers("/api/auth/kakao/verify", "/api/auth/kakao/url", "/api/auth/validate").permitAll()
+                .requestMatchers("/api/**").authenticated()
+                // 나머지 모든 요청은 인증 필요
+                .anyRequest().authenticated()
+            )
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                .accessDeniedHandler(jwtAccessDeniedHandler)
+            )
+            .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
