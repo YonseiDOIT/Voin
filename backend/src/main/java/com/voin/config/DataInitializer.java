@@ -75,24 +75,26 @@ public class DataInitializer {
     }
 
     private void initializeKeywords() {
+        // 기존 키워드 데이터가 잘못되었을 수 있으므로 모두 삭제하고 다시 초기화
         if (keywordRepository.count() > 0) {
-            log.info("Keywords already initialized");
-            return;
+            log.info("Deleting existing keywords to re-initialize with correct mapping...");
+            keywordRepository.deleteAll();
         }
 
-        // 저장된 코인들을 다시 조회
+        // 저장된 코인들을 알파벳순으로 조회하여 올바르게 매핑
         List<Coin> savedCoins = coinRepository.findAllByOrderByName();
         
         if (savedCoins.size() != 6) {
             throw new RuntimeException("Expected 6 coins but found " + savedCoins.size());
         }
 
-        Coin managementGrowth = savedCoins.get(0);  // 관리와 성장
-        Coin emotionAttitude = savedCoins.get(1);   // 감정과 태도  
-        Coin creativityFocus = savedCoins.get(2);   // 창의와 몰입
-        Coin thinkingSolving = savedCoins.get(3);   // 사고와 해결
-        Coin relationshipEmpathy = savedCoins.get(4); // 관계와 공감
-        Coin beliefExecution = savedCoins.get(5);   // 신념과 실행
+        // 알파벳순 정렬 결과에 따른 올바른 매핑
+        Coin emotionAttitude = savedCoins.get(0);   // 감정과 태도 (ㄱ)
+        Coin relationshipEmpathy = savedCoins.get(1); // 관계와 공감 (ㄱ)
+        Coin managementGrowth = savedCoins.get(2);  // 관리와 성장 (ㄱ)
+        Coin thinkingSolving = savedCoins.get(3);   // 사고와 해결 (ㅅ)
+        Coin beliefExecution = savedCoins.get(4);   // 신념과 실행 (ㅅ)
+        Coin creativityFocus = savedCoins.get(5);   // 창의와 몰입 (ㅊ)
 
         // 1 : 관리와 성장 키워드
         List<Keyword> managementKeywords = Arrays.asList(
@@ -104,7 +106,7 @@ public class DataInitializer {
                 Keyword.builder().coin(managementGrowth).name("학습력").description("새로운 지식이나 경험을 빠르게 이해하고 익히는 능력").build(),
                 Keyword.builder().coin(managementGrowth).name("성찰력").description("자신을 되돌아보고 의미를 찾는 내면적 사고 태도").build(),
                 Keyword.builder().coin(managementGrowth).name("적응력").description("새로운 변화에 빠르고 유연하게 적응하는 능력").build(),
-                Keyword.builder().coin(managementGrowth).name("수용성").description("피드백이나 의견을 열린 태도로 받아들이는 자세").build(),
+                Keyword.builder().coin(managementGrowth).name("수용성").description("피드백이나 의견을 열린 태도로 받아들이는 자세").build()
         );
 
         // 2 : 감정과 태도 키워드
@@ -114,7 +116,7 @@ public class DataInitializer {
                 Keyword.builder().coin(emotionAttitude).name("표현력").description("감정이나 생각을 솔직하고 풍부하게 표현하는 능력").build(),
                 Keyword.builder().coin(emotionAttitude).name("밝은 에너지").description("주변까지 환하게 만드는 활기찬 에너지").build(),
                 Keyword.builder().coin(emotionAttitude).name("긍정성").description("상황을 긍정적으로 받아들이는 태도").build(),
-                Keyword.builder().coin(emotionAttitude).name("열정").description("무언가에 강한 의욕과 에너지를 갖고 임하는 태도").build(),
+                Keyword.builder().coin(emotionAttitude).name("열정").description("무언가에 강한 의욕과 에너지를 갖고 임하는 태도").build()
         );
 
         // 3 : 창의와 몰입 키워드
@@ -124,7 +126,7 @@ public class DataInitializer {
                 Keyword.builder().coin(creativityFocus).name("창의력").description("기존 틀을 넘어 새로운 아이디어를 떠올리는 능력").build(),
                 Keyword.builder().coin(creativityFocus).name("집중력").description("하나의 일에 주의를 모아 지속하는 태도").build(),
                 Keyword.builder().coin(creativityFocus).name("몰입력").description("하나의 일에 깊이 빠져 몰두하는 태도").build(),
-                Keyword.builder().coin(creativityFocus).name("기획력").description("아이디어를 구체적으로 구조화하는 능력").build(),
+                Keyword.builder().coin(creativityFocus).name("기획력").description("아이디어를 구체적으로 구조화하는 능력").build()
         );
 
         // 4 : 사고와 해결 키워드
@@ -135,7 +137,7 @@ public class DataInitializer {
                 Keyword.builder().coin(thinkingSolving).name("통찰력").description("본질을 꿰뚫어보고 전체를 이해하는 사고력").build(),
                 Keyword.builder().coin(thinkingSolving).name("신중성").description("충동보다 깊은 사고로 판단하는 태도").build(),
                 Keyword.builder().coin(thinkingSolving).name("문제해결력").description("문제를 분석하고 구조적으로 해결해나가는 능력").build(),
-                Keyword.builder().coin(thinkingSolving).name("융통성").description("상황에 맞게 사고와 행동을 유연하게 조절하는 능력").build(),
+                Keyword.builder().coin(thinkingSolving).name("융통성").description("상황에 맞게 사고와 행동을 유연하게 조절하는 능력").build()
         );
 
         // 5 : 관계와 공감 키워드
@@ -150,7 +152,7 @@ public class DataInitializer {
                 Keyword.builder().coin(relationshipEmpathy).name("중재력").description("다른 사람의 말을 주의 깊게 듣는 능력").build(),
                 Keyword.builder().coin(relationshipEmpathy).name("조율력").description("서로 다른 사람들을 조화롭게 어우르는 능력").build(),
                 Keyword.builder().coin(relationshipEmpathy).name("겸손함").description("다른 사람에게 믿음과 안정감을 주는 능력").build(),
-                Keyword.builder().coin(relationshipEmpathy).name("예의 바름").description("갈등 상황에서 조정하고 해결하는 능력").build(),
+                Keyword.builder().coin(relationshipEmpathy).name("예의 바름").description("갈등 상황에서 조정하고 해결하는 능력").build()
         );
 
         // 6 : 신념과 실행 키워드
@@ -166,8 +168,8 @@ public class DataInitializer {
                 Keyword.builder().coin(beliefExecution).name("실행력").description("계획한 일을 실제로 옮겨서 실행해 나가는 추진력").build(),
                 Keyword.builder().coin(beliefExecution).name("리더십").description("사람들을 이끌고 방향을 제시하는 능력").build(),
                 Keyword.builder().coin(beliefExecution).name("공정성").description("편견 없이 균형 있게 판단하고 존중하는 태도").build(),
-                Keyword.builder().coin(beliefExecution).name("책임감").description("맡은 일이나 역할을 끝까지 해내려는 태도와 의지").build()
-                Keyword.builder().coin(beliefExecution).name("계획성").description("목표 달성을 위해 체계적으로 준비하는 능력").build()
+                Keyword.builder().coin(beliefExecution).name("책임감").description("맡은 일이나 역할을 끝까지 해내려는 태도와 의지").build(),
+                Keyword.builder().coin(beliefExecution).name("계획성").description("목표 달성을 위해 체계적으로 준비하는 능력").build(),
                 Keyword.builder().coin(beliefExecution).name("도전력").description("새로운 가능성에 적극적으로 뛰어드는 태도").build()
         );
 
