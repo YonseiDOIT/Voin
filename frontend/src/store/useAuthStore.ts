@@ -1,18 +1,24 @@
 import { create } from 'zustand';
 import { authService } from '@/services/authService';
-import type { Member, KakaoLoginResponse } from '@/services/authService';
+import type { Member } from '@/services/authService';
+
+interface AuthActions {
+    // ✅ 서버 리다이렉트 플로우: 반환값 없음
+    loginWithKakao: () => void;
+    logout: () => void;
+    checkAuthStatus: () => Promise<void>;
+    initialize: () => Promise<void>;
+    setAuthData: (token: string, member?: Member | null) => void;
+    clearAuth: () => void;
+}
 
 interface AuthState {
     isAuthenticated: boolean;
     member: Member | null;
     token: string | null;
     isLoading: boolean;
-    actions: {
-        loginWithKakao: () => Promise<KakaoLoginResponse>;
-        logout: () => void;
-        checkAuthStatus: () => Promise<void>;
-        initialize: () => void;
-    };
+    hasInitialized: boolean;
+    actions: AuthActions;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -20,59 +26,66 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     member: null,
     token: null,
     isLoading: true,
+    hasInitialized: false,
     actions: {
-        // 카카오로 로그인
-        loginWithKakao: async () => {
-            set({ isLoading: true });
-            try {
-                const response = await authService.loginWithKakao();
-                set({
-                    isAuthenticated: true,
-                    member: response.member,
-                    token: response.jwtToken,
-                    isLoading: false,
-                });
-                return response;
-            } catch (error) {
-                console.error('카카오 로그인 실패:', error);
-                get().actions.logout(); // 실패 시 로그아웃 처리
-                throw error;
-            }
+        // ✅ 리다이렉트만 트리거
+        loginWithKakao: () => {
+            authService.loginWithKakao(); // window.Kakao.Auth.authorize(...) or /api/auth/kakao/url 로 이동
         },
 
-        setAuthData: (token: string, member: Member) => {
-            set({ isAuthenticated: true, token, member, isLoading: false });
+        setAuthData: (token, member = null) => {
+            authService.storeAuthData(token, member ?? authService.getStoredUserInfo() ?? null);
+            set({
+                isAuthenticated: true,
+                token,
+                member: member ?? authService.getStoredUserInfo() ?? null,
+                isLoading: false,
+            });
         },
 
-        // 로그아웃
+        clearAuth: () => {
+            authService.logout();
+            set({ isAuthenticated: false, member: null, token: null, isLoading: false });
+        },
+
         logout: () => {
             authService.logout();
             set({ isAuthenticated: false, member: null, token: null, isLoading: false });
         },
 
-        // 앱 로드 시 인증 상태 확인
         checkAuthStatus: async () => {
             const token = authService.getStoredToken();
-            const member = authService.getStoredUserInfo();
-
-            if (token && member) {
-                const isValid = await authService.validateToken(token);
-                if (isValid) {
-                    set({ isAuthenticated: true, member, token, isLoading: false });
+            const storedMember = authService.getStoredUserInfo();
+            if (!token) {
+                set({ isAuthenticated: false, member: null, token: null, isLoading: false });
+                return;
+            }
+            set({ isLoading: true });
+            try {
+                const ok = await authService.validateToken(token);
+                if (ok) {
+                    set({
+                        isAuthenticated: true,
+                        member: storedMember ?? null,
+                        token,
+                        isLoading: false,
+                    });
                 } else {
-                    get().actions.logout(); // 토큰이 유효하지 않으면 로그아웃
+                    get().actions.clearAuth();
                 }
-            } else {
-                set({ isLoading: false }); // 토큰이 없으면 로딩 종료
+            } catch {
+                get().actions.clearAuth();
             }
         },
-        
-        // 스토어 초기화 (앱 시작 시 한 번만 호출)
-        initialize: () => {
-            get().actions.checkAuthStatus();
-        }
+
+        initialize: async () => {
+            if (get().hasInitialized) return;
+            set({ isLoading: true });
+            await get().actions.checkAuthStatus();
+            set({ hasInitialized: true });
+        },
     },
 }));
 
-// 앱이 시작될 때 인증 상태를 확인합니다.
+// App.tsx에서 useEffect로 initialize() 호출하면 아래 줄은 제거해도 됩니다.
 useAuthStore.getState().actions.initialize();

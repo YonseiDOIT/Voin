@@ -250,6 +250,42 @@ public class GptService {
         log.debug("최종 파싱 결과: {}", result);
         return result;
     }
+    public String summarizeOnly(String userInput) {
+        // GPT prompt 생성 (분류 없이 요약만)
+        GptRequest request = new GptRequest();
+        request.setModel(gptConfig.getModel());
+        request.setMessages(List.of(
+                new GptMessage("system", "당신은 입력된 내용을 50~60자 존댓말로 자연스럽고 공감 가도록 요약하는 AI입니다."),
+                new GptMessage("user", userInput)
+        ));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(gptConfig.getSecretKey());
+        HttpEntity<GptRequest> httpRequest = new HttpEntity<>(request, headers);
+
+        try {
+            ResponseEntity<GptResponse> response = restTemplate.exchange(
+                    "https://api.openai.com/v1/chat/completions",
+                    HttpMethod.POST,
+                    httpRequest,
+                    GptResponse.class
+            );
+
+            var choices = response.getBody().getChoices();
+            if (choices != null && !choices.isEmpty()) {
+                var message = (Map<String, Object>) choices.get(0).get("message");
+                String content = message.get("content").toString().trim();
+                // 요청 포맷에 따라 직접 요약문을 반환
+                return content;
+            }
+        } catch (Exception e) {
+            log.error("GPT 요약 API 호출 중 오류 발생", e);
+        }
+
+        return "";
+    }
+
 
     /**
      * 오류 응답 생성

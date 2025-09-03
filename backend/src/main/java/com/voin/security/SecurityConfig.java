@@ -14,6 +14,9 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
@@ -27,25 +30,34 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .csrf(csrf -> csrf.disable())
-            .headers(headers -> headers.frameOptions().disable())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                // 인증이 필요 없는 공개 경로들
-                .requestMatchers("/auth/**", "/", "/index.html", "/signup/**", 
-                               "/h2-console/**", "/swagger-ui/**", "/api-docs/**", 
-                               "/v3/api-docs/**", "/swagger-ui.html", "/error").permitAll()
-                // 인증이 필요한 API 경로들
-                .requestMatchers("/api/auth/kakao/verify", "/api/auth/kakao/url", "/api/auth/validate").permitAll()
-                .requestMatchers("/api/**").authenticated()
-                // 나머지 모든 요청은 인증 필요
-                .anyRequest().authenticated()
-            )
-            .exceptionHandling(ex -> ex
-                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                .accessDeniedHandler(jwtAccessDeniedHandler)
-            )
-            .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
+                .csrf(csrf -> csrf.disable())
+                .headers(h -> h.frameOptions().disable())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .cors(cors -> {})
+                .authorizeHttpRequests(auth -> auth
+                        // 1) 완전 공개(정적/문서/에러/초기 진입)
+                        .requestMatchers("/", "/index.html", "/favicon.ico", "/error",
+                                "/h2-console/**", "/swagger-ui/**", "/swagger-ui.html",
+                                "/api-docs/**", "/v3/api-docs/**").permitAll()
+                        // 2) 카카오 로그인 흐름에 필요한 공개 경로
+                        .requestMatchers("/auth/**", "/signup/**",
+                                "/api/auth/kakao/callback", // 콜백/URL/검증 등
+                                "/api/auth/kakao/verify", "/api/auth/kakao/url", "/api/auth/validate").permitAll()
+                        // 3) 로그인 전 공용 데이터(키워드 등)
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/master/**").permitAll()
+                        // 4) 웹소켓 핸드셰이크
+                        .requestMatchers("/ws/**", "/ws").permitAll()
+                        // 5) 그 외 API는 인증 필요
+                        .requestMatchers("/api/**").authenticated()
+                        // 6) 나머지 전부 인증
+                        .anyRequest().authenticated()
+                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+                        .accessDeniedHandler(jwtAccessDeniedHandler)
+                )
+                .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider),
+                        org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -53,5 +65,18 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
         return configuration.getAuthenticationManager();
+    }
+
+    @Bean
+    CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(java.util.List.of("https://localhost:5174"));
+        config.setAllowedMethods(java.util.List.of("GET","POST","PUT","DELETE","OPTIONS"));
+        config.setAllowedHeaders(java.util.List.of("Authorization","Content-Type"));
+        config.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 }
