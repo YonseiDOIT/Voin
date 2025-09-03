@@ -1,16 +1,25 @@
 {
   "devDependencies": {
     "@types/react": "^19.1.8",
-    "@types/react-dom": "^19.1.6"
+    "@types/react-dom": "^19.1.6",
+    "@types/sockjs-client": "^1.5.4"
   },
   "dependencies": {
+    "@stomp/stompjs": "^7.1.1",
     "@tailwindcss/vite": "^4.1.11",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^24.1.0",
     "@vitejs/plugin-react": "^4.7.0",
     "react-router-dom": "^7.7.0",
+    "sockjs-client": "^1.6.1",
     "vite-plugin-mkcert": "^1.17.8",
     "vite-plugin-pwa": "^1.0.1",
     "vite-plugin-svgr": "^4.3.0"
+  },
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "build": "npm --prefix frontend run build",
+    "preview": "npm --prefix frontend run preview",
+    "dev:front": "npm --prefix frontend run dev"
   }
 }
