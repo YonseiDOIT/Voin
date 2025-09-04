@@ -45,6 +45,8 @@ public class SecurityConfig {
                                 "/api/auth/kakao/verify", "/api/auth/kakao/url", "/api/auth/validate").permitAll()
                         // 3) 로그인 전 공용 데이터(키워드 등)
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/master/**").permitAll()
+                        // gpt 일단 임시로 열어놓음
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/gpt/**").permitAll()
                         // 4) 웹소켓 핸드셰이크
                         .requestMatchers("/ws/**", "/ws").permitAll()
                         // 5) 그 외 API는 인증 필요
