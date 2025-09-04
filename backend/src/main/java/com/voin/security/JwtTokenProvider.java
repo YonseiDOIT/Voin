@@ -33,12 +33,15 @@ public class JwtTokenProvider {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + tokenValidityInMilliseconds);
 
-        return Jwts.builder()
+        String token = Jwts.builder()
                 .setSubject(subject)
                 .setIssuedAt(now)
                 .setExpiration(expiry)
                 .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
+
+        log.info("✅ 발급된 JWT 토큰: {}", token);
+        return token;
     }
 
     // JWT에서 subject 추출 (예: userId)
