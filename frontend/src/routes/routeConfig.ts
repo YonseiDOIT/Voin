@@ -6,7 +6,8 @@ import Notification from '@/pages/notification/index';
 import NotFound from '@/pages/notFound';
 import Test from '@/pages/test/index';
 import SignUp from '@/pages/signup/index';
-import KakaoCallback from '@/pages/auth/KakaoCallback';
+import Login from '@/pages/login/index';
+import KakaoLoading from '@/pages/login/KakaoLoading';
 
 import TodaysDiary from '@/pages/findCoin/todaysDiary/index';
 import TodaysCategory from '@/pages/findCoin/todaysDiary/categories/index';
@@ -42,18 +43,23 @@ export interface RouteConfig {
 }
 
 export const routes: RouteConfig[] = [
+    {
+        path: '/auth/kakao/callback',
+        component: KakaoLoading,
+        isProtected: false,
+    },
+    
     // 공개 라우트
-    { path: '/login', component: Login, isProtected: false },
-
-    // ✅ 백엔드가 보내는 프론트 콜백 경로로 맞춤
-    { path: '/auth/callback', component: KakaoCallback, isProtected: false },
-
-    // (선택) 과거 경로 호환용 – 임시로 동일 컴포넌트 매핑해두면 404 방지됨
-    { path: '/auth/kakao/callback', component: KakaoCallback, isProtected: false },
-
-    // 회원가입은 토큰 있어야만 접근하게 하고 싶으면 true로 바꾸세요(권장)
-    // 지금은 로그인 직후에만 들어오니 false여도 동작은 합니다.
-    { path: '/signup', component: SignUp, isProtected: true },
+    {
+        path: '/login',
+        component: Login,
+        isProtected: false,
+    },
+    {
+        path: '/signup',
+        component: SignUp,
+        isProtected: false,
+    },
 
     // 보호된 라우트
     { path: '/', component: Home, isProtected: true },

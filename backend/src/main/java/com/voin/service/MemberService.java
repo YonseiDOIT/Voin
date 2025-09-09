@@ -7,6 +7,7 @@ import com.voin.exception.ResourceNotFoundException;
 import com.voin.repository.CardRepository;
 import com.voin.repository.FriendRepository;
 import com.voin.repository.MemberRepository;
+import com.voin.util.ImageUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,6 +30,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final CardRepository cardRepository;
     private final FriendRepository friendRepository;
+    private final ImageUtil imageUtil;
 
     /**
      * 현재 로그인한 사용자 정보 가져오기

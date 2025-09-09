@@ -1,7 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useAuthStore } from '@/store/useAuthStore';
-
-import 아미새image from '@/assets/images/9e476176d040dbba92dedbb1e7f3d47eee4b0f12.png'
 
 interface ProfileImageProps {
     /** 이미지 URL */
@@ -11,11 +8,12 @@ interface ProfileImageProps {
 const ProfileImage: React.FC<ProfileImageProps> = ({
     src,
 }) => {
-    const userInfo = useAuthStore((state) => state.userInfo);
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+    const profileImage = userInfo.profileImage || '';
     const [imageError, setImageError] = useState(false);
 
     // 실제 사용할 이미지 URL (props로 전달된 것이 우선, 없으면 userInfo에서 가져옴)
-    const imageUrl = src || userInfo?.profileImage;
+    const imageUrl = src || profileImage || '';
 
     // src 주소가 변경될 때마다 에러 상태 초기화
     useEffect(() => {
@@ -26,7 +24,7 @@ const ProfileImage: React.FC<ProfileImageProps> = ({
         setImageError(true);
     };
 
-    const showImage = imageUrl && !imageError;
+    const showImage = !!imageUrl && !imageError;
 
     return (
         <div className={"h-8 aspect-square rounded-full bg-gray-200 flex items-center justify-center text-gray-500"}>
@@ -37,8 +35,7 @@ const ProfileImage: React.FC<ProfileImageProps> = ({
                     className="h-full w-full object-cover rounded-full"
                 />
             ) : (
-                // <DefaultFallbackIcon />
-                <img src={아미새image} alt="대체 이미지" className="h-full w-full object-cover rounded-full" />
+                <DefaultFallbackIcon />
             )}
         </div>
     );

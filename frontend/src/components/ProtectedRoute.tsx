@@ -1,5 +1,4 @@
 import { Navigate } from 'react-router-dom';
-import { useAuthStore } from '@/store/useAuthStore';
 import type { ReactNode } from 'react';
 
 interface ProtectedRouteProps {
@@ -7,7 +6,8 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-    const { isAuthenticated, isLoading } = useAuthStore();
+    const isAuthenticated = !!localStorage.getItem('JWTtoken'); // JWT 토큰이 존재하는지 확인
+    const isLoading = false;
 
     // 로딩 중일 때는 로딩 스피너 표시
     if (isLoading) {

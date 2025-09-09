@@ -28,7 +28,7 @@ const shareTypes = [
 const friends = [
     {
         id: '1',
-        name: '홍길동',
+        name: '티파니',
         profileImage: 'https://randomuser.me/api/portraits/men/1.jpg',
         userTag: '#F45DE2',
     },
@@ -71,19 +71,18 @@ const friends = [
 ];
 
 const SelectShareType = () => {
-    const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+    const [selectedTypeIndex, setSelectedTypeIndex] = useState<number | null>(null);
+    // const [selectedFriendIndex, setSelectedFriendIndex] = useState<number | null>(null);
     const [isSheetOpen, setIsSheetOpen] = useState(false);
 
-    // const openSheet = () => setIsSheetOpen(true);
     const closeSheet = () => setIsSheetOpen(false);
 
     const handleClick = (index: number) => {
-        console.log(`Selected type: ${index}`);
-        setSelectedIndex(selectedIndex === index ? null : index);
+        setSelectedTypeIndex(selectedTypeIndex === index ? null : index);
     };
 
     const handleButtonClick = () => {
-        if (selectedIndex !== null) {
+        if (selectedTypeIndex !== null) {
             setIsSheetOpen(true);
         }
     };
@@ -97,12 +96,11 @@ const SelectShareType = () => {
 
             <div className="flex flex-col gap-y-4 px-4 mt-6 w-full h-full">
                 {shareTypes.map((type, index) => {
-                    const isSelected = selectedIndex === index;
+                    const isSelected = selectedTypeIndex === index;
                     return (
                         <div
                             key={type.value}
-                            onClick={() => handleClick(index)
-                            }
+                            onClick={() => handleClick(index)}
                             className={`relative flex flex-row items-center aspect-[2.3/1] px-6 py-8 rounded-[24px] cursor-pointer shadow-[0px_5px_15px_-5px_rgba(35,48,59,0.10)] transition-all duration-200 bg-transparent`}
                             style={{ minHeight: 140 }}
                         >
@@ -132,7 +130,7 @@ const SelectShareType = () => {
                 <ActionButton
                     buttonText="다음"
                     onClick={handleButtonClick}
-                    disabled={selectedIndex === null}
+                    disabled={selectedTypeIndex === null}
                 />
             </div>
 
@@ -142,10 +140,18 @@ const SelectShareType = () => {
                 onClose={closeSheet}
             >
                 <div>
+                    {/* 실제 데이터 연동 시 아래 props를 사용하세요
                     <FriendSelectList
                         friends={friends}
-                        selectedIndex={selectedIndex}
-                        onSelectFriend={(index) => setSelectedIndex(index)}
+                        selectedIndex={selectedFriendIndex}
+                        onSelectFriend={(index) => setSelectedFriendIndex(index)}
+                        navigateTo='/memories-together/final-result'
+                    />
+                    */}
+                    {/* 더미 데이터만 출력하는 FriendSelectList */}
+                    <FriendSelectList
+                        friends={friends}
+                        onFriendSelect={() => {}}
                         navigateTo='/memories-together/final-result'
                     />
                 </div>

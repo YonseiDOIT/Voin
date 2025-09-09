@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/useAuthStore";
+import { authService } from "@/services/authService";
+import type { KakaoLoginResponse } from "@/services/authService";
 import useEmblaCarousel from 'embla-carousel-react';
 import type { EmblaCarouselType } from 'embla-carousel';
 
@@ -17,8 +19,8 @@ const onBoardImages = [onBoardImage1, onBoardImage2, onBoardImage3, onBoardImage
 const onBoardTexts = [
     <div><span>일상 속 순간이 장점이 되는</span><br /><span className="text-VB-40">Voin에 오신 걸 환영해요</span></div>,
     <div><span>일상 속 순간을 기록하고</span><br /><span className="text-VB-40">나와 친구의 장점을 발견해요</span></div>,
-    <div><span>일상 속 순간이 장점이 되는</span><br /><span className="text-VB-40">Voin에 오신 걸 환영해요</span></div>,
-    <div><span>일상 속 순간이 장점이 되는</span><br /><span className="text-VB-40">Voin에 오신 걸 환영해요</span></div>,
+    <div><span>반짝였던 그 순간을</span><br /><span className="text-VB-40">장점 코인으로 만들 수 있어요</span></div>,
+    <div><span>피드에서 나와 친구의 코인을</span><br /><span className="text-VB-40">함께 공유, 공감할 수 있어요</span></div>,
 ];
 
 const Login = () => {
@@ -65,16 +67,15 @@ const Login = () => {
         <img key={index} src={imageSrc} alt={`onboarding image ${index + 1}`} className="max-h-full w-auto object-contain" />
     ));
 
-    const handleKakaoLogin = () => {
+    const handleKakaoLogin = async () => {
         if (isLoginLoading) return;
         setIsLoginLoading(true);
         try {
-            // 스토어 액션을 사용 (리다이렉트 트리거만 함)
-            actions.loginWithKakao();
-            // 이후 카카오 → 백엔드 → 프론트 콜백으로 이동하므로 버튼 로딩은 유지해도 무방
+            await authService.loginWithKakao();
         } catch (error) {
-            console.error('카카오 로그인 시작 오류:', error);
-            alert('카카오 로그인 과정에 문제가 발생했습니다.');
+            console.error('카카오 로그인 오류:', error);
+            alert('카카오 로그인에 실패했습니다. 다시 시도해주세요.');
+        } finally {
             setIsLoginLoading(false);
         }
     };

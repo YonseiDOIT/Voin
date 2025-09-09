@@ -2,23 +2,18 @@ import { create } from 'zustand';
 import { authService } from '@/services/authService';
 import type { Member } from '@/services/authService';
 
-interface AuthActions {
-    // ✅ 서버 리다이렉트 플로우: 반환값 없음
-    loginWithKakao: () => void;
-    logout: () => void;
-    checkAuthStatus: () => Promise<void>;
-    initialize: () => Promise<void>;
-    setAuthData: (token: string, member?: Member | null) => void;
-    clearAuth: () => void;
-}
-
 interface AuthState {
     isAuthenticated: boolean;
     member: Member | null;
     token: string | null;
     isLoading: boolean;
-    hasInitialized: boolean;
-    actions: AuthActions;
+    actions: {
+        loginWithKakao: () => void;
+        logout: () => void;
+        checkAuthStatus: () => Promise<void>;
+        initialize: () => void;
+        setAuthData: (token: string, member: Member) => void;
+    };
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -28,31 +23,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     isLoading: true,
     hasInitialized: false,
     actions: {
-        // ✅ 리다이렉트만 트리거
         loginWithKakao: () => {
-            authService.loginWithKakao(); // window.Kakao.Auth.authorize(...) or /api/auth/kakao/url 로 이동
+            authService.loginWithKakao();
         },
-
-        setAuthData: (token, member = null) => {
-            authService.storeAuthData(token, member ?? authService.getStoredUserInfo() ?? null);
-            set({
-                isAuthenticated: true,
-                token,
-                member: member ?? authService.getStoredUserInfo() ?? null,
-                isLoading: false,
-            });
+        setAuthData: (token: string, member: Member) => {
+            authService.storeAuthData(token, member); // localStorage에 저장
+            set({ isAuthenticated: true, token, member, isLoading: false });
         },
-
-        clearAuth: () => {
-            authService.logout();
-            set({ isAuthenticated: false, member: null, token: null, isLoading: false });
-        },
-
         logout: () => {
             authService.logout();
             set({ isAuthenticated: false, member: null, token: null, isLoading: false });
         },
-
         checkAuthStatus: async () => {
             const token = authService.getStoredToken();
             const storedMember = authService.getStoredUserInfo();
@@ -71,21 +52,16 @@ export const useAuthStore = create<AuthState>((set, get) => ({
                         isLoading: false,
                     });
                 } else {
-                    get().actions.clearAuth();
+                    get().actions.logout();
                 }
-            } catch {
-                get().actions.clearAuth();
+            } else {
+                set({ isLoading: false });
             }
         },
-
-        initialize: async () => {
-            if (get().hasInitialized) return;
-            set({ isLoading: true });
-            await get().actions.checkAuthStatus();
-            set({ hasInitialized: true });
-        },
+        initialize: () => {
+            get().actions.checkAuthStatus();
+        }
     },
 }));
 
-// App.tsx에서 useEffect로 initialize() 호출하면 아래 줄은 제거해도 됩니다.
 useAuthStore.getState().actions.initialize();

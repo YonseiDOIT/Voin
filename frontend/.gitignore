@@ -87,3 +87,7 @@ temp/
 # PWA files
 sw.js
 workbox-*.js
+
+localhost-cert.pem
+localhost-key.pem
+localhost-cert.cer

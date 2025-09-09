@@ -20,7 +20,8 @@ import 리더십화이트Icon from '@/assets/svgs/리더십화이트.svg?react';
 import 이첫레img from '@/assets/images/6c98263fb5c7d5cd2ffe6cfeca32d4eed4fde21e.png'
 
 const Home = () => {
-    const { userInfo, actions } = useAuthStore();
+    const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+    const nickname = userInfo.nickname;
     const navigate = useNavigate();
     
     // 카카오 콜백 처리 (백엔드에서 리다이렉트된 경우)
@@ -84,7 +85,7 @@ const Home = () => {
         />,
         <HomeCoinStatus
             title="코인을 많이 나눈 친구"
-            titleValue="김도청"
+            titleValue="이건첫번째레슨"
             subtitle={["코인을 ", "회 주고 받았어요"]}
             subtitleNumValue={5}
             image={이첫레img}
@@ -108,12 +109,6 @@ const Home = () => {
     return (
         <div className="w-full h-full flex flex-col">
             <style>{globalWhiteSvgStyle}</style>
-            {/* 더미 유저 표시 (개발용) */}
-            {userInfo && userInfo.id.startsWith('dummy-user') && (
-                <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-2 text-sm">
-                    🚀 개발 모드: 더미 유저 "{userInfo.nickname}"로 로그인됨
-                </div>
-            )}
             {/* Header */}
             <div className="w-full h-12 px-4 py-2 pt-4 mb-2 flex flex-row items-center">
                 <div className="h-full inline-flex flex-row items-center gap-2">
@@ -121,18 +116,18 @@ const Home = () => {
                     {/* 사용자 이름 */}
                     <div className="min-w-fit">
                         <span className="text-base text-white font-semibold">
-                            {userInfo?.nickname || '아름답고미운새'}
+                            {nickname || '아름답고미운새'}
                         </span>
                         <span className="text-base text-white font-medium mx-0.5">님</span>
                     </div>
                 </div>
                 <div className='ml-auto h-full inline-flex items-center gap-2'>
-                    <button 
+                    {/* <button 
                         onClick={handleLogout}
                         className="px-3 py-1 text-sm text-white/80 hover:text-white border border-white/30 rounded-full hover:bg-white/10"
                     >
                         로그아웃
-                    </button>
+                    </button> */}
                     <Link to="/notification" className='inline-flex flex-row items-center'>
                         <NotificationIcon style={{ opacity: 0.7 }}/>
                     </Link>

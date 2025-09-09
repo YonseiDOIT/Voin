@@ -15,12 +15,12 @@ export default defineConfig({
     host: true,        // ← localhost 대신 true로 (127.0.0.1/::1 모두 수용)
     port: 5174,        // ← 임시로 다른 포트 사용해 SW/충돌 영향 제거
     strictPort: true,
-    // https: false,    // ← 명시해도 OK(기본 false)
     proxy: {
       '/api': { target: 'http://localhost:8080', changeOrigin: true, secure: false },
       '/signup/profile-image': { target: 'http://localhost:8080', changeOrigin: true, secure: false },
     },
   },
+  appType: 'spa', 
   plugins: [
     react(),
     tailwindcss(),

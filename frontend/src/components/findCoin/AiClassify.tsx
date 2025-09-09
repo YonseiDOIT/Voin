@@ -4,6 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { classifyText } from '@/services/gptService';
 import { fetchAllStrengths } from '@/services/strengthService';
 
+import TopNavigation from '../common/TopNavigation';
+
+import LoadingVideo from "@/assets/videos/loading.mp4"; // Assuming you have a loading video in your assets
+
 interface AiClassifyProps {
     nextPath: string;
 }
@@ -12,6 +16,15 @@ const AiClassify = ({ nextPath }: AiClassifyProps) => {
     const writtenCase1 = useActivityStore((state) => state.data.writtenCase1);
     const setActivityData = useActivityStore((state) => state.setData);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        document.body.style.background = '#FFFFFF';
+        // 클리님 함수
+        return () => {
+            document.body.style.background = '#F7F7F8';
+        };
+    }, []);
+
 
     useEffect(() => {
         const fetchClassify = async () => {
@@ -50,10 +63,24 @@ const AiClassify = ({ nextPath }: AiClassifyProps) => {
     }, [writtenCase1, nextPath, setActivityData, navigate]);
 
     return (
-        <div className="w-full h-full flex flex-col items-center justify-center">
-            <span className="text-[20px] font-semibold text-grey-15">
-                {`그 순간에 빛났던\n장점을 살펴보는 중이에요`}
-            </span>
+        <div className="w-full h-full flex flex-col items-center">
+            <TopNavigation
+                title={`그 순간에 빛났던\n장점을 살펴보는 중이에요`}
+            />
+            <div className="w-full aspect-square pt-14">
+                <video
+                    src={LoadingVideo}
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    disablePictureInPicture
+                    controlsList="nodownload nofullscreen noremoteplayback noplaybackrate"
+                    className="w-full h-full object-cover"
+                    tabIndex={-1}
+                    style={{ pointerEvents: 'none' }}
+                />
+            </div>
         </div>
     );
 };

@@ -117,14 +117,19 @@ export default function ProfileUploader({ defaultImage, onChange }: ProfileUploa
             if (!blob) {
                 throw new Error('Failed to create blob');
             }
-            const url = URL.createObjectURL(blob);
-            setCroppedImageUrl(url);
-            setImgSrc(null); // 모달 닫기
-            
-            // 부모 컴포넌트에 변경사항 알림
-            if (onChange) {
-                onChange(url);
-            }
+
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64data = reader.result as string;
+                setCroppedImageUrl(base64data);
+                setImgSrc(null); // 모달 닫기
+
+                // 부모 컴포넌트에 변경사항 알림
+                if (onChange) {
+                    onChange(base64data);
+                }
+            };
+            reader.readAsDataURL(blob);
         }, 'image/png');
     };
 

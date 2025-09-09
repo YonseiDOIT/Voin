@@ -17,14 +17,14 @@ const AdvantageResultPage = () => {
         // zustand 데이터 콘솔 출력
         console.log('[CaseReviewData zustand]', activityData);
         // 데이터가 없으면 이전 페이지로 리다이렉트
-        if (!activityData || !activityData.caseName) {
+        if (!activityData) {
             console.warn('케이스 리뷰 데이터가 없습니다. 강점 선택 페이지로 돌아갑니다.');
             navigate('/case-review/categories', { replace: true });
         }
     }, [activityData, navigate]);
 
     // 데이터가 없으면 로딩 상태 표시
-    if (!activityData || !activityData.caseName) {
+    if (!activityData) {
         return (
             <div className="w-full h-full flex items-center justify-center">
                 <div className="text-center">

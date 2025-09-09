@@ -4,74 +4,29 @@ import TextInput from '@/components/TextInput';
 import ActionButton from '@/components/common/ActionButton';
 
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useAuthStore } from '@/store/useAuthStore';
-import type { Member } from '@/services/authService';
+import { useNavigate, useLocation } from 'react-router-dom';
+// import type { Member } from '@/services/authService';
 
 const SignUp = () => {
     const [nickname, setNickname] = useState<string>('');
     const [profileImage, setProfileImage] = useState<string | null>(null);
-    const [finalProfileImage, setFinalProfileImage] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
-    const { setAuthData } = useAuthStore((state) => state.actions);
-
+    const { kakaoNickname, kakaoProfileImage } = useLocation().state || {};
+    
     useEffect(() => {
-        const fetchKakaoProfile = async () => {
-            try {
-                // URL 파라미터에서 카카오 토큰 정보 확인
-                const kakaoAccessToken = searchParams.get('kakao_access_token');
-                const isNewMember = searchParams.get('is_new_member');
-                
-                console.log('회원가입 페이지 진입:', {
-                    kakaoAccessToken: kakaoAccessToken ? kakaoAccessToken.substring(0, 20) + '...' : null,
-                    isNewMember
-                });
+        // 카카오 로그인 정보가 있다면 초기화
+        setNickname(kakaoNickname);
+        setProfileImage(kakaoProfileImage);
 
-                // 새로운 회원이 아니면 로그인 페이지로 리다이렉트
-                if (isNewMember !== 'true') {
-                    console.log('신규 회원이 아닙니다. 로그인 페이지로 리다이렉트');
-                    navigate('/login', { replace: true });
-                    return;
-                }
+        setIsLoading(false);
+    }, [kakaoNickname, kakaoProfileImage]);
 
-                if (kakaoAccessToken) {
-                    // 카카오 프로필 정보 가져오기
-                    const profileResponse = await fetch('https://kapi.kakao.com/v2/user/me', {
-                        headers: {
-                            'Authorization': `Bearer ${kakaoAccessToken}`
-                        }
-                    });
-
-                    if (profileResponse.ok) {
-                        const profileData = await profileResponse.json();
-                        
-                        // 카카오 닉네임 설정
-                        if (profileData.kakao_account?.profile?.nickname) {
-                            setNickname(profileData.kakao_account.profile.nickname);
-                        }
-                        
-                        // 카카오 프로필 이미지 설정
-                        if (profileData.kakao_account?.profile?.profile_image_url) {
-                            setProfileImage(profileData.kakao_account.profile.profile_image_url);
-                        }
-                    }
-                }
-            } catch (error) {
-                console.error('카카오 프로필 정보 가져오기 실패:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchKakaoProfile();
-    }, [searchParams, navigate]);
 
     // 프로필 이미지 변경 핸들러
     const handleProfileImageChange = (imageUrl: string | null) => {
-        setFinalProfileImage(imageUrl);
+        setProfileImage(imageUrl);
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -99,22 +54,22 @@ const SignUp = () => {
 
     const handleButtonClick = async () => {
         try {
-            const kakaoAccessToken = searchParams.get('kakao_access_token');
-            if (!kakaoAccessToken) {
-                alert('카카오 로그인 정보가 없습니다. 다시 로그인해주세요.');
-                navigate('/login');
-                return;
+            const JWTtoken = localStorage.getItem('jwtToken');
+            if (!JWTtoken) {
+                throw new Error('로그인이 필요합니다. 다시 로그인해주세요.');
             }
 
-            const response = await fetch('/signup/profile-image', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+            const response = await fetch('/api/members/me', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${JWTtoken}`,
+                },
                 body: JSON.stringify({
-                    accessToken: kakaoAccessToken,
                     nickname: nickname,
-                    profileImage: finalProfileImage || profileImage,
+                    // profileImage: profileImage,
+                    profileImage: "abcd",
                 }),
-                credentials: 'include',
             });
 
             if (!response.ok) {
@@ -123,11 +78,11 @@ const SignUp = () => {
             }
 
             const apiResponse = await response.json();
-
+            console.log('회원가입 응답:', apiResponse);
             if (apiResponse.success && apiResponse.data) {
+                console.log('회원가입 성공:', apiResponse.data);
                 // 백엔드에서 받은 JWT와 사용자 정보로 로그인 상태 설정
-                const { jwtToken, member }: { jwtToken: string; member: Member } = apiResponse.data;
-                setAuthData(jwtToken, member);
+                localStorage.setItem('userInfo', JSON.stringify(apiResponse.data));
                 navigate('/home');
             } else {
                 throw new Error(apiResponse.message || '회원가입에 실패했습니다.');
