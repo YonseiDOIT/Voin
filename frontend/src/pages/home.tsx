@@ -117,11 +117,11 @@ const Home = () => {
             {/* Header */}
             <div className="w-full h-12 px-4 py-2 pt-4 mb-2 flex flex-row items-center">
                 <div className="h-full inline-flex flex-row items-center gap-2">
-                    <ProfileImage />
+                    <ProfileImage src={userInfo?.profileImage}/>
                     {/* 사용자 이름 */}
                     <div className="min-w-fit">
                         <span className="text-base text-white font-semibold">
-                            {userInfo?.nickname || '아름답고미운새'}
+                            {userInfo?.nickname || '닉네임'}
                         </span>
                         <span className="text-base text-white font-medium mx-0.5">님</span>
                     </div>

@@ -11,7 +11,7 @@ export interface Member {
     id: string;
     kakaoId: string;
     nickname: string;
-    profileImage: string;
+    profileImage: string | null;
     friendCode: string;
     isActive: boolean;
 }

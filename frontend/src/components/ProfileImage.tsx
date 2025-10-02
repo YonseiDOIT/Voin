@@ -1,63 +1,71 @@
+// src/components/ProfileImage.tsx
 import React, { useState, useEffect } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
-
-import 아미새image from '@/assets/images/9e476176d040dbba92dedbb1e7f3d47eee4b0f12.png'
+import 아미새image from '@/assets/images/9e476176d040dbba92dedbb1e7f3d47eee4b0f12.png';
 
 interface ProfileImageProps {
-    /** 이미지 URL */
-    src?: string;
+    /** 우선 사용될 이미지 URL (없으면 전역 userInfo.profileImage 사용) */
+    src?: string | null;
+    /** 대체 텍스트 (없으면 userInfo.nickname → '프로필') */
+    alt?: string | null;
+    /** 정사각 픽셀 크기 (기본 32px) */
+    size?: number;
+    /** 외부에서 클래스 추가하고 싶을 때 */
+    className?: string;
 }
 
 const ProfileImage: React.FC<ProfileImageProps> = ({
-    src,
-}) => {
+                                                       src,
+                                                       alt,
+                                                       size = 32,
+                                                       className = '',
+                                                   }) => {
     const userInfo = useAuthStore((state) => state.userInfo);
     const [imageError, setImageError] = useState(false);
 
-    // 실제 사용할 이미지 URL (props로 전달된 것이 우선, 없으면 userInfo에서 가져옴)
-    const imageUrl = src || userInfo?.profileImage;
+    // 실제 사용할 이미지 URL/ALT 결정
+    const imageUrl = (src ?? undefined) || userInfo?.profileImage || undefined;
+    const altText = alt ?? userInfo?.nickname ?? '프로필';
 
-    // src 주소가 변경될 때마다 에러 상태 초기화
+    // 이미지 URL이 바뀌면 에러 상태 초기화
     useEffect(() => {
         setImageError(false);
     }, [imageUrl]);
 
-    const handleError = () => {
-        setImageError(true);
-    };
+    const handleError = () => setImageError(true);
+    const showImage = !!imageUrl && !imageError;
 
-    const showImage = imageUrl && !imageError;
+    const px = `${size}px`;
 
     return (
-        <div className={"h-8 aspect-square rounded-full bg-gray-200 flex items-center justify-center text-gray-500"}>
+        <div
+            className={`rounded-full bg-gray-200 flex items-center justify-center text-gray-500 overflow-hidden ${className}`}
+            style={{ width: px, height: px }}
+            aria-label={altText}
+        >
             {showImage ? (
                 <img
                     src={imageUrl}
+                    alt={altText}
                     onError={handleError}
+                    loading="lazy"
+                    decoding="async"
                     className="h-full w-full object-cover rounded-full"
+                    // cross-origin 이미지라면 필요 시 주석 해제
+                    // crossOrigin="anonymous"
+                    // referrerPolicy="no-referrer"
                 />
             ) : (
-                // <DefaultFallbackIcon />
-                <img src={아미새image} alt="대체 이미지" className="h-full w-full object-cover rounded-full" />
+                <img
+                    src={아미새image}
+                    alt="대체 이미지"
+                    className="h-full w-full object-cover rounded-full"
+                    loading="lazy"
+                    decoding="async"
+                />
             )}
         </div>
     );
 };
-
-// 기본 Fallback 아이콘
-const DefaultFallbackIcon = () => (
-    <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="currentColor"
-        className="w-3/5 h-3/5"
-    >
-        <path
-            fillRule="evenodd"
-            d="M7.5 6a4.5 4.5 0 119 0 4.5 4.5 0 01-9 0zM3.751 20.105a8.25 8.25 0 0116.498 0 .75.75 0 01-.437.695A18.683 18.683 0 0112 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 01-.437-.695z"
-            clipRule="evenodd"
-        />
-    </svg>
-);
 
 export default ProfileImage;

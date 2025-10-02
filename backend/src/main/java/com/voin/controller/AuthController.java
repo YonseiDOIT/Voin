@@ -35,7 +35,7 @@ public class AuthController {
     private final JwtTokenProvider jwtTokenProvider;
     private final FriendCodeGenerator friendCodeGenerator;
 
-    // ✅ 프론트 콜백 URL을 환경설정에서 주입 (기본값: https://localhost:5174/auth/callback)
+    // ✅ 프론트 콜백 URL을 환경설정에서 주입 (기본값: https://localhost:5174/api/auth/kakao/callback)
     @Value("${app.frontend-callback-uri:https://localhost:5174/api/auth/kakao/callback}")
     private String frontendCallbackUri;
 

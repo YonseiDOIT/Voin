@@ -1,3 +1,4 @@
+// src/pages/auth/Login.tsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -20,6 +21,9 @@ const onBoardTexts = [
     <div><span>일상 속 순간이 장점이 되는</span><br /><span className="text-VB-40">Voin에 오신 걸 환영해요</span></div>,
     <div><span>일상 속 순간이 장점이 되는</span><br /><span className="text-VB-40">Voin에 오신 걸 환영해요</span></div>,
 ];
+
+// ✅ 로그인 이후 리다이렉트 목적지 저장 키
+const REDIRECT_KEY = 'postLoginRedirect';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -53,11 +57,13 @@ const Login = () => {
         }
     }, [hasInitialized, actions]);
 
-    // 이미 로그인 상태면 홈으로
+    // 이미 로그인 상태면 저장된 목적지 → 기본은 /signup
     useEffect(() => {
         if (!hasInitialized || isLoading) return;
         if (isAuthenticated) {
-            navigate('/home', { replace: true });
+            const to = sessionStorage.getItem(REDIRECT_KEY) || '/signup';
+            sessionStorage.removeItem(REDIRECT_KEY);
+            navigate(to, { replace: true });
         }
     }, [hasInitialized, isLoading, isAuthenticated, navigate]);
 
@@ -69,6 +75,8 @@ const Login = () => {
         if (isLoginLoading) return;
         setIsLoginLoading(true);
         try {
+            // ✅ 로그인 후 보낼 목적지 저장 (/signup)
+            sessionStorage.setItem(REDIRECT_KEY, '/signup');
             // 스토어 액션을 사용 (리다이렉트 트리거만 함)
             actions.loginWithKakao();
             // 이후 카카오 → 백엔드 → 프론트 콜백으로 이동하므로 버튼 로딩은 유지해도 무방
@@ -102,9 +110,10 @@ const Login = () => {
             </div>
 
             {/* 하단 컨텐츠 영역 */}
-            <div className="bg-white w-full pt-6 flex flex-col rounded-t-2xl"
-                 style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}>
-
+            <div
+                className="bg-white w-full pt-6 flex flex-col rounded-t-2xl"
+                style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom))' }}
+            >
                 {/* 텍스트 표시 영역 */}
                 <div className="w-full px-5 h-24 flex items-center justify-center text-center text-2xl font-semibold">
                     {onBoardTexts[selectedIndex]}
@@ -148,6 +157,6 @@ const Login = () => {
             </div>
         </div>
     );
-}
+};
 
 export default Login;
